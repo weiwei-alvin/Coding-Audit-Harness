@@ -143,7 +143,7 @@ Runner insuper omnia mandata acceptionis ab initio iterum exsequitur. Si vel unu
 - **Non est sandbox (ambitus segregatus).** Idem usor systematis statum, probationes, testimonia mutare potest. Summae recentiam probant, non sunt signa digitalia. Instrumentum errores cavet, non adversarium eadem potestate praeditum.
 - **Nullum agentis ambitum habet.** Nullum LLM vocat, ad MCP non conectitur, nec interfaciem interretialem nec ordinatorem habet. Artes sunt fasciculi regularum ab agente legendi, non machina exsecutionis.
 - **De qualitate non iudicat.** Architecturam tuam aut elegantiam probationum non aestimat. Haec iudicia criteriis recognitionis et Portae relinquuntur.
-- **Collaborationem plurium usorum non sustinet.** Unus status, unus scriptor (sera clausus). Traditiones concurrentes nondum effectae sunt.
+- **Collaborationem plurium usorum non sustinet.** Unus status, una tantum scriptio simul (sera munita). Traditiones concurrentes nondum effectae sunt.
 
 ### Tria strata officiorum
 
@@ -518,7 +518,7 @@ Variabiles viarum non sunt credentialia: mandata iam fasciculos usoris legere po
 
 ### Purgatio processuum filiorum
 
-In Windows adhibetur Job Object: processus suspensus creatur, iob assignatur, deinde resumitur. Tempore exspirato, errore, aut exitu solito iob clauditur, et omnes posteri terminantur. In POSIX adhibetur grex processuum; **processus qui gregem consulto relinquunt non praestantur.**
+In Windows adhibetur Job Object: processus suspensus creatur, iob assignatur, deinde resumitur. Tempore exspirato, errore, aut exitu solito iob clauditur, et omnes posteri terminantur. In POSIX adhibetur grex processuum; **de processibus qui gregem consulto relinquunt nulla cautio datur.**
 
 stdout/stderr in memoria et in artefactis servantur. **Ea sola mandata exsequere quae exitum modicum habent nec secreta imprimunt**: nullus terminus firmus nunc exstat.
 
@@ -530,7 +530,7 @@ stdout/stderr in memoria et in artefactis servantur. **Ea sola mandata exsequere
 
 SHA-256 inceptis cum Git et sine Git convenit. **Git non initiat**, neque commit pro mutationibus nondum commissis habet. Fasciculos incepti ordinarios, schedulas, `golden_path.json` complectitur; ex more excludit `.git`, `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `.venv`, `venv`, `node_modules` et cetera data exsecutionis `.harness`, necnon ea quae in `source_hash_exclude` enumerantur.
 
-**Numquam codicem negotii aut probationes quae verificantur exclude.** Tantum in inceptis fidis et secretis carentibus adhibe: summa contenta legit, quamquam testimonia nihil nisi digesta servant. Editiones instrumentorum et dependentiarum externarum statusque servitiorum **in summa non continentur**; ambitum fige aut iterum proba.
+**Numquam codicem negotii aut probationes quae verificantur exclude.** Tantum in inceptis fidis et secretis carentibus adhibe: ad summam computandam contenta fasciculorum leguntur, quamquam testimonia nihil nisi digesta servant. Editiones instrumentorum et dependentiarum externarum statusque servitiorum **in summa non continentur**; ambitum fige aut iterum proba.
 
 ### Ratio incrementalis
 
@@ -538,7 +538,7 @@ Runner quaque exsecutione **omnes** passus activos iterum exsequitur, sine ulla 
 
 ### Scriptio status
 
-Sera fasciculi systematis et compare-and-swap SHA-256 in octetis lectis; scriptor obsoletus semper cum codice non nullo exit. Sera cum processus exit solvitur, et `writer.lock` suo loco manet; **noli fasciculum serae activum delere**. Si conflictus fit, iterum lege / restitue (read / recover), statum confirma, deinde operationem repete.
+Sera fasciculi systematis et compare-and-swap SHA-256 in octetis lectis; scriptio ex statu iam obsoleto semper cum codice exitus non nullo deficit. Sera cum processus exit solvitur, et `writer.lock` suo loco manet; **noli fasciculum serae activum delere**. Si conflictus fit, iterum lege / restitue (read / recover), statum confirma, deinde operationem repete.
 
 Artefacta **primum scribuntur, status postremo atomice substituitur**. Defectus artefactum orbum relinquere potest quod status non citat; **id non significat quicquam perfectum esse**. Restitutio ea sola artefacta adhibet quae status citat. Status corruptus nuntiatur, numquam coniectura reparatur; ex exemplari tutelae probato restituendus est.
 

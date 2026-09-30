@@ -32,7 +32,7 @@ Ce n'est pas une question de confiance envers l'agent : il vous a simplement don
 
 C'est l'échec typique du développement assisté par IA. **Le problème n'est pas d'écrire le code, c'est que personne ne peut le vérifier une fois écrit.**
 
-Coding Audit Harness n'existe que pour une raison : **faire de « c'est validé » non plus une simple affirmation, mais une preuve traçable.**
+Coding Audit Harness n'existe que pour une raison : **faire de « c'est validé » une preuve traçable plutôt qu'une simple affirmation.**
 
 (Ici, « harness » désigne la couche qui enveloppe le processus de développement pour l'encadrer, et non un harnais de test.)
 

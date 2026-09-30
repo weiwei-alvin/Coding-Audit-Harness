@@ -28,7 +28,7 @@ Postulatum aliquod agenti programmatorio (coding agent) committis. Post semihora
 
 Difficultas autem haec est: id confirmare nullo modo potes.
 
-Non quia agenti diffidis, sed quia tibi nihil nisi sententiam dedit. Nihil eam sententiam ad certam codicis editionem alligat. Postquam rettulit, agens plicam `login.py` ter mutavit neque probationes umquam iterum exsecutus est. Probationes quas scripsit ea sola tegunt quae ipse excogitare potuit. «Transiit» dicit, sed nullum instrumentum notavit id factum esse, neque in qua codicis editione.
+Non quia agenti diffidis, sed quia tibi nihil nisi sententiam dedit. Nihil eam sententiam ad certam codicis editionem alligat. Postquam rettulit, agens fasciculum `login.py` ter mutavit neque probationes umquam iterum exsecutus est. Probationes quas scripsit ea sola tegunt quae ipse excogitare potuit. «Transiit» dicit, sed nullum instrumentum notavit id factum esse, neque in qua codicis editione.
 
 Hic est error maxime proprius programmationis per intellegentiam artificialem (IA). **Non quod codex scribi non possit, sed quod scriptum nemo probare possit.**
 
@@ -44,27 +44,27 @@ Iudicare non potest utrum architectura tua bona sit aut probationes eleganter sc
 
 | Pars | Imago | Quid re vera sit |
 |---|---|---|
-| **Audit skills** | Liber regularum | Quinque plicae Markdown ab agente legendae (`skills/*-audit/SKILL.md`), singulae singulis gradibus evolutionis. Quaeque enumerat condiciones quibus opus illius gradus satisfacere debet. |
+| **Audit skills** | Liber regularum | Quinque fasciculi Markdown ab agente legendi (`skills/*-audit/SKILL.md`), singuli singulis gradibus evolutionis. Quisque enumerat condiciones quibus opus illius gradus satisfacere debet. |
 | **Runner** | Arbiter | Programma lineae mandatorum (`harness/runner/runner.py`). Evolutioni non interest et unum tantum facit: inspicit num PASS testimonio suo nitatur. Si non, cum codice exitus non nullo exit. |
-| **state.json** | Acta processus | Plica JSON in incepto tuo, quae notat quo gradu nunc sis, quo statu quaeque schedula sit, quae vitia nondum soluta sint. Unicus fons veritatis est; omne iudicium ex ea legitur. |
-| **Testimonium verificationis**<br>`evidence` | Apocha | Quotiens mandatum acceptionis exsequitur, Runner apocham servat: quod mandatum currerit, quis codex exitus fuerit, quae summa (hash) codicis eo momento fuerit. |
+| **state.json** | Acta processus | Fasciculus JSON in incepto tuo, qui notat quo gradu nunc sis, quo statu quaeque schedula sit, quae vitia nondum soluta sint. Unicus fons veritatis est; omne iudicium ex eo legitur. |
+| **Testimonium verificationis**<br>`evidence` | Apocha | Quotiens Runner mandatum acceptionis exsequitur, apocham servat: quod mandatum exsecutus sit, quis codex exitus fuerit, quae summa (hash) codicis eo momento fuerit. |
 | **Gate** | Porta | Porta quam **tu (homo)** aperire debes. Agens eam per se transire non potest. |
 
 ### Cur non satis sit agenti credere «probationes transierunt» dicenti
 
 Officia sic divisa sunt:
 
-- **Agens codicem scribit, probationes scribit, eventum refert.** Tres partes ab eodem exemplari (model) aguntur. Probationes ab eodem exemplari scriptae ea sola tegunt quae ipsum cogitavit. Quod omisit ipsum non videt, itaque nemo scit quid omissum sit.
+- **Agens codicem scribit, probationes scribit, eventum refert.** Tres partes idem model (LLM) agit. Probationes quas agens scribit ea sola tegunt quae ipse excogitavit. Quod omisit ipse non videt, itaque nemo scit quid omissum sit.
 - **Runner relationi agentis non credit, apochis solis credit.** Ipse mandata acceptionis iterum exsequitur, ipse summam codicis computat, ipse comparat. Si agens «probationes transierunt» dicit, Runner id pro nihilo habet.
 - **Portam homo aperit.** Id mandatum tu solus das. Significat «inspexi et approbo», non «systema omnia recte se habere deprehendit».
 
-Nulla trium partium alteram supplere potest: agens proponit, Runner cogit, operator approbat. Si una deest, processus consistit.
+Nulla trium partium alteram supplere potest: agens proponit; Runner exigit; operator approbat. Si una deest, processus consistit.
 
 ### Quinque artibus Matthaei Pocock innititur
 
 Hoc harness per se neque specificationes neque codicem gignit. Haec a [quinque artibus (skills) Matthaei Pocock](https://github.com/mattpocock/skills) gignuntur; harness post quemque gradum opus inspicit. Quaeque ars `*-audit` aditus est: primum artem Matthaei respondentem vocat, exspectat dum finiatur, deinde opus suis regulis examinat. Si ars superior (upstream) deest, statim deficit neque praeterit.
 
-| Gradus | Aditus (ars examinandi) | Ars Matthaei vocata | Opus | Coactio per Runner |
+| Gradus | Aditus (ars examinandi) | Ars Matthaei vocata | Opus | Quid Runner exigat |
 |---|---|---|---|---|
 | DISCOVERY | `grill-me-audit` | `grill-me` | `PLAN.md` | Nulla |
 | SPEC | `to-spec-audit` | `to-spec` | `SPEC.md` (cum User Stories `US-NNN`) | Nulla |
@@ -101,19 +101,19 @@ flowchart LR
 Finge postulatum tuum esse «`add(2, 3)` 5 reddere debet». Haec re vera fiunt:
 
 **1. Postulatum in schedulam scribis**
-`.harness/tickets/T-001.md`. Schedula unam rem probabilem agit et dependentias suas (`depends_on`) declarat, quae ordinem exsecutionis statuunt.
+`.harness/tickets/T-001.md`. Unaquaeque schedula unum munus continet quod separatim verificari potest, et praerequisita sua (`depends_on`) declarat, quae ordinem exsecutionis statuunt.
 
 **2. Modum probandi definis**
 In `.harness/golden_path.json` definis quomodo probetur opus vere recte factum esse. Hic unum mandatum est, `python check_calc.py`, et `check_calc.py` continet `assert add(2, 3) == 5`. **Mandatum, si deficit, cum codice exitus non nullo exire debet.** Solum `OK` imprimere non est probare.
 
 **3. Portam aperis: `gate-verdict --verdict PASS`**
-Runner tunc quattuor facit: inspicit ne dependentiae in orbem redeant, **inspicit ut quaeque schedula saltem unum mandatum acceptionis habeat quod per se currere possit**, **inspicit ut omne examen alicui User Story in `SPEC.md` respondeat et omnis User Story examen habeat**, et summam consilii praesentis notat.
+Runner tunc quattuor facit: inspicit ne dependentiae in orbem redeant, **inspicit ut quaeque schedula saltem unum mandatum acceptionis habeat quod separatim exsequi liceat**, **inspicit ut omne examen alicui User Story in `SPEC.md` respondeat et omnis User Story examen habeat**, et summam consilii praesentis notat.
 
 **4. Agens efficit, deinde `verify-ticket` exsequitur**
 Runner mandatum acceptionis **ipse** exsequitur et eventum in apocha servat, quae summam codicis eo momento continet.
 
 **5. Agens opus tradit**
-Plicam `.harness/inbox/handoff.json` implet, quattuor campos ex apocha ad verbum transcribens.
+Fasciculum `.harness/inbox/handoff.json` implet, quattuor campos ex apocha ad verbum transcribens.
 
 **6. Recognitio proponitur: `review-verdict --verdict PASS`**
 Eventus recognitionis eosdem quattuor campos transcribit. Runner tunc ultima examina agit:
@@ -134,14 +134,14 @@ Runner insuper omnia mandata acceptionis ab initio iterum exsequitur. Si vel unu
 
 - Series quinque graduum: `DISCOVERY → SPEC → TICKETS → IMPLEMENTATION → REVIEW → COMPLETE`
 - 25 optiones mandatorum Runner (quarum 3 expresse recusantur, ne verificatio circumveniatur), cum `state.json` ut unico fonte veritatis
-- 5 artes examinandi, quae singulis gradibus condiciones acceptionis decernibiles definiunt
+- 5 artes examinandi, quae singulis gradibus condiciones acceptionis obiective examinabiles definiunt
 - Verificatio per Golden Path: quaeque schedula mandatum suum habere debet quod per se PASS/FAIL reddat, et quodque mandatum ad aliquam User Story in `SPEC.md` spectare debet
 - Colligatio testimonii: `source_hash` (summa codicis) + `verification_id` (nota unica unius verificationis) + `review_round` (quotus circulus recognitionis) inter se alligantur, ut PASS ad alium codicis statum transferri non possit
 
 ### Quid non sit
 
-- **Non est arca harenaria (sandbox).** Idem usor systematis statum, probationes, testimonia mutare potest. Summae recentiam probant, non sunt signa digitalia. Instrumentum errores cavet, non adversarium eadem potestate praeditum.
-- **Nullum agentis ambitum habet.** Nullum LLM vocat, ad MCP non conectitur, nec interfaciem interretialem nec ordinatorem habet. Artes sunt plicae regularum ab agente legendae, non machina exsecutionis.
+- **Non est sandbox (ambitus segregatus).** Idem usor systematis statum, probationes, testimonia mutare potest. Summae recentiam probant, non sunt signa digitalia. Instrumentum errores cavet, non adversarium eadem potestate praeditum.
+- **Nullum agentis ambitum habet.** Nullum LLM vocat, ad MCP non conectitur, nec interfaciem interretialem nec ordinatorem habet. Artes sunt fasciculi regularum ab agente legendi, non machina exsecutionis.
 - **De qualitate non iudicat.** Architecturam tuam aut elegantiam probationum non aestimat. Haec iudicia criteriis recognitionis et Portae relinquuntur.
 - **Collaborationem plurium usorum non sustinet.** Unus status, unus scriptor (sera clausus). Traditiones concurrentes nondum effectae sunt.
 
@@ -150,11 +150,11 @@ Runner insuper omnia mandata acceptionis ab initio iterum exsequitur. Si vel unu
 | Stratum | Locus | Quis agat | Cui rei praesit |
 |---|---|---|---|
 | **Audit skills** | `skills/*-audit/SKILL.md` | Agens (regulas legit) | Definit quid opus cuiusque gradus praestare debeat; opus invalidum reicit |
-| **Runner** | `harness/runner/` | CLI (cogit) | Inspicit testimonium adesse, summas congruere, processum non circumventum esse; aliter cum codice non nullo exit |
+| **Runner** | `harness/runner/` | CLI (exigit) | Inspicit testimonium adesse, summas congruere, processum non circumventum esse; aliter cum codice non nullo exit |
 | **Operator (tu)** | — | Homo | `gate-verdict` / `decide` sunt **approbationes humanae**. Instrumentum numquam per se PASS pronuntiat |
 
 > [!IMPORTANT]
-> **Runner a gradu TICKETS regimen suscipit.** `init` gradum statim in `TICKETS` ponit (vide `initialize()` in `harness/runner/workflow.py`), itaque ad `DISCOVERY` et `SPEC` **nulla via per CLI ducit**. Condiciones acceptionis artium `grill-me-audit` et `to-spec-audit` nunc ab agente solo sponte servantur; Runner eas in gradu non cogit. Una exceptio est: Porta TICKETS indicem User Stories in `SPEC.md` legit et quomodo Golden Path ei respondeat inspicit. Si Runner hos duos gradus cogere vis, id nondum effectum est; vide [Deferred Items](docs/DEFERRED_ITEMS.md) (Sinice litteris traditis).
+> **Runner a gradu TICKETS regimen suscipit.** `init` gradum statim in `TICKETS` ponit (vide `initialize()` in `harness/runner/workflow.py`), itaque ad `DISCOVERY` et `SPEC` **nulla via per CLI ducit**. Condiciones acceptionis artium `grill-me-audit` et `to-spec-audit` nunc ab agente solo sponte servantur; Runner earum observantiam in gradu non exigit. Una exceptio est: Porta TICKETS indicem User Stories in `SPEC.md` legit et quomodo Golden Path ei respondeat inspicit. Si vis Runner in his duobus gradibus regulas exigere, id nondum effectum est; vide [Deferred Items](docs/DEFERRED_ITEMS.md) (Sinice litteris traditis).
 
 ---
 
@@ -199,7 +199,7 @@ Data exsecutionis (`state.json`, schedulae, apochae) in **incepto destinato** cr
 
 ## Initium celere
 
-Exemplum minimum quod re vera ab initio ad finem currit. Finge inceptum destinatum esse `C:\work\calc`.
+Exemplum minimum quod re vera ab initio ad finem procedit. Finge inceptum destinatum esse `C:\work\calc`.
 
 ### 0. Harness in inceptum destinatum pone
 
@@ -223,7 +223,7 @@ python -m pip install -r requirements.txt
 1. US-001: As a user, I want to add two numbers, so that I get their sum
 ```
 
-Porta TICKETS ea sola elementa indicis legit quae a `US-NNN` incipiunt, intra sectionem cuius titulus «User Stories» continet (`1. US-001: ...`, `- US-001: ...`, `- **US-001**: ...` omnia accipiuntur). Si `SPEC.md` deest, si sectio nullum `US-NNN` habet, aut si nota bis occurrit, Porta recusat. In processu solito haec plica ab arte `to-spec-audit` gignitur.
+Porta TICKETS ea sola elementa indicis legit quae a `US-NNN` incipiunt, intra sectionem cuius titulus «User Stories» continet (`1. US-001: ...`, `- US-001: ...`, `- **US-001**: ...` omnia accipiuntur). Si `SPEC.md` deest, si sectio nullum `US-NNN` habet, aut si nota bis occurrit, Porta recusat. In processu solito hic fasciculus ab arte `to-spec-audit` gignitur.
 
 ### 2. Schedulam crea
 
@@ -240,7 +240,7 @@ depends_on: []
 - [ ] `add(2, 3)` 5 reddit
 ```
 
-`depends_on` accipit `[T-001, T-002]` vel `[]`. Si omittitur, schedula nullas dependentias habet. YAML multilineare, valores virgulis inclusi, scalares, campi duplicati, formae vitiosae **omnia reiciuntur**.
+`depends_on` accipit `[T-001, T-002]` vel `[]`. Si omittitur, schedula nullas dependentias habet. YAML multilineare, valores signis citationis inclusi, scalares, campi duplicati, formae vitiosae **omnia reiciuntur**.
 
 ### 3. Golden Path crea
 
@@ -268,15 +268,15 @@ assert add(2, 3) == 5
 
 Quisque passus (step) verificatio necessaria est. Mandata veras assertiones continere debent et, si deficiunt, cum codice non nullo exire; `print` fixum ad functionem probandam non sufficit.
 
-**Quaeque schedula saltem unum passum habere debet cuius `ticket_ids` nihil nisi ipsam schedulam eiusque praerequisita contineant** (`depends_on` directa vel indirecta). Passus plures schedulas complectentes addi possunt, sed tum demum currunt cum omnes schedulae enumeratae COMPLETE sunt; **itaque numquam unica verificatio ullius schedulae esse possunt**. Cum Porta TICKETS PASS accipit, passus deficiens, passus sine mandato, aut passus schedulam ignotam citans recusatur.
+**Quaeque schedula saltem unum passum habere debet cuius `ticket_ids` nihil nisi ipsam schedulam eiusque praerequisita contineant** (`depends_on` directa vel indirecta). Passus plures schedulas complectentes addi possunt, sed Runner eos tum demum exsequitur cum omnes schedulae enumeratae COMPLETE sunt; **itaque numquam unica verificatio ullius schedulae esse possunt**. Cum Porta TICKETS PASS accipit, recusat si passus deest, si passus mandato caret, aut si passus schedulam ignotam citat.
 
-**`user_story_ids` cuiusque passus vacua esse non possunt et eas solas notas citare possunt quae in `SPEC.md` definitae sunt; omnis User Story ab uno saltem passu mandatum habente citari debet.** Hac regula omne examen dicere potest quod postulatum probet. Passus plures User Stories enumerare potest, sed assertiones eius singulas vere probare debent; passus qui nihil nisi codicem currere probat nullum postulatum probat.
+**`user_story_ids` cuiusque passus vacua esse non possunt et eas solas notas citare possunt quae in `SPEC.md` definitae sunt; omnis User Story ab uno saltem passu mandatum habente citari debet.** Hac regula omne examen dicere potest quod postulatum probet. Passus plures User Stories enumerare potest, sed assertiones eius singulas vere probare debent; passus qui nihil aliud probat quam codicem sine errore procedere nullum postulatum probat.
 
 ### 4. Optiones non necessariae
 
-In summo gradu plicae `golden_path.json` ponuntur et pars consilii approbati sunt:
+In summo gradu fasciculi `golden_path.json` ponuntur et pars consilii approbati sunt:
 
-- **`source_hash_exclude`**: plicae a mandatis acceptionis generatae (formulae glob relativae), e.g. `[".coverage", "htmlcov", "dist", "*.log"]`. Sine hac optione, si mandatum ullam plicam scribit, `verify-ticket` cum `Project changed during verification` recusat. **Neque `.harness`, neque `*`, neque totum inceptum complecti potest; si codicem fontalem excludis, mutationes eius non deprehenduntur.**
+- **`source_hash_exclude`**: fasciculi a mandatis acceptionis generati (formulae glob relativae), e.g. `[".coverage", "htmlcov", "dist", "*.log"]`. Sine hac optione, si mandatum ullum fasciculum scribit, `verify-ticket` cum `Project changed during verification` recusat. **Neque `.harness`, neque `*`, neque totum inceptum complecti potest; si codicem fontalem excludis, mutationes eius non deprehenduntur.**
 - **`env_passthrough`**: nomina variabilium ambitus quibus mandata insuper egent.
 
 ### 5. Initia et Portam TICKETS transi
@@ -287,7 +287,7 @@ python harness/runner/runner.py set-ready-for-gate
 python harness/runner/runner.py gate-verdict --verdict PASS
 ```
 
-`init` statum creat in quo omnes schedulae TODO sunt, et **statum exstantem supprimere recusat**. Cum Porta TICKETS PASS accipit, Runner graphum dependentiarum et copiam schedularum confirmat, examina cuiusque schedulae et cuiusque User Story inspicit, summam consilii approbati notat (plicae schedularum + `golden_path.json` + `SPEC.md`), et primam schedulam exsequibilem incipit.
+`init` statum creat in quo omnes schedulae TODO sunt, et **statum exstantem supprimere recusat**. Cum Porta TICKETS PASS accipit, Runner graphum dependentiarum et copiam schedularum confirmat, examina cuiusque schedulae et cuiusque User Story inspicit, summam consilii approbati notat (fasciculi schedularum + `golden_path.json` + `SPEC.md`), et primam schedulam exsequibilem incipit.
 
 Non requiritur ut omnes schedulae praerequisitae ante initium operis perfectae sint.
 
@@ -352,7 +352,7 @@ python harness/runner/runner.py validate
 python harness/runner/status.py --json
 ```
 
-Cum schedula non ultima perficitur, idem status proximam schedulam TODO, cuius dependentiae perfectae sunt, sponte incipit.
+Cum schedula non ultima perficitur, idem status proximam schedulam TODO, cuius praerequisita iam perfecta sunt, sponte incipit.
 
 ---
 
@@ -389,7 +389,7 @@ Recognitor insuper unum criterium manuale addere debet:
 
 ### Mutatio consilii approbati
 
-Si post approbationem aliquid consilii mutatur (`golden_path.json`, plicae schedularum, `SPEC.md`), exempli gratia mandatum acceptionis relaxatum aut schedula decurtata, proximum `verify-ticket` vel `review-verdict` inceptum sponte intermittit cum causa `PLAN_CHANGE_REQUIRES_DECISION` et **nullum novum testimonium gignit**.
+Si post approbationem aliquid consilii mutatur (`golden_path.json`, fasciculi schedularum, `SPEC.md`), exempli gratia mandatum acceptionis relaxatum aut schedula decurtata, proximum `verify-ticket` vel `review-verdict` inceptum sponte intermittit cum causa `PLAN_CHANGE_REQUIRES_DECISION` et **nullum novum testimonium gignit**.
 
 ```powershell
 python harness/runner/runner.py decide --option CONTINUE --rationale '...' --source '...'
@@ -432,7 +432,7 @@ python harness/runner/runner.py resolve-finding --finding-id F-001
 
 ### Post tres conatus, intermissio
 
-`retry_limit` ex more 3 est. Eo attento, inceptum sponte intermittitur et nova plica `.harness/decisions/DEC-NNN.json` creatur; **historia numquam supprimitur**.
+`retry_limit` ex more 3 est. Eo attento, inceptum sponte intermittitur et novus fasciculus `.harness/decisions/DEC-NNN.json` creatur; **historia numquam supprimitur**.
 
 | Causa intermissionis | Unica optio admissa |
 |---|---|
@@ -508,13 +508,13 @@ Sine `--trust-commands`, `verify-ticket` et `review-verdict` ullum mandatum ince
 ### `--trust-commands`
 
 > [!CAUTION]
-> Expresse permittit ut haec exsecutio mandata incepti exsequatur, cum **potestate usoris praesentis**. **Directorium laboris non est arca harenaria**: mandata ad omnes plicas et rete quibus usor utitur adhuc pervenire possunt. Sine hac permissione nihil exsequitur. Repositoria non fida prius in systema aut machinam virtualem vere segregatam pone; hoc instrumentum talem segregationem non praebet.
+> Expresse permittit ut Runner hac exsecutione mandata incepti exsequatur, cum **potestate usoris praesentis**. **Directorium laboris non est sandbox**: mandata ad omnes fasciculos et rete quibus usor utitur adhuc pervenire possunt. Sine hac permissione Runner nihil exsequitur. Repositoria non fida prius in systema aut machinam virtualem vere segregatam pone; hoc instrumentum talem segregationem non praebet.
 
 ### Colatio variabilium ambitus
 
-Ex more nihil transmittitur nisi PATH, viae systematis et instrumentorum (`SYSTEMROOT`, `USERPROFILE`, `APPDATA`, `LOCALAPPDATA`, `HOME`, `PROGRAMFILES` etc.), viae temporariae et locale; praeterea Python ad UTF-8 figitur neque bytecode scribit. **Neque tesserae (tokens) neque aliae variabiles hereditariae transmittuntur.** Si quod instrumentum aliam variabilem vere requirit, eam nominatim in `env_passthrough` plicae `golden_path.json` enumera.
+Ex more nihil transmittitur nisi PATH, viae systematis et instrumentorum (`SYSTEMROOT`, `USERPROFILE`, `APPDATA`, `LOCALAPPDATA`, `HOME`, `PROGRAMFILES` etc.), viae temporariae et locale; praeterea Python ad UTF-8 figitur neque bytecode scribit. **Neque tesserae (tokens) neque aliae variabiles hereditariae transmittuntur.** Si quod instrumentum aliam variabilem vere requirit, eam nominatim in `env_passthrough` fasciculi `golden_path.json` enumera.
 
-Variabiles viarum non sunt credentialia: mandata iam plicas usoris legere possunt, quia haec non est arca harenaria.
+Variabiles viarum non sunt credentialia: mandata iam fasciculos usoris legere possunt, quia hic nullum sandbox est.
 
 ### Purgatio processuum filiorum
 
@@ -528,21 +528,21 @@ stdout/stderr in memoria et in artefactis servantur. **Ea sola mandata exsequere
 
 ### Summa contentorum
 
-SHA-256 inceptis cum Git et sine Git convenit. **Git non initiat**, neque commit pro mutationibus nondum commissis habet. Plicas incepti ordinarias, schedulas, `golden_path.json` complectitur; ex more excludit `.git`, `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `.venv`, `venv`, `node_modules` et cetera data exsecutionis `.harness`, necnon ea quae in `source_hash_exclude` enumerantur.
+SHA-256 inceptis cum Git et sine Git convenit. **Git non initiat**, neque commit pro mutationibus nondum commissis habet. Fasciculos incepti ordinarios, schedulas, `golden_path.json` complectitur; ex more excludit `.git`, `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `.venv`, `venv`, `node_modules` et cetera data exsecutionis `.harness`, necnon ea quae in `source_hash_exclude` enumerantur.
 
 **Numquam codicem negotii aut probationes quae verificantur exclude.** Tantum in inceptis fidis et secretis carentibus adhibe: summa contenta legit, quamquam testimonia nihil nisi digesta servant. Editiones instrumentorum et dependentiarum externarum statusque servitiorum **in summa non continentur**; ambitum fige aut iterum proba.
 
 ### Ratio incrementalis
 
-Quaeque exsecutio **omnes** passus activos iterum exsequitur, sine ulla memoria temporaria (cache). Schedula praesens et schedulae perfectae pro activis habentur. Post mutationem codicis aut schedularum apochae veteres recusantur; mutatio contentorum dum verificatio fit etiam recusatur.
+Runner quaque exsecutione **omnes** passus activos iterum exsequitur, sine ulla memoria temporaria (cache). Schedula praesens et schedulae perfectae pro activis habentur. Post mutationem codicis aut schedularum apochae veteres recusantur; mutatio contentorum dum verificatio fit etiam recusatur.
 
 ### Scriptio status
 
-Sera plicae systematis et compare-and-swap SHA-256 in octetis lectis; scriptor obsoletus semper cum codice non nullo exit. Sera cum processus exit solvitur, et `writer.lock` suo loco manet; **noli plicam serae activam delere**. Si conflictus fit, iterum lege / restitue (read / recover), statum confirma, deinde operationem repete.
+Sera fasciculi systematis et compare-and-swap SHA-256 in octetis lectis; scriptor obsoletus semper cum codice non nullo exit. Sera cum processus exit solvitur, et `writer.lock` suo loco manet; **noli fasciculum serae activum delere**. Si conflictus fit, iterum lege / restitue (read / recover), statum confirma, deinde operationem repete.
 
 Artefacta **primum scribuntur, status postremo atomice substituitur**. Defectus artefactum orbum relinquere potest quod status non citat; **id non significat quicquam perfectum esse**. Restitutio ea sola artefacta adhibet quae status citat. Status corruptus nuntiatur, numquam coniectura reparatur; ex exemplari tutelae probato restituendus est.
 
-Nulla firmitas praestatur contra defectum electricitatis totius machinae aut contra mutationes plicarum concurrentes et malevolas.
+Nulla firmitas praestatur contra defectum electricitatis totius machinae aut contra mutationes fasciculorum concurrentes et malevolas.
 
 ---
 

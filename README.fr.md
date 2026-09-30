@@ -16,7 +16,7 @@ version: 3.1.0
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB.svg?logo=python&logoColor=white)](#installation)
 
-[繁體中文](README.md) · [简体中文](README.zh-CN.md) · [English](README.en.md) · Français
+[繁體中文](README.md) · [简体中文](README.zh-CN.md) · [English](README.en.md) · Français · [Latina](README.la.md)
 
 [Fonctionnement](#parcours-complet-dun-ticket) · [Installation](#installation) · [Démarrage rapide](#démarrage-rapide) · [Référence des commandes](#référence-des-commandes) · [Limites de confiance](#limites-de-confiance)
 

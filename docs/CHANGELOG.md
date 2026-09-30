@@ -6,7 +6,7 @@
 - `to-spec-audit` 要求 User Story 清單項目以 `US-NNN` 開頭；`to-tickets-audit` TKT-5 加入 User Story 對應規則。
 - README 補上稽核技能與 Matt Pocock 五個技能的對應（`*-audit` 為入口、內部呼叫上游），說明 DISCOVERY／SPEC 只有 agent 自我稽核；快速上手加入 `SPEC.md` 步驟。文件版本 3.0.0 → 3.1.0。
 - 測試 fixture 加上 `SPEC.md`；新增 7 個 Gate 回歸測試（共 119 個）。
-- 中文副標題改為「AI 寫的程式，驗過才算數」。新增簡體中文（`README.zh-CN.md`，大陸用語）、英文（`README.en.md`）、法文（`README.fr.md`）版 README，四份互相連結，章節、程式碼區塊與表格與繁中版一一對應。
+- 中文副標題改為「AI 寫的程式，驗過才算數」。新增簡體中文（`README.zh-CN.md`，大陸用語）、英文（`README.en.md`）、法文（`README.fr.md`）、新拉丁文（`README.la.md`）版 README，五份互相連結，章節、程式碼區塊與表格與繁中版一一對應。
 
 ## 2026-10-01 — README 重構
 

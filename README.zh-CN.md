@@ -16,7 +16,7 @@ version: 3.1.0
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB.svg?logo=python&logoColor=white)](#安装)
 
-[繁體中文](README.md) · 简体中文 · [English](README.en.md) · [Français](README.fr.md)
+[繁體中文](README.md) · 简体中文 · [English](README.en.md) · [Français](README.fr.md) · [Latina](README.la.md)
 
 [工作原理](#一张工单怎么从头走到尾) · [安装](#安装) · [快速上手](#快速上手) · [命令参考](#命令参考) · [信任边界](#信任边界)
 

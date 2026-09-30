@@ -1,6 +1,6 @@
 <!--
 document_title: Coding Audit Harness
-chinese_title: 可信本機專案流程稽核框架
+chinese_title: AI 寫的程式，驗過才算數
 aka: []
 established_date: 2026-09-29
 updated_date: 2026-10-01
@@ -11,10 +11,12 @@ version: 3.1.0
 
 # Coding Audit Harness
 
-**可信本機專案流程稽核框架**
+**AI 寫的程式，驗過才算數**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB.svg?logo=python&logoColor=white)](#安裝)
+
+繁體中文 · [简体中文](README.zh-CN.md) · [English](README.en.md) · [Français](README.fr.md)
 
 [運作方式](#一張工單怎麼從頭走到尾) · [安裝](#安裝) · [快速上手](#快速上手) · [指令參考](#指令參考) · [信任邊界](#信任邊界)
 

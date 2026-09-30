@@ -11,6 +11,7 @@ SOURCE = Path(__file__).resolve().parents[2]
 def fixture(root, count=1):
     shutil.copytree(SOURCE / 'harness', root / 'harness', ignore=shutil.ignore_patterns('__pycache__'))
     (root / '.harness/tickets').mkdir(parents=True)
+    (root / 'SPEC.md').write_text('# Spec\n\n## User Stories\n\n1. US-001: As a user, I want to add numbers, so that I get their sum\n', encoding='utf-8')
     tickets = {}
     for n in range(1, count + 1):
         tid = f'T-{n:03}'
@@ -57,7 +58,7 @@ def review_files(root, verdict='PASS'):
         (root/f'.harness/tickets/{key}.md').write_text(f'---\nid: {key}\ndepends_on: []\n---\n',encoding='utf-8')
     (root/'calc.py').write_text('def add(a,b): return a+b\n',encoding='utf-8')
     (root/'check.py').write_text('from calc import add\nassert add(3,4)==7\n',encoding='utf-8')
-    (root/'.harness/golden_path.json').write_text(json.dumps({'steps':[dict(id='GP-001',description='addition',user_story_ids=[],ticket_ids=[tid],verification_command=[sys.executable,'check.py'],expected_output='')]}),encoding='utf-8')
+    (root/'.harness/golden_path.json').write_text(json.dumps({'steps':[dict(id='GP-001',description='addition',user_story_ids=['US-001'],ticket_ids=[tid],verification_command=[sys.executable,'check.py'],expected_output='')]}),encoding='utf-8')
     common=dict(ticket_id=tid,review_round=s['tickets'][tid].get('review_total',0)+1,source_hash=source_hash(root))
     if verdict=='PASS': common['verification_id']=Workflow(runner,trusted=True).verify(tid)['verification_id']
     r=dict(**common,verdict=verdict,criteria=[dict(id='GP-001',status='PASS' if verdict=='PASS' else 'FAIL',critical=True)],findings=[] if verdict=='PASS' else [dict(finding_key='wrong-result',criterion_ref='GP-001',description='Bad result',blocking=True)])

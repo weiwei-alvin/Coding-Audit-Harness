@@ -35,12 +35,12 @@ class ReviewFixes(unittest.TestCase):
     def plan(self,extra_steps=(),per_ticket=('T-001','T-002','T-003'),**settings):
         (self.root/'calc.py').write_text('def add(a,b): return a+b\n',encoding='utf-8')
         (self.root/'check.py').write_text('from calc import add\nassert add(2,3)==5\nprint("OK")\n',encoding='utf-8')
-        steps=[dict(id=f'GP-{n:03}',description=tid,user_story_ids=[],ticket_ids=[tid],verification_command=[sys.executable,'check.py'],expected_output='OK') for n,tid in enumerate(per_ticket,1)]
+        steps=[dict(id=f'GP-{n:03}',description=tid,user_story_ids=['US-001'],ticket_ids=[tid],verification_command=[sys.executable,'check.py'],expected_output='OK') for n,tid in enumerate(per_ticket,1)]
         steps+=list(extra_steps)
         (self.root/'.harness/golden_path.json').write_text(json.dumps(dict(steps=steps,**settings)),encoding='utf-8')
 
     def step(self,sid,tickets,command=None):
-        return dict(id=sid,description='cross',user_story_ids=[],ticket_ids=list(tickets),verification_command=command or [sys.executable,'check.py'],expected_output='')
+        return dict(id=sid,description='cross',user_story_ids=['US-001'],ticket_ids=list(tickets),verification_command=command or [sys.executable,'check.py'],expected_output='')
 
     def decision(self):
         ref=self.state()['pause']['decision_ref']
@@ -73,6 +73,44 @@ class ReviewFixes(unittest.TestCase):
         s=self.state(); self.assertEqual(s['active_ticket_id'],'T-001'); self.assertRegex(s['approved_plan']['sha256'],'^[a-f0-9]{64}$')
         receipt=json.loads(self.cli('verify-ticket','--ticket','T-001','--trust-commands',ok=True).stdout)
         self.assertEqual([x['step_id'] for x in receipt['results']],['GP-001'])
+
+    def spec(self,*stories):
+        (self.root/'SPEC.md').write_text('# Spec\n\n## User Stories\n\n'+''.join(f'{line}\n' for line in stories)+'\n## V1 Golden Path\n\nSee golden_path.json\n',encoding='utf-8')
+
+    def gate_refused(self,text):
+        before=self.state()
+        p=self.cli('gate-verdict','--verdict','PASS',ok=False)
+        self.assertIn(text,p.stderr+p.stdout)
+        self.assertEqual(before,self.state())
+
+    def test_gate_rejects_missing_spec(self):
+        self.plan(); (self.root/'SPEC.md').unlink()
+        self.gate_refused('SPEC.md is missing')
+
+    def test_gate_rejects_spec_without_user_stories(self):
+        self.plan(); self.spec('- As a user, I want to add numbers')
+        self.gate_refused('SPEC.md defines no User Stories')
+
+    def test_gate_rejects_step_without_user_story(self):
+        self.plan(extra_steps=[dict(self.step('GP-009',['T-001']),user_story_ids=[])])
+        self.gate_refused('GP-009 has no user_story_ids')
+
+    def test_gate_rejects_unknown_user_story(self):
+        self.plan(extra_steps=[dict(self.step('GP-009',['T-001']),user_story_ids=['US-404'])])
+        self.gate_refused("GP-009 references User Stories not in SPEC.md ['US-404']")
+
+    def test_gate_rejects_uncovered_user_story(self):
+        self.plan(); self.spec('1. US-001: As a user, I want to add numbers','2. **US-002**: As a user, I want to subtract numbers')
+        self.gate_refused("User Stories without an executable Golden Path step: ['US-002']")
+
+    def test_gate_rejects_duplicate_user_story(self):
+        self.plan(); self.spec('- US-001: add','- US-001: add again')
+        self.gate_refused('SPEC.md defines US-001 more than once')
+
+    def test_gate_accepts_every_user_story_covered(self):
+        self.plan(extra_steps=[dict(self.step('GP-009',['T-001','T-002']),user_story_ids=['US-002'])])
+        self.spec('1. US-001: As a user, I want to add numbers','- **US-002**: As a user, I want to chain additions')
+        self.cli('gate-verdict','--verdict','PASS',ok=True)
 
     def test_fix_gate_verdict_does_not_require_coverage(self):
         self.cli('gate-verdict','--verdict','FIX_REQUIRED',ok=True)

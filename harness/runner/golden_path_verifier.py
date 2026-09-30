@@ -180,6 +180,21 @@ class GoldenPathVerifier:
     def get_all_steps(self) -> List[GoldenPathStep]:
         return list(self._golden_path)
 
+    def spec_user_story_ids(self) -> Optional[List[str]]:
+        """US-NNN IDs that open list items under SPEC.md's User Stories heading; None without SPEC.md."""
+        import re
+        if not self.spec_file.exists():
+            return None
+        ids, inside = [], False
+        for line in self.spec_file.read_text(encoding='utf-8').splitlines():
+            if line.lstrip().startswith('#'):
+                inside = 'user stor' in line.lower()
+                continue
+            match = re.match(r'\s*(?:[-*]|\d+\.)\s+\**(US-\d+)\b', line)
+            if inside and match:
+                ids.append(match.group(1))
+        return ids
+
     def get_steps_for_tickets(self, completed_ticket_ids: List[str]) -> List[GoldenPathStep]:
         """Get golden path steps that are enabled by completed tickets."""
         enabled_steps = []

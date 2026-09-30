@@ -66,7 +66,7 @@ class Reliability(unittest.TestCase):
         self.cli('validate-deps',ok=False)
 
     def golden(self, command='', expected=''):
-        (self.root/'.harness/golden_path.json').write_text(json.dumps({'steps':[dict(id='GP-001',description='assertion',user_story_ids=[],ticket_ids=['T-001'],verification_command=command,expected_output=expected)]}),encoding='utf-8')
+        (self.root/'.harness/golden_path.json').write_text(json.dumps({'steps':[dict(id='GP-001',description='assertion',user_story_ids=['US-001'],ticket_ids=['T-001'],verification_command=command,expected_output=expected)]}),encoding='utf-8')
 
     def test_unverified_not_passed(self):
         self.golden()
@@ -98,7 +98,7 @@ class Reliability(unittest.TestCase):
         steps=[]
         for n,assertion in enumerate(('add(2,3)==5','mul(4,3)==12','div(mul(add(2,3),4),2)==10'),1):
             (self.root/f'check_{n}.py').write_text(f'from calc import add,mul,div\nassert {assertion}\n',encoding='utf-8')
-            steps.append(dict(id=f'GP-{n:03}',description=assertion,user_story_ids=[],ticket_ids=[f'T-{n:03}'],verification_command=[sys.executable,f'check_{n}.py'],expected_output=''))
+            steps.append(dict(id=f'GP-{n:03}',description=assertion,user_story_ids=['US-001'],ticket_ids=[f'T-{n:03}'],verification_command=[sys.executable,f'check_{n}.py'],expected_output=''))
         (self.root/'.harness/golden_path.json').write_text(json.dumps({'steps':steps}),encoding='utf-8')
 
     def evidence(self,tid='T-001',verdict='PASS'):

@@ -45,6 +45,7 @@ If the upstream skill is not available, this skill **fails explicitly** — no s
   - Every Ticket must have at least one executable step in `.harness/golden_path.json` whose `ticket_ids` contain only that Ticket and, optionally, its prerequisites (direct or indirect `depends_on`). The step's command must contain a real assertion and exit non-zero on failure
   - End-to-end steps that span several Tickets (SPEC-3) are allowed in addition; they only run once all their Tickets are COMPLETE, so they can never be a Ticket's only verification
   - The TICKETS Gate refuses PASS when any Ticket lacks such a step, when a step has no command, or when a step references an unknown Ticket
+  - Every step's `user_story_ids` names the SPEC.md User Stories it proves (never empty), and every SPEC.md User Story is covered by at least one step with a command. The assertion must check the behavior that story describes; a step that only proves the code runs does not verify a story. The Gate refuses PASS when SPEC.md is missing, defines no `US-NNN` stories, or any of these links is broken
 
 - **TKT-6. Dependency Declaration**:
   - Each Ticket file (`.harness/tickets/T-<NNN>.md`) must declare `depends_on` field with dependent Ticket IDs (empty array `[]` if none)
@@ -96,7 +97,7 @@ depends_on: [T-001, T-002]
 ## Runner Integration
 
 1. Write Ticket files and `.harness/golden_path.json`, then run `python harness/runner/runner.py set-ready-for-gate`.
-2. The operator runs `python harness/runner/runner.py gate-verdict --verdict PASS`. The Runner checks the dependency graph and TKT-5 coverage, records the approved plan digest (Ticket files, `golden_path.json`, `SPEC.md`), and starts the first ready Ticket.
+2. The operator runs `python harness/runner/runner.py gate-verdict --verdict PASS`. The Runner checks the dependency graph, TKT-5 Ticket coverage and User Story coverage, records the approved plan digest (Ticket files, `golden_path.json`, `SPEC.md`), and starts the first ready Ticket.
 3. After the Gate, any change to those files pauses the project on the next `verify-ticket` or `review-verdict` (reason `PLAN_CHANGE_REQUIRES_DECISION`). The operator reviews the change, runs `decide --option CONTINUE --rationale ... --source ...`, then `resume`. New Tickets are added as TODO; removing approved Tickets is not supported.
 
 ## Execution
@@ -109,6 +110,7 @@ depends_on: [T-001, T-002]
 ## Validation Checklist
 
 - [ ] Every Ticket has traceability to User Story / approved requirement / valid Technical Ticket
+- [ ] Every Golden Path step names the User Stories it proves; every SPEC.md User Story has a step
 - [ ] No Tickets for speculative abstractions/frameworks
 - [ ] Each Ticket has single clear outcome
 - [ ] User-facing Tickets are vertical slices (full stack)

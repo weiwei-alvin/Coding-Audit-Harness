@@ -4,7 +4,7 @@ chinese_title: 可信本機專案流程稽核框架
 aka: []
 established_date: 2026-09-29
 updated_date: 2026-10-01
-version: 3.0.0
+version: 3.1.0
 -->
 
 <div align="center">
@@ -34,7 +34,7 @@ Coding Audit Harness 存在的理由就一句：**讓「驗收過」從一句話
 
 （`harness` 這個詞在這裡的意思是「套在開發流程外面、負責約束它的那一層框架」，不是測試用的 test harness。）
 
-它判斷不了你的架構好不好、測試寫得漂不漂亮。它能做的只有一件事——擋下沒有證據的「通過」。
+它判斷不了你的架構好不好、測試寫得漂不漂亮。它能做的是兩件事：擋下沒有證據的「通過」，以及擋下跟任何使用者需求都對不上的驗收。
 
 ---
 
@@ -57,6 +57,23 @@ Coding Audit Harness 存在的理由就一句：**讓「驗收過」從一句話
 - **Gate 是人按的。** 那道指令只有你會下。它代表「我看過了，我批准」，不是「系統偵測到一切正常」。
 
 三者不能互相代替：Agent 提出，Runner 強制，Operator 核准，少一環流程就走不動。
+
+### 接在 Matt Pocock 的五個技能後面
+
+這套 harness 不自己產出規格或程式碼。產出靠 [Matt Pocock 的五個技能](https://github.com/mattpocock/skills)，harness 負責在每一步之後檢查產出物。每個 `*-audit` 技能都是入口：它先呼叫對應的 Matt 技能，等上游跑完，再用自己的規則檢查產出。上游技能不存在就直接失敗，不會跳過。
+
+| 階段 | 入口（稽核技能） | 內部呼叫的 Matt 技能 | 產出物 | Runner 強制 |
+|---|---|---|---|---|
+| DISCOVERY | `grill-me-audit` | `grill-me` | `PLAN.md` | 無 |
+| SPEC | `to-spec-audit` | `to-spec` | `SPEC.md`（含 `US-NNN` User Stories） | 無 |
+| TICKETS | `to-tickets-audit` | `to-tickets` | 工單、`golden_path.json` | Gate：依賴圖、每張工單的驗收、每個 User Story 的驗收 |
+| IMPLEMENTATION | `implement-audit` | `implement`（內含 `tdd`） | 程式碼、驗收收據 | `verify-ticket` 親自執行並存收據 |
+| REVIEW | `code-review-audit` | `code-review` | 審查結果 | 指紋、判準、阻擋性問題比對 |
+
+Matt 的技能連同它們呼叫的 `grilling`、`tdd`，固定版本放在 `skills/matt-upstream/`，沒有修改。
+
+> [!NOTE]
+> 稽核技能是寫給 agent 讀的規則，執行稽核的就是剛跑完 Matt 技能的那個 agent。後三個階段有 Runner 拿收據與指紋在外面檢查；DISCOVERY 與 SPEC 只有 agent 自己檢查自己。這兩段正是確認「我們要的是什麼」的地方，所以目前「做出來的是不是你要的」主要靠你在 TICKETS Gate 看過 `SPEC.md` 與 `golden_path.json`。Runner 在這裡能保證的只有結構：每條驗收都指向一個 User Story，每個 User Story 都有驗收；斷言有沒有真的驗到那個需求，仍要你判斷。
 
 ---
 
@@ -88,7 +105,7 @@ flowchart LR
 `.harness/golden_path.json` 裡定義「怎麼證明這件事真的做對了」。對這個例子就是一條指令 `python check_calc.py`，而 `check_calc.py` 裡有一行 `assert add(2, 3) == 5`。**這條指令失敗時必須 exit 非 0**——只印一行 `OK` 不算驗收。
 
 **3. 你按下 Gate：`gate-verdict --verdict PASS`**
-Runner 這時做三件事：檢查依賴關係沒有死結、**檢查每張工單都至少有一條自己能獨立跑的驗收指令**、把「目前這份計畫」的指紋記下來。
+Runner 這時做四件事：檢查依賴關係沒有死結、**檢查每張工單都至少有一條自己能獨立跑的驗收指令**、**檢查每條驗收都對應到 `SPEC.md` 裡的 User Story，且每個 User Story 都有驗收**、把「目前這份計畫」的指紋記下來。
 
 **4. Agent 實作，然後跑 `verify-ticket`**
 Runner **親自**執行那條驗收指令，把結果存成收據。收據上會寫進當下程式碼的指紋。
@@ -116,7 +133,7 @@ Runner 額外把所有驗收指令從頭再跑一遍。任何一條不過，整�
 - 五階段管線：`DISCOVERY → SPEC → TICKETS → IMPLEMENTATION → REVIEW → COMPLETE`
 - 25 個 Runner 指令選項（其中 3 個已明確拒絕，以防止繞過驗收），以 `state.json` 為唯一事實來源
 - 5 個 audit skills，替每個階段定義可判定的驗收條件
-- Golden Path 驗證：每張工單都要有自己能獨立跑出 PASS/FAIL 的指令
+- Golden Path 驗證：每張工單都要有自己能獨立跑出 PASS/FAIL 的指令，每條指令都要指向 `SPEC.md` 的 User Story
 - 證據綁定：`source_hash`（程式碼指紋）+ `verification_id`（單次驗證的唯一編號）+ `review_round`（第幾輪審查）三者綁定，PASS 不能用在別的程式碼狀態上
 
 ### 這不是什麼
@@ -135,7 +152,7 @@ Runner 額外把所有驗收指令從頭再跑一遍。任何一條不過，整�
 | **Operator（你）** | — | 人 | `gate-verdict` / `decide` 是**人做的核准**。工具不會自己宣告 PASS |
 
 > [!IMPORTANT]
-> **Runner 從 TICKETS 開始接管。** `init` 會直接把階段設為 `TICKETS`（見 `harness/runner/workflow.py` 的 `initialize()`），因此 `DISCOVERY` 與 `SPEC` 兩階段**沒有 CLI 路徑可以到達**——`grill-me-audit` 與 `to-spec-audit` 的驗收條件目前只由 agent 側自律執行，Runner 不做階段層強制。若你需要 Runner 強制這兩段，那是未實作項目，見 [Deferred Items](docs/DEFERRED_ITEMS.md)。
+> **Runner 從 TICKETS 開始接管。** `init` 會直接把階段設為 `TICKETS`（見 `harness/runner/workflow.py` 的 `initialize()`），因此 `DISCOVERY` 與 `SPEC` 兩階段**沒有 CLI 路徑可以到達**——`grill-me-audit` 與 `to-spec-audit` 的驗收條件目前只由 agent 側自律執行，Runner 不做階段層強制。唯一的例外是 TICKETS Gate 會讀 `SPEC.md` 的 User Stories 清單，檢查它與 Golden Path 的對應。若你需要 Runner 強制這兩段，那是未實作項目，見 [Deferred Items](docs/DEFERRED_ITEMS.md)。
 
 ---
 
@@ -192,7 +209,21 @@ python -m pip install -r requirements.txt
 
 **`harness/` 必須在目標專案裡**——Runner 會相對於 `--project-root` 讀 `harness/*.schema.json`。若目標專案已有 `.harness/`，**先備份，不要重設既有狀態**。
 
-### 1. 建立工單
+### 1. 寫 SPEC.md 的 User Stories
+
+`SPEC.md`（專案根目錄）：
+
+```markdown
+# Spec
+
+## User Stories
+
+1. US-001: As a user, I want to add two numbers, so that I get their sum
+```
+
+TICKETS Gate 只讀標題含「User Stories」的段落裡、以 `US-NNN` 開頭的清單項目（`1. US-001: ...`、`- US-001: ...`、`- **US-001**: ...` 都可以）。沒有 `SPEC.md`、段落裡沒有任何 `US-NNN`、或 ID 重複，Gate 都拒絕。正常流程下這份檔案由 `to-spec-audit` 產出。
+
+### 2. 建立工單
 
 `.harness/tickets/T-001.md`：
 
@@ -209,7 +240,7 @@ depends_on: []
 
 `depends_on` 支援 `[T-001, T-002]` 或 `[]`。未宣告視為無依賴。multiline YAML、引號值、scalar、重複欄位、格式錯誤**全部拒絕**。
 
-### 2. 建立 Golden Path
+### 3. 建立 Golden Path
 
 `.harness/golden_path.json`：
 
@@ -218,7 +249,7 @@ depends_on: []
   "steps": [{
     "id": "GP-001",
     "description": "加法正確",
-    "user_story_ids": [],
+    "user_story_ids": ["US-001"],
     "ticket_ids": ["T-001"],
     "verification_command": ["python", "check_calc.py"],
     "expected_output": ""
@@ -237,14 +268,16 @@ assert add(2, 3) == 5
 
 **每張工單至少要有一個 step，其 `ticket_ids` 只含該工單本身加上它的前置工單**（直接或間接 `depends_on`）。跨多張工單的端到端 step 可以另外加，但只在所列工單全部 COMPLETE 後才執行，**不能當任何工單唯一的驗證**。TICKETS Gate PASS 時會檢查：缺 step、step 沒指令、step 引用不存在的工單，都拒絕。
 
-### 3. 選用設定
+**每個 step 的 `user_story_ids` 不能是空的，只能引用 `SPEC.md` 定義過的 ID；每個 User Story 都要被至少一個有指令的 step 引用。** 這條規則讓每條驗收都說得出「它在證明哪個需求」。一個 step 可以列多個 User Story，但斷言要真的驗到每一個；只證明程式跑得起來的 step，不算驗到任何需求。
+
+### 4. 選用設定
 
 寫在 `golden_path.json` 最上層，屬於核准計畫的一部分：
 
 - **`source_hash_exclude`** — 驗收指令產生的檔案（相對路徑 glob），例如 `[".coverage", "htmlcov", "dist", "*.log"]`。不設定時，指令只要寫檔，`verify-ticket` 就會以 `Project changed during verification` 拒絕。**不能涵蓋 `.harness`、`*` 或整個專案；排除原始碼會讓它的變更偵測不到。**
 - **`env_passthrough`** — 指令額外需要的環境變數名稱。
 
-### 4. 初始化並通過 TICKETS Gate
+### 5. 初始化並通過 TICKETS Gate
 
 ```powershell
 python harness/runner/runner.py init
@@ -252,11 +285,11 @@ python harness/runner/runner.py set-ready-for-gate
 python harness/runner/runner.py gate-verdict --verdict PASS
 ```
 
-`init` 建立全 TODO state，**拒絕覆寫既有 state**。TICKETS Gate PASS 時會：驗證依賴圖與工單集合、檢查每張工單的驗收涵蓋、記錄核准計畫的指紋（工單檔 + `golden_path.json` + `SPEC.md`）、啟動第一張可執行工單。
+`init` 建立全 TODO state，**拒絕覆寫既有 state**。TICKETS Gate PASS 時會：驗證依賴圖與工單集合、檢查每張工單與每個 User Story 的驗收涵蓋、記錄核准計畫的指紋（工單檔 + `golden_path.json` + `SPEC.md`）、啟動第一張可執行工單。
 
 不要求所有前置工單在開工前已完成。
 
-### 5. 實作 → 驗收 → 審查
+### 6. 實作 → 驗收 → 審查
 
 ```powershell
 python harness/runner/runner.py verify-ticket --ticket T-001 --trust-commands
@@ -361,7 +394,7 @@ python harness/runner/runner.py decide --option CONTINUE --rationale '...' --sou
 python harness/runner/runner.py resume
 ```
 
-`resume` 會重新檢查依賴圖與驗收涵蓋，並更新核准指紋。新工單以 TODO 加入，**不支援刪除已核准工單**。
+`resume` 會重新檢查依賴圖與驗收涵蓋（含 User Story 對應），並更新核准指紋。新工單以 TODO 加入，**不支援刪除已核准工單**。
 
 決策後計畫又變 → resume 會再開一個新決策。改回原狀也需要決策確認。此類 pause **不能用 `pause` 指令手動建立**。
 

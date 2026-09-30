@@ -55,8 +55,10 @@ class Workflow:
         verify-ticket only enables steps whose tickets are all COMPLETE or active, so a
         step that also names a later ticket can never verify the earlier one.
         """
-        steps=GoldenPathVerifier(self.root).get_all_steps()
+        verifier=GoldenPathVerifier(self.root)
+        steps=verifier.get_all_steps()
         errors=[f'{x.id} references unknown tickets {sorted(set(x.ticket_ids)-set(tickets))}' for x in steps if set(x.ticket_ids)-set(tickets)]
+        errors+=self.story_errors(steps,verifier.spec_user_story_ids())
         def ancestors(tid,seen=None):
             seen=set() if seen is None else seen
             for dep in tickets[tid].depends_on:
@@ -66,6 +68,22 @@ class Workflow:
             allowed=ancestors(tid)|{tid}
             if not any(tid in x.ticket_ids and set(x.ticket_ids)<=allowed and x.verification_command for x in steps):
                 errors.append(f'{tid} has no Golden Path step covering only itself and its prerequisites {sorted(allowed-{tid})}; add one with ticket_ids limited to that set')
+        return errors
+
+    @staticmethod
+    def story_errors(steps,stories):
+        """Every GP step must prove a SPEC.md User Story, and every User Story needs a step.
+
+        Without this link a step can pass while verifying nothing the user asked for.
+        """
+        if stories is None: return ['SPEC.md is missing; the TICKETS gate needs its User Stories to check what each Golden Path step verifies']
+        if not stories: return ['SPEC.md defines no User Stories; list them under a "User Stories" heading as "- US-NNN: ..." or "1. US-NNN: ..."']
+        errors=[f'SPEC.md defines {sid} more than once' for sid in sorted({x for x in stories if stories.count(x)>1})]
+        for x in steps:
+            if not x.user_story_ids: errors.append(f'{x.id} has no user_story_ids; name the SPEC.md User Stories it verifies')
+            elif set(x.user_story_ids)-set(stories): errors.append(f'{x.id} references User Stories not in SPEC.md {sorted(set(x.user_story_ids)-set(stories))}')
+        uncovered=set(stories)-{sid for x in steps if x.verification_command for sid in x.user_story_ids}
+        if uncovered: errors.append(f'User Stories without an executable Golden Path step: {sorted(uncovered)}')
         return errors
 
     def check_plan(self,s):

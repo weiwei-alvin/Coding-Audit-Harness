@@ -1,5 +1,12 @@
 # 變更紀錄
 
+## 2026-10-01 — Golden Path 必須對應 User Story
+
+- TICKETS Gate PASS（以及計畫變更後的 `resume`）新增檢查：`SPEC.md` 必須存在並在「User Stories」段落以 `US-NNN` 定義需求、ID 不可重複；每個 Golden Path step 的 `user_story_ids` 不可為空且只能引用已定義的 ID；每個 User Story 至少被一個有指令的 step 覆蓋。過去 `user_story_ids: []` 也能過關，驗收可以跟任何需求都無關。
+- `to-spec-audit` 要求 User Story 清單項目以 `US-NNN` 開頭；`to-tickets-audit` TKT-5 加入 User Story 對應規則。
+- README 補上稽核技能與 Matt Pocock 五個技能的對應（`*-audit` 為入口、內部呼叫上游），說明 DISCOVERY／SPEC 只有 agent 自我稽核；快速上手加入 `SPEC.md` 步驟。文件版本 3.0.0 → 3.1.0。
+- 測試 fixture 加上 `SPEC.md`；新增 7 個 Gate 回歸測試（共 119 個）。
+
 ## 2026-10-01 — README 重構
 
 - README 改為「情境 → 元件心智模型 → 一次完整工單旅程 → 細節」的信息順序。開頭用一個 AI coding 的具體失敗情境說明工具為什麼存在，前 20% 足以回答「做什麼／防什麼／各元件角色／為何不能只信 Agent／工單如何走完」。

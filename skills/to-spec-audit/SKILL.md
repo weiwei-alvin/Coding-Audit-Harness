@@ -30,6 +30,7 @@ If the upstream skill is not available, this skill **fails explicitly** — no s
 
 - **SPEC-2. User-facing Behavior**:
   - Every User Story must describe behavior the user can actually perform or observe
+  - Every User Story gets a unique ID at the start of its list item under the `User Stories` heading: `1. US-001: As an <actor>, I want ...` (upstream numbered format with the ID added) or `- US-001: ...`. The Runner reads these IDs at the TICKETS Gate; a story without an ID is invisible to it
 
 - **SPEC-3. V1 Golden Path**:
   - Must define at least one V1 golden path / end-to-end scenario connecting multiple User Stories
@@ -59,6 +60,7 @@ When the stage output is ready, run `python harness/runner/runner.py set-ready-f
 - [ ] V1 Scope strictly matches PLAN.md approved In Scope (no additions/expansions)
 - [ ] Every Scope item maps to ≥1 User Story; every User Story maps to a Scope item
 - [ ] All User Stories describe user-observable behavior
+- [ ] Every User Story list item starts with a unique `US-NNN` ID
 - [ ] At least one Golden Path defined with steps mapping to User Stories
 - [ ] Golden Path has verifiable Acceptance Criteria
 - [ ] No technical stories (database, API, cache, refactor, framework) as User Stories

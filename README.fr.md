@@ -11,7 +11,7 @@ version: 3.1.0
 
 # Coding Audit Harness
 
-**Le code écrit par l'IA ne compte qu'une fois vérifié**
+**Le code écrit par l'IA ne vaut que s'il a été vérifié**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB.svg?logo=python&logoColor=white)](#installation)
@@ -24,15 +24,15 @@ version: 3.1.0
 
 <br>
 
-Vous confiez un besoin à un agent de code. Une demi-heure plus tard, il répond : « C'est fait, tous les tests passent. »
+Vous confiez un besoin à un agent de programmation. Une demi-heure plus tard, il répond : « C'est fait, tous les tests passent. »
 
 Le problème, c'est que vous n'avez aucun moyen de le vérifier.
 
-Ce n'est pas une question de confiance envers l'agent : il vous a simplement donné une phrase. Rien ne rattache cette phrase à une version précise du code. Après son rapport, l'agent a encore modifié `login.py` trois fois sans relancer les tests. Les tests qu'il a écrits ne couvrent que les cas auxquels il a pensé. Il affirme que « ça passe », mais aucun outil n'a enregistré que ce passage a eu lieu, ni sur quelle version du code.
+Ce n'est pas une question de confiance envers l'agent : il vous a simplement donné une phrase. Rien ne rattache cette phrase à une version précise du code. Après son rapport, l'agent a encore modifié `login.py` trois fois sans relancer les tests. Les tests qu'il a écrits ne couvrent que les cas auxquels il a pensé. Il affirme que tout passe, mais aucun outil n'a enregistré cette réussite ni la version du code concernée.
 
 C'est l'échec typique du développement assisté par IA. **Le problème n'est pas d'écrire le code, c'est que personne ne peut le vérifier une fois écrit.**
 
-Coding Audit Harness n'existe que pour une raison : **transformer « ça a passé » d'une simple affirmation en une preuve traçable.**
+Coding Audit Harness n'existe que pour une raison : **faire de « c'est validé » non plus une simple affirmation, mais une preuve traçable.**
 
 (Ici, « harness » désigne la couche qui enveloppe le processus de développement pour l'encadrer, et non un harnais de test.)
 
@@ -44,8 +44,8 @@ Il ne sait pas juger si votre architecture est bonne ni si vos tests sont bien �
 
 | Élément | Image | Ce que c'est concrètement |
 |---|---|---|
-| **Audit skills** | Règlement | Cinq fichiers Markdown destinés à l'agent de code (`skills/*-audit/SKILL.md`), un par étape de développement. Chacun liste les conditions que la production de l'étape doit remplir. |
-| **Runner** | Arbitre | Un programme en ligne de commande (`harness/runner/runner.py`). Il ne participe pas au développement et ne fait qu'une chose : vérifier qu'un PASS est accompagné d'une preuve. Sinon, il sort avec un code non nul. |
+| **Audit skills** | Règlement | Cinq fichiers Markdown destinés à l'agent de programmation (`skills/*-audit/SKILL.md`), un par étape de développement. Chacun liste les conditions que doit remplir le résultat de l'étape. |
+| **Runner** | Arbitre | Un programme en ligne de commande (`harness/runner/runner.py`). Il ne participe pas au développement et ne fait qu'une chose : vérifier qu'un PASS est accompagné d'une preuve. Sinon, il se termine avec un code de sortie non nul. |
 | **state.json** | Journal du processus | Un fichier JSON du projet qui enregistre l'étape en cours, le statut de chaque ticket et les problèmes non résolus. C'est l'unique source de vérité ; toutes les décisions s'appuient sur lui. |
 | **Preuve de vérification**<br>`evidence` | Reçu | À chaque exécution d'une commande d'acceptation, le Runner enregistre un reçu : la commande lancée, son code de sortie et l'empreinte du code à ce moment-là. |
 | **Gate** | Point de contrôle | Un point de contrôle que **vous (un humain)** devez valider. L'agent ne peut pas le franchir seul. |
@@ -54,17 +54,17 @@ Il ne sait pas juger si votre architecture est bonne ni si vos tests sont bien �
 
 La répartition des rôles est la suivante :
 
-- **L'agent écrit le code, écrit les tests et rapporte le résultat.** Les trois rôles sont tenus par le même modèle. Des tests écrits par ce modèle ne couvrent que ce à quoi il a pensé. Il ne voit pas ce qu'il a oublié, donc personne ne le sait.
-- **Le Runner ignore le rapport de l'agent et ne croit que les reçus.** Il relance lui-même les commandes d'acceptation, calcule lui-même l'empreinte du code et compare lui-même. Pour lui, le « les tests passent » de l'agent ne vaut rien.
+- **L'agent écrit le code, écrit les tests et rapporte le résultat.** Les trois rôles sont assurés par le même modèle. Des tests écrits par ce modèle ne couvrent que ce à quoi il a pensé. Il ne voit pas ce qu'il a oublié, donc personne ne le sait.
+- **Le Runner ignore le rapport de l'agent et ne se fie qu'aux reçus.** Il relance lui-même les commandes d'acceptation, calcule lui-même l'empreinte du code et compare lui-même. Pour lui, le « les tests passent » de l'agent ne vaut rien.
 - **La Gate est validée par un humain.** Vous seul lancez cette commande. Elle signifie « j'ai regardé et j'approuve », et non « le système a détecté que tout va bien ».
 
-Aucun des trois ne peut remplacer les autres : l'agent propose, le Runner impose, l'opérateur approuve. Qu'un seul manque, et le processus s'arrête.
+Aucun des trois ne peut remplacer les autres : l'agent propose, le Runner fait respecter les règles, l'opérateur approuve. Qu'un seul manque, et le processus s'arrête.
 
 ### Il s'appuie sur les cinq skills de Matt Pocock
 
-Le harness ne produit lui-même ni spécification ni code. Cela revient aux [cinq skills de Matt Pocock](https://github.com/mattpocock/skills) ; le harness contrôle la production après chaque étape. Chaque skill `*-audit` sert de point d'entrée : il appelle d'abord le skill de Matt correspondant, attend la fin de son exécution, puis contrôle le résultat avec ses propres règles. Si le skill amont est absent, il échoue directement au lieu de passer outre.
+Le harness ne produit lui-même ni spécification ni code. Cela revient aux [cinq skills de Matt Pocock](https://github.com/mattpocock/skills) ; le harness contrôle le résultat produit à chaque étape. Chaque skill `*-audit` sert de point d'entrée : il appelle d'abord le skill de Matt correspondant, attend la fin de son exécution, puis contrôle le résultat avec ses propres règles. Si le skill amont est absent, il échoue directement au lieu de passer outre.
 
-| Étape | Point d'entrée (skill d'audit) | Skill de Matt appelé | Production | Contrôle par le Runner |
+| Étape | Point d'entrée (skill d'audit) | Skill de Matt appelé | Livrable | Contrôle par le Runner |
 |---|---|---|---|---|
 | DISCOVERY | `grill-me-audit` | `grill-me` | `PLAN.md` | Aucun |
 | SPEC | `to-spec-audit` | `to-spec` | `SPEC.md` (avec des User Stories `US-NNN`) | Aucun |
@@ -75,7 +75,7 @@ Le harness ne produit lui-même ni spécification ni code. Cela revient aux [cin
 Les skills de Matt, ainsi que `grilling` et `tdd` qu'ils appellent, sont figés dans `skills/matt-upstream/` sans modification.
 
 > [!NOTE]
-> Les skills d'audit sont des règles que l'agent lit, et c'est l'agent qui vient d'exécuter le skill de Matt qui mène l'audit. Dans les trois dernières étapes, le Runner contrôle de l'extérieur à l'aide des reçus et des empreintes ; en DISCOVERY et en SPEC, l'agent ne contrôle que lui-même. Or ce sont précisément ces deux étapes qui fixent « ce que l'on veut vraiment ». Pour l'instant, savoir si le résultat correspond à ce que vous vouliez dépend donc surtout de votre relecture de `SPEC.md` et de `golden_path.json` à la Gate TICKETS. Le Runner ne peut y garantir que la structure : chaque critère d'acceptation renvoie à une User Story, et chaque User Story a un critère d'acceptation. Savoir si une assertion vérifie réellement ce besoin reste votre décision.
+> Les skills d'audit sont des règles que l'agent lit, et c'est l'agent qui vient d'exécuter le skill de Matt qui mène l'audit. Dans les trois dernières étapes, le Runner contrôle de l'extérieur à l'aide des reçus et des empreintes ; en DISCOVERY et en SPEC, l'agent ne contrôle que lui-même. Or ce sont précisément ces deux étapes qui fixent « ce que l'on veut vraiment ». Pour l'instant, savoir si le résultat correspond à ce que vous vouliez dépend donc surtout de votre relecture de `SPEC.md` et de `golden_path.json` à la Gate TICKETS. Le Runner ne peut y garantir que la structure : chaque critère d'acceptation renvoie à une User Story, et chaque User Story a un critère d'acceptation. Déterminer si une assertion vérifie réellement ce besoin relève toujours de votre jugement.
 
 ---
 
@@ -101,10 +101,10 @@ flowchart LR
 Supposons que votre besoin soit « `add(2, 3)` doit renvoyer 5 ». Voici ce qui se passe réellement :
 
 **1. Vous rédigez le besoin sous forme de ticket**
-`.harness/tickets/T-001.md`. Un ticket ne fait qu'une chose vérifiable et déclare ses dépendances (`depends_on`), qui fixent l'ordre d'exécution.
+`.harness/tickets/T-001.md`. Un ticket porte sur une seule tâche vérifiable et déclare ses dépendances (`depends_on`), qui fixent l'ordre d'exécution.
 
 **2. Vous définissez la façon de vérifier**
-Dans `.harness/golden_path.json`, vous définissez comment prouver que le travail est réellement correct. Ici, il s'agit d'une commande, `python check_calc.py`, et `check_calc.py` contient `assert add(2, 3) == 5`. **La commande doit sortir avec un code non nul en cas d'échec.** Afficher `OK` ne constitue pas une vérification.
+Dans `.harness/golden_path.json`, vous définissez comment prouver que le travail est réellement correct. Ici, il s'agit d'une commande, `python check_calc.py`, et `check_calc.py` contient `assert add(2, 3) == 5`. **La commande doit se terminer avec un code de sortie non nul en cas d'échec.** Afficher `OK` ne constitue pas une vérification.
 
 **3. Vous validez la Gate : `gate-verdict --verdict PASS`**
 Le Runner fait alors quatre choses : il vérifie que les dépendances ne forment pas de cycle, **que chaque ticket dispose d'au moins une commande d'acceptation exécutable de façon autonome**, **que chaque critère d'acceptation correspond à une User Story de `SPEC.md` et que chaque User Story en a un**, puis il enregistre l'empreinte du plan courant.
@@ -119,7 +119,7 @@ Il remplit `.harness/inbox/handoff.json` en recopiant tels quels quatre champs d
 Le résultat de la revue recopie les mêmes quatre champs. Le Runner effectue alors ses derniers contrôles :
 
 - L'empreinte du code sur le reçu **correspond-elle toujours au code actuel ?** (Quelqu'un a-t-il modifié le code après l'étape 4 ?)
-- Chaque étape d'acceptation du reçu a-t-elle un critère « réussi » correspondant dans la revue ?
+- Chaque step d'acceptation figurant sur le reçu a-t-il un critère « réussi » correspondant dans la revue ?
 - Reste-t-il des problèmes bloquants non résolus ?
 
 **7. Le ticket est terminé**
@@ -134,7 +134,7 @@ Le Runner relance en plus toutes les commandes d'acceptation depuis le début. S
 
 - Un pipeline en cinq étapes : `DISCOVERY → SPEC → TICKETS → IMPLEMENTATION → REVIEW → COMPLETE`
 - 25 options de commande du Runner (dont 3 explicitement refusées pour empêcher de contourner la vérification), avec `state.json` comme unique source de vérité
-- 5 audit skills qui définissent, pour chaque étape, des conditions d'acceptation décidables
+- 5 audit skills qui définissent, pour chaque étape, des conditions d'acceptation objectivement vérifiables
 - Vérification par Golden Path : chaque ticket a besoin de sa propre commande donnant PASS/FAIL de façon autonome, et chaque commande doit renvoyer à une User Story de `SPEC.md`
 - Liaison des preuves : `source_hash` (empreinte du code) + `verification_id` (identifiant unique d'une exécution de vérification) + `review_round` (numéro du tour de revue) sont liés, de sorte qu'un PASS ne peut pas être réutilisé sur un autre état du code
 
@@ -143,14 +143,14 @@ Le Runner relance en plus toutes les commandes d'acceptation depuis le début. S
 - **Pas un bac à sable.** Le même utilisateur du système peut modifier l'état, les tests et les preuves. Les hachages servent à vérifier la fraîcheur, ce ne sont pas des signatures numériques. L'outil protège contre les erreurs de manipulation, pas contre un attaquant disposant des mêmes droits.
 - **Pas de runtime d'agent.** Il n'appelle aucun LLM, ne se connecte pas à MCP et n'a ni interface web ni planificateur. Les skills sont des fichiers de règles lus par l'agent, pas un moteur d'exécution.
 - **Pas de jugement de qualité.** Il n'évalue ni votre architecture ni la qualité de vos tests. Ces jugements relèvent des critères de revue et de la Gate.
-- **Pas de collaboration multi-utilisateur.** Un seul état, un seul écrivain (verrouillé). Les handoffs concurrents ne sont pas implémentés.
+- **Pas de collaboration multi-utilisateur.** Un seul état, un seul processus d'écriture à la fois (protégé par un verrou). Les handoffs concurrents ne sont pas implémentés.
 
 ### Trois niveaux de responsabilité
 
 | Niveau | Emplacement | Qui agit | Responsable de |
 |---|---|---|---|
-| **Audit skills** | `skills/*-audit/SKILL.md` | Agent (lit les règles) | Définir ce que doit satisfaire la production de chaque étape ; rejeter une production invalide |
-| **Runner** | `harness/runner/` | CLI (impose) | Vérifier que la preuve existe, que les hachages concordent et que le processus n'a pas été contourné ; sinon, sortie avec code non nul |
+| **Audit skills** | `skills/*-audit/SKILL.md` | Agent (lit les règles) | Définir ce que doit satisfaire le résultat de chaque étape ; rejeter un résultat invalide |
+| **Runner** | `harness/runner/` | CLI (fait respecter les règles) | Vérifier que la preuve existe, que les hachages concordent et que le processus n'a pas été contourné ; sinon, se termine avec un code de sortie non nul |
 | **Opérateur (vous)** | — | Humain | `gate-verdict` / `decide` sont des **approbations humaines**. L'outil ne déclare jamais PASS de lui-même |
 
 > [!IMPORTANT]
@@ -209,7 +209,7 @@ cd C:\work\calc
 python -m pip install -r requirements.txt
 ```
 
-**`harness/` doit se trouver dans le projet cible** : le Runner lit `harness/*.schema.json` relativement à `--project-root`. Si le projet cible contient déjà un `.harness/`, **sauvegardez-le d'abord et ne réinitialisez pas l'état existant**.
+**`harness/` doit se trouver dans le projet cible** : le Runner lit `harness/*.schema.json` par rapport à `--project-root`. Si le projet cible contient déjà un `.harness/`, **sauvegardez-le d'abord et ne réinitialisez pas l'état existant**.
 
 ### 1. Écrire les User Stories dans SPEC.md
 
@@ -266,7 +266,7 @@ from calc import add
 assert add(2, 3) == 5
 ```
 
-Chaque step est une vérification obligatoire. Les commandes doivent contenir de vraies assertions et sortir avec un code non nul en cas d'échec ; un `print` figé ne suffit pas à valider une fonctionnalité.
+Chaque step constitue une vérification obligatoire. Les commandes doivent contenir de vraies assertions et se terminer avec un code de sortie non nul en cas d'échec ; un `print` figé ne suffit pas à valider une fonctionnalité.
 
 **Chaque ticket a besoin d'au moins un step dont les `ticket_ids` ne contiennent que ce ticket et ses prérequis** (`depends_on` directs ou indirects). Vous pouvez ajouter des steps de bout en bout couvrant plusieurs tickets, mais ils ne s'exécutent qu'une fois tous les tickets listés à l'état COMPLETE : **ils ne peuvent donc jamais être la seule vérification d'un ticket**. Lors d'un PASS à la Gate TICKETS, un step manquant, un step sans commande ou un step qui référence un ticket inconnu est refusé.
 
@@ -352,7 +352,7 @@ python harness/runner/runner.py validate
 python harness/runner/status.py --json
 ```
 
-Lorsqu'un ticket autre que le dernier est terminé, le même état lance automatiquement le ticket TODO suivant dont les dépendances sont terminées.
+Lorsqu'un ticket autre que le dernier est terminé, le même état lance automatiquement le prochain ticket TODO dont les dépendances sont satisfaites.
 
 ---
 
@@ -383,7 +383,7 @@ Le relecteur doit en outre ajouter un critère manuel :
 
 ### Anciennes commandes explicitement refusées
 
-`complete-ticket`, `ready-for-review` et `increment-review` échouent immédiatement avec un code non nul, car elles permettraient de contourner les preuves de vérification et de revue. Utilisez plutôt `mark-ticket-ready-for-review` + `review-verdict --review --handoff`.
+`complete-ticket`, `ready-for-review` et `increment-review` échouent immédiatement avec un code de sortie non nul, car elles permettraient de contourner les preuves de vérification et de revue. Utilisez plutôt `mark-ticket-ready-for-review` + `review-verdict --review --handoff`.
 
 `payload_validator.py` contrôle toujours la structure des anciens payloads, mais **le passer ne remplit pas les conditions d'achèvement du Workflow** : celui-ci vérifie séparément les champs de liaison, le contenu des reçus et le statut des problèmes.
 
@@ -406,7 +406,7 @@ Si le plan change à nouveau après la décision, resume ouvre une nouvelle déc
 
 ### Une vérification échoue
 
-Le reçu d'échec est tout de même enregistré et la CLI sort avec un code non nul. **Corrigez le code et relancez ; les anciens résultats ne sont jamais réutilisés.** Toute modification du projet pendant la vérification est également refusée.
+Le reçu d'échec est tout de même enregistré et la CLI se termine avec un code de sortie non nul. **Corrigez le code et relancez ; les anciens résultats ne sont jamais réutilisés.** Toute modification du projet pendant la vérification est également refusée.
 
 ### Une revue échoue
 
@@ -514,11 +514,11 @@ Sans `--trust-commands`, `verify-ticket` et `review-verdict` refusent d'exécute
 
 Par défaut, seuls PATH, les chemins système et de la chaîne d'outils (`SYSTEMROOT`, `USERPROFILE`, `APPDATA`, `LOCALAPPDATA`, `HOME`, `PROGRAMFILES`, etc.), les chemins temporaires et la locale sont transmis ; Python est en outre forcé en UTF-8, sans écriture de bytecode. **Aucun jeton ni aucune autre variable héritée n'est transmis.** Listez nommément dans `env_passthrough` de `golden_path.json` toute autre variable réellement nécessaire à un outil.
 
-Les variables de chemin ne sont pas des identifiants : les commandes peuvent déjà lire les fichiers de l'utilisateur, puisque ce n'est pas un bac à sable.
+Les variables de chemin ne constituent pas des secrets d'authentification : les commandes peuvent déjà lire les fichiers de l'utilisateur, puisque ce n'est pas un bac à sable.
 
 ### Nettoyage des processus enfants
 
-Sous Windows, un Job Object est utilisé : le processus est créé suspendu, affecté au job, puis relancé. En cas de délai dépassé, d'erreur ou de sortie normale, le job est fermé, ce qui termine tous les descendants. Sous POSIX, un groupe de processus est utilisé ; **les processus qui quittent délibérément le groupe ne sont pas couverts.**
+Sous Windows, un Job Object est utilisé : le processus est créé à l'état suspendu, affecté au job, puis repris. En cas de délai dépassé, d'erreur ou de sortie normale, le job est fermé, ce qui met fin à tous les processus descendants. Sous POSIX, un groupe de processus est utilisé ; **les processus qui quittent délibérément le groupe ne sont pas couverts.**
 
 stdout/stderr sont conservés en mémoire et dans les artefacts. **N'exécutez que des commandes au volume de sortie raisonnable et qui n'affichent aucun secret** : il n'existe pour l'instant aucune limite stricte.
 
@@ -538,9 +538,9 @@ Chaque exécution relance **tous** les steps activés, sans cache. Le ticket cou
 
 ### Écriture de l'état
 
-Un verrou de fichier du système plus un compare-and-swap SHA-256 sur les octets lus ; un écrivain périmé sort toujours avec un code non nul. Le verrou est libéré à la fin du processus et `writer.lock` reste en place ; **ne supprimez pas un fichier de verrou actif**. En cas de conflit, relisez (read / recover), confirmez l'état, puis recommencez l'opération.
+Un verrou de fichier au niveau du système d'exploitation, associé à un compare-and-swap SHA-256 sur les octets lus ; toute écriture fondée sur un état obsolète échoue avec un code de sortie non nul. Le verrou est libéré à la fin du processus et `writer.lock` reste en place ; **ne supprimez pas un fichier de verrou actif**. En cas de conflit, relisez (read / recover), confirmez l'état, puis recommencez l'opération.
 
-Les artefacts sont **écrits d'abord, et l'état est remplacé atomiquement en dernier**. Un échec peut laisser un artefact orphelin non référencé par l'état ; **cela ne signifie pas que quoi que ce soit est terminé**. La reprise n'utilise que les artefacts référencés par l'état. Un état corrompu est signalé, jamais deviné ni réparé ; restaurez-le depuis une sauvegarde vérifiée.
+Les artefacts sont **écrits d'abord, et l'état est remplacé atomiquement en dernier**. Un échec peut laisser un artefact orphelin non référencé par l'état ; **cela ne signifie pas que l'opération a abouti**. La reprise n'utilise que les artefacts référencés par l'état. Un état corrompu est signalé, jamais reconstitué par supposition ni réparé ; restaurez-le depuis une sauvegarde vérifiée.
 
 Aucune garantie de durabilité n'est fournie en cas de coupure de courant de la machine entière, ni contre des modifications de fichiers concurrentes malveillantes.
 

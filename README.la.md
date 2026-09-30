@@ -209,7 +209,7 @@ cd C:\work\calc
 python -m pip install -r requirements.txt
 ```
 
-**`harness/` intra inceptum destinatum esse debet**: Runner `harness/*.schema.json` relative ad `--project-root` legit. Si inceptum destinatum iam `.harness/` habet, **prius exemplar tutelae fac neque statum exstantem restitue**.
+**`harness/` intra inceptum destinatum esse debet**: Runner `harness/*.schema.json` relative ad `--project-root` legit. Si inceptum destinatum iam `.harness/` habet, **prius exemplar tutelae fac et noli statum exstantem ad initium reducere**.
 
 ### 1. User Stories in SPEC.md scribe
 

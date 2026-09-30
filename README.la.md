@@ -66,8 +66,8 @@ Hoc harness per se neque specificationes neque codicem gignit. Haec a [quinque a
 
 | Gradus | Aditus (ars examinandi) | Ars Matthaei vocata | Opus | Quid Runner exigat |
 |---|---|---|---|---|
-| DISCOVERY | `grill-me-audit` | `grill-me` | `PLAN.md` | Nulla |
-| SPEC | `to-spec-audit` | `to-spec` | `SPEC.md` (cum User Stories `US-NNN`) | Nulla |
+| DISCOVERY | `grill-me-audit` | `grill-me` | `PLAN.md` | Nihil |
+| SPEC | `to-spec-audit` | `to-spec` | `SPEC.md` (cum User Stories `US-NNN`) | Nihil |
 | TICKETS | `to-tickets-audit` | `to-tickets` | Schedulae, `golden_path.json` | Porta: graphum dependentiarum, examen cuiusque schedulae, examen cuiusque User Story |
 | IMPLEMENTATION | `implement-audit` | `implement` (adhibet `tdd`) | Codex, apochae verificationis | `verify-ticket` ipse exsequitur et apochas servat |
 | REVIEW | `code-review-audit` | `code-review` | Eventus recognitionis | Comparatio summae, criteriorum, vitiorum impedientium |
@@ -432,7 +432,7 @@ python harness/runner/runner.py resolve-finding --finding-id F-001
 
 ### Post tres conatus, intermissio
 
-`retry_limit` ex more 3 est. Eo attento, inceptum sponte intermittitur et novus fasciculus `.harness/decisions/DEC-NNN.json` creatur; **historia numquam supprimitur**.
+`retry_limit` ex more 3 est. Hoc limite attacto, inceptum sponte intermittitur et novus fasciculus `.harness/decisions/DEC-NNN.json` creatur; **historia numquam supprimitur**.
 
 | Causa intermissionis | Unica optio admissa |
 |---|---|

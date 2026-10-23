@@ -134,6 +134,19 @@ class ReviewFixes(unittest.TestCase):
         self.assertNotIn('retry_limit',s['tickets']['T-001'])
         self.cli('verify-ticket','--ticket','T-001','--trust-commands',ok=True)
 
+    def test_pipeline_definition_edit_pauses_plan(self):
+        self.approved()
+        pipeline = self.root/'.harness/pipeline.json'
+        data = json.loads(pipeline.read_text(encoding='utf-8'))
+        data['description'] = data.get('description', '') + ' changed after approval'
+        pipeline.write_text(json.dumps(data), encoding='utf-8')
+        p = self.cli('verify-ticket', '--ticket', 'T-001', '--trust-commands', ok=False)
+        self.assertIn('Approved plan', p.stderr)
+        s = self.state()
+        self.assertEqual(s['project_status'], 'PAUSED')
+        self.assertEqual(s['pause']['reason'], PLAN_PAUSE)
+        self.assertNotIn('verification', s['tickets']['T-001'])
+
     def test_ticket_edit_pauses_review(self):
         self.approved()
         with open(self.root/'.harness/tickets/T-001.md','a',encoding='utf-8') as f: f.write('\nScope reduced\n')
@@ -203,7 +216,7 @@ class ReviewFixes(unittest.TestCase):
             receipt=json.loads(self.cli('verify-ticket','--ticket',tid,'--trust-commands',ok=True).stdout)
             self.cli('mark-ticket-ready-for-review','--ticket',tid,ok=True)
             common=dict(ticket_id=tid,review_round=receipt['review_round'],source_hash=receipt['source_hash'],verification_id=receipt['verification_id'])
-            r=dict(**common,verdict='PASS',criteria=[dict(id=x['step_id'],status='PASS',critical=True) for x in receipt['results']],findings=[])
+            r=dict(**common,verdict='PASS',criteria=[dict(id=x['step_id'],status='PASS',critical=True,tier=x.get('tier','deterministic')) for x in receipt['results']],findings=[])
             h=dict(**common,changes=[dict(file='calc.py',summary='add')],verification=[dict(step='receipt',expected='exit 0',actual='exit 0',status='PASS')],dependencies=[])
             inbox=self.root/'.harness/inbox'; inbox.mkdir(exist_ok=True)
             (inbox/'r.json').write_text(json.dumps(r)); (inbox/'h.json').write_text(json.dumps(h))

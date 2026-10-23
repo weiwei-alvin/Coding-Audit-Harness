@@ -1,5 +1,20 @@
 # 變更紀錄
 
+## 2026-10-20 — P2 審查後修復（agy round 1）
+
+- **F-01（major）**：`required_evidence_tiers` 只在 `PASS` 驗收時強制；`FIX_REQUIRED`／`USER_DECISION_REQUIRED` 仍可提交並記錄，避免設有 tier 要求的 stage 無法進入「失敗→修正→PASS」流程。`declared` 的 `source`／`limitations` 仍在所有 verdict 檢查。新增兩個回歸測試。
+- **F-02（minor）**：核准計畫指紋納入 `.harness/pipeline.json`；Gate PASS 後修改 pipeline 定義會觸發 `PLAN_CHANGE_REQUIRES_DECISION`，不再靜默採用新 stage／gate 定義。新增回歸測試。
+- **F-03（minor）**：`review-result.schema.json` 對 `tier: "declared"` 加上條件必填 `source`／`limitations`（non-empty），讓獨立 payload validator 與 runtime 一致；新增 schema 負例測試。`test_state_transition.py` 的 docstring 明示 canonical 入口是 `run_tests.py`，直接 `python -m unittest` 不適用於此 legacy function-style 模組。
+- 測試數 156 → 160，`python harness/runner/run_tests.py` 全綠（160/160、protected state unchanged）。
+
+## 2026-10-20 — P2 kernel：pipeline 定義、typed verification、三層證據
+
+- Stage 定義移出程式碼：`.harness/pipeline.json` 宣告 stage 順序、planning／execution 類型、gate verdict、`next`、hook 與 `required_evidence_tiers`；`init` 缺少定義檔時拒絕並明示原因，不再猜預設。既有 state 沒有 `pipeline_definition` 記錄時，執行期才回退到 `harness/pipeline.default.json`。
+- Golden Path step 可宣告 `verification_type: "collector"` 與 `expected_artifacts`；收據新增 `tier` 與 `artifacts`（專案相對路徑＋SHA-256），宣告的 artifact 缺失即 FAILED、`verify-ticket` exit 非 0。未宣告型別的舊 step 仍是 assertion，行為不變。artifact 目錄可用 `source_hash_exclude` 排除，變更偵測仍覆蓋原始碼與計畫檔。
+- Review criteria 新增必填 `tier`（`deterministic`／`captured`／`declared`）。`declared` 缺 `source` 或 `limitations` 一律拒收；execution stage 可用 `required_evidence_tiers` 要求三層齊備。舊 review payload 沒有 `tier` 會被明示拒收，歷史 review／verification artifact 不改寫。
+- README 補上 pipeline 定義、collector step、新收據欄位與 review tier 範例；快速上手改為先複製 `harness/pipeline.default.json` 到 `.harness/pipeline.json`。
+- 測試數 119 → 156（新增 pipeline 資料驅動、typed verification、三層證據測試），`python harness/runner/run_tests.py` 全綠。
+
 ## 2026-10-01 — Golden Path 必須對應 User Story
 
 - TICKETS Gate PASS（以及計畫變更後的 `resume`）新增檢查：`SPEC.md` 必須存在並在「User Stories」段落以 `US-NNN` 定義需求、ID 不可重複；每個 Golden Path step 的 `user_story_ids` 不可為空且只能引用已定義的 ID；每個 User Story 至少被一個有指令的 step 覆蓋。過去 `user_story_ids: []` 也能過關，驗收可以跟任何需求都無關。

@@ -32,14 +32,8 @@
     },
     "pipeline_stage": {
       "type": "string",
-      "enum": [
-        "DISCOVERY",
-        "SPEC",
-        "TICKETS",
-        "IMPLEMENTATION",
-        "REVIEW"
-      ],
-      "description": "Current Harness pipeline stage."
+      "pattern": "^[A-Z][A-Z0-9_]*$",
+      "description": "Current pipeline stage. Valid IDs, order and kind are declared by the project's pipeline definition (.harness/pipeline.json), not by this schema."
     },
     "stage_status": {
       "type": "string",
@@ -47,7 +41,7 @@
         "IN_PROGRESS",
         "READY_FOR_GATE"
       ],
-      "description": "Execution status within the current planning stage. IMPLEMENTATION and REVIEW use ticket status for detailed state."
+      "description": "Execution status within the current stage. Planning stages use it for gate readiness; ticket-driven stages use ticket status for detailed state."
     },
     "active_ticket_id": {
       "oneOf": [
@@ -59,7 +53,7 @@
           "pattern": "^T-[0-9]{3,}$"
         }
       ],
-      "description": "Currently active Ticket. Must be null outside IMPLEMENTATION and REVIEW."
+      "description": "Currently active Ticket. Must be null outside ticket execution stages."
     },
     "pause": {
       "oneOf": [
@@ -121,7 +115,34 @@
           "pattern": "^[a-f0-9]{64}$"
         }
       },
-      "description": "Digest of tickets, golden_path.json and SPEC.md recorded at TICKETS gate PASS; later changes pause the project until a decision accepts them."
+      "description": "Digest of pipeline.json, tickets, golden_path.json and SPEC.md recorded when the approval gate PASSed; later changes pause the project until a decision accepts them."
+    },
+    "pipeline_definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "sha256",
+        "pipeline"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Path of the pipeline definition file adopted at init (T-006)."
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Content hash of the adopted pipeline definition."
+        },
+        "pipeline": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable name of the adopted pipeline definition."
+        }
+      },
+      "description": "Optional: recorded by init so the stage machine a project followed is auditable. Legacy states without it remain valid."
     }
   },
   "$defs": {
@@ -338,65 +359,6 @@
     {
       "if": {
         "properties": {
-          "pipeline_stage": {
-            "enum": [
-              "DISCOVERY",
-              "SPEC",
-              "TICKETS"
-            ]
-          }
-        },
-        "required": [
-          "pipeline_stage"
-        ]
-      },
-      "then": {
-        "properties": {
-          "active_ticket_id": {
-            "type": "null"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "pipeline_stage": {
-            "enum": [
-              "IMPLEMENTATION",
-              "REVIEW"
-            ]
-          },
-          "project_status": {
-            "enum": [
-              "IN_PROGRESS",
-              "PAUSED"
-            ]
-          }
-        },
-        "required": [
-          "pipeline_stage",
-          "project_status"
-        ]
-      },
-      "then": {
-        "properties": {
-          "active_ticket_id": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "pattern": "^T-[0-9]{3,}$"
-          },
-          "stage_status": {
-            "const": "IN_PROGRESS"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
           "stage_status": {
             "const": "READY_FOR_GATE"
           }
@@ -407,12 +369,8 @@
       },
       "then": {
         "properties": {
-          "pipeline_stage": {
-            "enum": [
-              "DISCOVERY",
-              "SPEC",
-              "TICKETS"
-            ]
+          "active_ticket_id": {
+            "type": "null"
           }
         }
       }

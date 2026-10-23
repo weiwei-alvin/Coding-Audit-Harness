@@ -1,0 +1,51 @@
+{
+  "schema_version": "0.1",
+  "pipeline": "code-default",
+  "description": "Bundled reference pipeline for code-only projects. Mirrors the pre-T-006 hardcoded stage tables exactly: DISCOVERY -> SPEC -> TICKETS -> IMPLEMENTATION -> REVIEW. Copy to .harness/pipeline.json to adopt explicitly; the runner refuses init when no definition resolves.",
+  "stages": [
+    {
+      "id": "DISCOVERY",
+      "kind": "planning",
+      "gate_verdicts": [
+        "PASS",
+        "FIX_REQUIRED",
+        "USER_DECISION_REQUIRED"
+      ],
+      "next": "SPEC"
+    },
+    {
+      "id": "SPEC",
+      "kind": "planning",
+      "gate_verdicts": [
+        "PASS",
+        "FIX_REQUIRED",
+        "USER_DECISION_REQUIRED"
+      ],
+      "next": "TICKETS"
+    },
+    {
+      "id": "TICKETS",
+      "kind": "planning",
+      "gate_verdicts": [
+        "PASS",
+        "FIX_REQUIRED",
+        "USER_DECISION_REQUIRED"
+      ],
+      "next": "IMPLEMENTATION",
+      "on_gate_pass": "validate_ticket_dependencies",
+      "entry": true
+    },
+    {
+      "id": "IMPLEMENTATION",
+      "kind": "execution",
+      "next": "REVIEW",
+      "on_enter": "start_first_ticket"
+    },
+    {
+      "id": "REVIEW",
+      "kind": "execution",
+      "next": null,
+      "terminal": true
+    }
+  ]
+}

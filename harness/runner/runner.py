@@ -24,9 +24,7 @@ SCHEMA_FILE = Path("harness/state.schema.json")
 # Import state transition engine
 from state_transition import (
     StateTransitionEngine,
-    ProjectStatus, PipelineStage, StageStatus,
     TicketStatus, FindingStatus, ReviewVerdict, GateVerdict, PauseReason,
-    create_initial_state
 )
 from dependency_scheduler import DependencyScheduler
 
@@ -143,8 +141,13 @@ class HarnessRunner:
             return False, f"Another ticket {state['active_ticket_id']} is active"
 
         # Check stage
-        if state["pipeline_stage"] not in [PipelineStage.IMPLEMENTATION.value, PipelineStage.REVIEW.value]:
-            return False, f"Cannot start ticket in stage {state['pipeline_stage']}"
+        from pipeline_definition import PipelineDefinitionError, definition_for_state
+        try:
+            definition = definition_for_state(self.project_root, state)
+            if not definition.is_execution(state["pipeline_stage"]):
+                return False, f"Cannot start ticket in stage {state['pipeline_stage']}"
+        except PipelineDefinitionError as exc:
+            return False, str(exc)
 
         return True, None
 
@@ -269,6 +272,7 @@ def main():
     parser.add_argument("--option")
     parser.add_argument("--rationale")
     parser.add_argument("--source")
+    parser.add_argument("--pipeline", type=Path, help="Pipeline definition file for init (defaults to .harness/pipeline.json)")
     args = parser.parse_args()
     runner = HarnessRunner(args.project_root)
     from workflow import Workflow
@@ -276,7 +280,7 @@ def main():
     if args.command in ("complete-ticket", "ready-for-review", "increment-review"):
         parser.error("Unsupported command; use mark-ticket-ready-for-review and review-verdict --review --handoff")
     if args.command in ("init", "verify-ticket", "snapshot", "decide"):
-        if args.command == "init": workflow.initialize()
+        if args.command == "init": workflow.initialize(args.pipeline)
         elif args.command == "snapshot":
             from storage import source_hash
             print(source_hash(runner.project_root))

@@ -80,7 +80,7 @@ class Reliability(unittest.TestCase):
 
     def test_nonempty_finding_schema(self):
         self.ready()
-        payload=dict(ticket_id='T-001',verdict='FIX_REQUIRED',criteria=[dict(id='AC-1',status='FAIL',critical=True)], findings=[dict(finding_key='wrong-addition',criterion_ref='AC-1',description='Wrong result',blocking=True)])
+        payload=dict(ticket_id='T-001',verdict='FIX_REQUIRED',criteria=[dict(id='AC-1',status='FAIL',critical=True,tier='declared',source='reviewer',limitations='fixture only')], findings=[dict(finding_key='wrong-addition',criterion_ref='AC-1',description='Wrong result',blocking=True)])
         f=self.root/'review.json'; f.write_text(json.dumps(payload),encoding='utf-8')
         self.cli('review','--file',str(f),module='payload_validator.py',ok=True)
 
@@ -108,10 +108,10 @@ class Reliability(unittest.TestCase):
         if verdict=='PASS':
             receipt=json.loads(self.cli('verify-ticket','--ticket',tid,'--trust-commands',ok=True).stdout)
             common['verification_id']=receipt['verification_id']
-            criteria=[dict(id=x['step_id'],status='PASS',critical=True) for x in receipt['results']]
+            criteria=[dict(id=x['step_id'],status='PASS',critical=True,tier=x.get('tier','deterministic')) for x in receipt['results']]
             findings=[]
         else:
-            criteria=[dict(id='GP-001',status='FAIL',critical=True)]
+            criteria=[dict(id='GP-001',status='FAIL',critical=True,tier='deterministic')]
             findings=[dict(finding_key='wrong-addition',criterion_ref='GP-001',description='Addition assertion failed',blocking=True)]
         review=dict(**common,verdict=verdict,criteria=criteria,findings=findings)
         handoff=dict(**common,changes=[dict(file='calc.py',summary='Arithmetic operations')],verification=[dict(step='controlled receipt',expected='exit 0',actual='exit 0',status='PASS')],dependencies=[])
@@ -350,7 +350,7 @@ class Reliability(unittest.TestCase):
         f.write_text('{}'); self.submit('T-001',r,h,ok=False); f.write_bytes(old)
         s['tickets']['T-001'].pop('verification'); self.state(s)
         self.submit('T-001',r,h,ok=False)
-        r,h=self.evidence(); d=json.loads(r.read_text()); d['criteria'].append(dict(id='MANUAL-UX',status='PASS',critical=True))
+        r,h=self.evidence(); d=json.loads(r.read_text()); d['criteria'].append(dict(id='MANUAL-UX',status='PASS',critical=True,tier='declared'))
         r.write_text(json.dumps(d)); self.submit('T-001',r,h,ok=False)
         d['criteria'][-1].update(source='Operator observed local keyboard flow',limitations='One Windows display size only')
         r.write_text(json.dumps(d)); self.submit('T-001',r,h,ok=True)

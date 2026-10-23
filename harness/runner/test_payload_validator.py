@@ -136,7 +136,7 @@ def test_review_valid():
     payload = {
         "ticket_id": "T-001",
         "verdict": "PASS",
-        "criteria": [{"id": "TKT-1", "status": "PASS", "critical": True}],
+        "criteria": [{"id": "TKT-1", "status": "PASS", "critical": True, "tier": "deterministic"}],
         "findings": []
     }
     valid, errors = run_validator("review", payload)
@@ -144,11 +144,44 @@ def test_review_valid():
     print("✓ test_review_valid passed")
 
 @isolated
+def test_review_legacy_without_tier_rejected():
+    payload = {
+        "ticket_id": "T-001",
+        "verdict": "PASS",
+        "criteria": [{"id": "TKT-1", "status": "PASS", "critical": True}],
+        "findings": []
+    }
+    valid, errors = run_validator("review", payload)
+    assert not valid, "Review without tier must be rejected (documented legacy rejection)"
+    assert any("tier" in e and "required" in e for e in errors), errors
+    print("✓ test_review_legacy_without_tier_rejected passed")
+
+@isolated
+def test_review_declared_missing_source_and_limitations_rejected():
+    for missing in ("source", "limitations"):
+        criterion = {"id": "TKT-1", "status": "PASS", "critical": True, "tier": "declared"}
+        if missing != "source":
+            criterion["source"] = "Operator review"
+        if missing != "limitations":
+            criterion["limitations"] = "One Windows environment only"
+        payload = {
+            "ticket_id": "T-001",
+            "verdict": "PASS",
+            "criteria": [criterion],
+            "findings": []
+        }
+        valid, errors = run_validator("review", payload)
+        assert not valid, f"Declared criterion without {missing} must be rejected"
+        assert any(missing in e for e in errors), errors
+    print("✓ test_review_declared_missing_source_and_limitations_rejected passed")
+
+
+@isolated
 def test_review_wrong_ticket():
     payload = {
         "ticket_id": "T-999",
         "verdict": "PASS",
-        "criteria": [{"id": "TKT-1", "status": "PASS", "critical": True}],
+        "criteria": [{"id": "TKT-1", "status": "PASS", "critical": True, "tier": "deterministic"}],
         "findings": []
     }
     valid, errors = run_validator("review", payload)
@@ -171,7 +204,7 @@ def test_review_non_active_ticket():
     payload = {
         "ticket_id": "T-001",
         "verdict": "PASS",
-        "criteria": [{"id": "TKT-1", "status": "PASS", "critical": True}],
+        "criteria": [{"id": "TKT-1", "status": "PASS", "critical": True, "tier": "deterministic"}],
         "findings": []
     }
     valid, errors = run_validator("review", payload)
@@ -284,6 +317,8 @@ def run_all_tests():
         test_gate_extra_field,
         test_gate_stage_mismatch,
         test_review_valid,
+        test_review_legacy_without_tier_rejected,
+        test_review_declared_missing_source_and_limitations_rejected,
         test_review_wrong_ticket,
         test_review_non_active_ticket,
         test_finding_valid,

@@ -71,6 +71,10 @@ class PayloadValidator:
         except json.JSONDecodeError:
             return None
 
+    def definition(self, state):
+        from pipeline_definition import definition_for_state
+        return definition_for_state(self.project_root, state)
+
     def validate_gate_payload(self, payload: Dict) -> Tuple[bool, List[str]]:
         """Validate gate-result payload with Harness rules."""
         errors = []
@@ -93,6 +97,14 @@ class PayloadValidator:
             errors.append(
                 f"Stage mismatch: payload targets '{payload_stage}' but current stage is '{current_stage}'"
             )
+        try:
+            definition = self.definition(state)
+            if not definition.is_planning(current_stage):
+                errors.append(f"Gate only allowed in planning stages, current: {current_stage}")
+            elif payload.get("verdict") not in definition.gate_verdicts(current_stage):
+                errors.append(f"Verdict {payload.get('verdict')} is not accepted by stage {current_stage}")
+        except Exception as exc:
+            errors.append(str(exc))
 
         # If PASS, all criteria must be PASS (enforced by schema, but double-check)
         if payload.get("verdict") == "PASS":
@@ -132,10 +144,14 @@ class PayloadValidator:
                 f"Ticket mismatch: payload targets '{payload_ticket}' but active ticket is '{active_ticket}'"
             )
 
-        # Check ticket is in IMPLEMENTATION or REVIEW stage
+        # Check ticket is in a definition-declared execution stage
         current_stage = state.get("pipeline_stage")
-        if current_stage not in ["IMPLEMENTATION", "REVIEW"]:
-            errors.append(f"Review only allowed in IMPLEMENTATION/REVIEW stage, current: {current_stage}")
+        try:
+            definition = self.definition(state)
+            if not definition.is_execution(current_stage):
+                errors.append(f"Review only allowed in execution stages, current: {current_stage}")
+        except Exception as exc:
+            errors.append(str(exc))
 
         # Check ticket exists and is IN_PROGRESS or READY_FOR_REVIEW
         tickets = state.get("tickets", {})

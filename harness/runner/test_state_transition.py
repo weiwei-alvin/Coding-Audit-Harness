@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """
 Test Suite for State Transition Engine
+
+Canonical execution is `python harness/runner/run_tests.py`, which wraps these
+legacy function-style tests in FunctionTestCase. This module is also runnable
+directly with `python test_state_transition.py`; it is not discoverable by
+`python -m unittest test_state_transition` because it defines no TestCase class.
 """
 
 from test_support import isolated
@@ -24,7 +29,7 @@ def test_planning_stage_advance():
     engine = StateTransitionEngine()
     
     # Initial state
-    state = create_initial_state()
+    state = create_initial_state("DISCOVERY")
     state["pipeline_stage"] = PipelineStage.DISCOVERY.value
     state["stage_status"] = StageStatus.READY_FOR_GATE.value
     
@@ -58,7 +63,7 @@ def test_gate_fix_required():
     """Test FIX_REQUIRED keeps stage in IN_PROGRESS."""
     engine = StateTransitionEngine()
     
-    state = create_initial_state()
+    state = create_initial_state("DISCOVERY")
     state["pipeline_stage"] = PipelineStage.SPEC.value
     state["stage_status"] = StageStatus.READY_FOR_GATE.value
     
@@ -74,7 +79,7 @@ def test_gate_user_decision_required():
     """Test USER_DECISION_REQUIRED pauses project."""
     engine = StateTransitionEngine()
     
-    state = create_initial_state()
+    state = create_initial_state("DISCOVERY")
     state["pipeline_stage"] = PipelineStage.DISCOVERY.value
     state["stage_status"] = StageStatus.READY_FOR_GATE.value
     
@@ -91,7 +96,7 @@ def test_ticket_start():
     """Test ticket start transition."""
     engine = StateTransitionEngine()
     
-    state = create_initial_state()
+    state = create_initial_state("DISCOVERY")
     state["pipeline_stage"] = PipelineStage.IMPLEMENTATION.value
     state["tickets"] = {"T-001": {"status": TicketStatus.TODO.value, "review_attempts": 0, "active_findings": []}}
     
@@ -107,7 +112,7 @@ def test_ticket_cannot_start_in_planning():
     """Test ticket cannot start in planning stage."""
     engine = StateTransitionEngine()
     
-    state = create_initial_state()
+    state = create_initial_state("DISCOVERY")
     state["pipeline_stage"] = PipelineStage.DISCOVERY.value
     state["tickets"] = {"T-001": {"status": TicketStatus.TODO.value, "review_attempts": 0, "active_findings": []}}
     
@@ -122,7 +127,7 @@ def test_ticket_ready_for_review():
     """Test IN_PROGRESS -> READY_FOR_REVIEW."""
     engine = StateTransitionEngine()
     
-    state = create_initial_state()
+    state = create_initial_state("DISCOVERY")
     state["pipeline_stage"] = PipelineStage.IMPLEMENTATION.value
     state["active_ticket_id"] = "T-001"
     state["tickets"] = {"T-001": {"status": TicketStatus.IN_PROGRESS.value, "review_attempts": 0, "active_findings": []}}
@@ -138,7 +143,7 @@ def test_complete_ticket_via_review_pass():
     """Test ticket completion only via Review PASS."""
     engine = StateTransitionEngine()
     
-    state = create_initial_state()
+    state = create_initial_state("DISCOVERY")
     state["pipeline_stage"] = PipelineStage.IMPLEMENTATION.value
     state["active_ticket_id"] = "T-001"
     state["tickets"] = {"T-001": {"status": TicketStatus.READY_FOR_REVIEW.value, "review_attempts": 0, "active_findings": []}}
@@ -156,7 +161,7 @@ def test_cannot_complete_from_in_progress():
     """Test developer cannot complete ticket from IN_PROGRESS directly."""
     engine = StateTransitionEngine()
     
-    state = create_initial_state()
+    state = create_initial_state("DISCOVERY")
     state["pipeline_stage"] = PipelineStage.IMPLEMENTATION.value
     state["active_ticket_id"] = "T-001"
     state["tickets"] = {"T-001": {"status": TicketStatus.IN_PROGRESS.value, "review_attempts": 0, "active_findings": []}}
@@ -172,7 +177,7 @@ def test_review_fix_required_increments_attempts():
     """Test FIX_REQUIRED increments review_attempts."""
     engine = StateTransitionEngine()
     
-    state = create_initial_state()
+    state = create_initial_state("DISCOVERY")
     state["pipeline_stage"] = PipelineStage.IMPLEMENTATION.value
     state["active_ticket_id"] = "T-001"
     state["tickets"] = {"T-001": {"status": TicketStatus.READY_FOR_REVIEW.value, "review_attempts": 0, "active_findings": []}}
@@ -189,7 +194,7 @@ def test_review_retry_limit_auto_pause():
     """Test auto-pause at 3 review attempts."""
     engine = StateTransitionEngine()
     
-    state = create_initial_state()
+    state = create_initial_state("DISCOVERY")
     state["pipeline_stage"] = PipelineStage.IMPLEMENTATION.value
     state["active_ticket_id"] = "T-001"
     state["tickets"] = {"T-001": {"status": TicketStatus.READY_FOR_REVIEW.value, "review_attempts": 2, "active_findings": []}}
@@ -209,7 +214,7 @@ def test_review_user_decision_required():
     """Test USER_DECISION_REQUIRED pauses with decision ref."""
     engine = StateTransitionEngine()
     
-    state = create_initial_state()
+    state = create_initial_state("DISCOVERY")
     state["pipeline_stage"] = PipelineStage.IMPLEMENTATION.value
     state["active_ticket_id"] = "T-001"
     state["tickets"] = {"T-001": {"status": TicketStatus.READY_FOR_REVIEW.value, "review_attempts": 0, "active_findings": []}}
@@ -225,7 +230,7 @@ def test_pause_resume():
     """Test project pause and resume."""
     engine = StateTransitionEngine()
     
-    state = create_initial_state()
+    state = create_initial_state("DISCOVERY")
     state["pipeline_stage"] = PipelineStage.IMPLEMENTATION.value
     
     result = engine.pause_project(state, PauseReason.GATE_USER_DECISION_REQUIRED, "DEC-001")
@@ -244,7 +249,7 @@ def test_finding_lifecycle():
     """Test finding OPEN -> RESOLVED -> REOPENED -> RESOLVED."""
     engine = StateTransitionEngine()
     
-    state = create_initial_state()
+    state = create_initial_state("DISCOVERY")
     state["pipeline_stage"] = PipelineStage.IMPLEMENTATION.value
     state["active_ticket_id"] = "T-001"
     state["tickets"] = {"T-001": {"status": TicketStatus.IN_PROGRESS.value, "review_attempts": 0, "active_findings": []}}
@@ -284,7 +289,7 @@ def test_undefined_transition_rejected():
     """Test undefined transitions are rejected."""
     engine = StateTransitionEngine()
     
-    state = create_initial_state()
+    state = create_initial_state("DISCOVERY")
     state["pipeline_stage"] = PipelineStage.IMPLEMENTATION.value
     state["active_ticket_id"] = "T-001"
     state["tickets"] = {"T-001": {"status": TicketStatus.COMPLETE.value, "review_attempts": 0, "active_findings": []}}

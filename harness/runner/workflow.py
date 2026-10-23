@@ -12,6 +12,7 @@ import uuid
 from dependency_scheduler import DependencyScheduler
 from golden_path_verifier import GoldenPathVerifier
 from payload_validator import PayloadValidator
+from pipeline_definition import definition_for_state
 from state_transition import create_initial_state, GateVerdict, PauseReason
 from storage import atomic_json, digest, plan_hash, source_hash
 from schema_validation import validator
@@ -32,12 +33,21 @@ class Workflow:
     def commit(self,s):
         if not self.runner.write_state_atomic(s): raise RuntimeError('State commit failed; operation not completed')
 
-    def initialize(self):
+    def initialize(self, pipeline_path=None):
         if self.runner.state_file.exists(): raise ValueError('State already exists; init refuses to overwrite')
+        from pipeline_definition import PipelineDefinitionError, resolve_definition
+        try:
+            definition = resolve_definition(self.root, pipeline_path, allow_bundled=False)
+        except PipelineDefinitionError as exc:
+            raise ValueError(f'init refuses to start without a pipeline definition: {exc}')
+        entry = [stage['id'] for stage in definition.stages if stage.get('entry')]
+        if len(entry) != 1:
+            raise ValueError(f'Pipeline definition must mark exactly one entry stage for init; got {entry}')
         tickets=self.graph()
         if not tickets: raise ValueError('Create .harness/tickets/T-NNN.md before init')
-        s=create_initial_state()
-        s.update(pipeline_stage='TICKETS',stage_status='IN_PROGRESS')
+        s=create_initial_state(entry[0])
+        s.update(stage_status='IN_PROGRESS')
+        s['pipeline_definition']=dict(source=definition.source, sha256=definition.digest(), pipeline=definition.name)
         s['tickets']={tid:dict(status='TODO',review_attempts=0,active_findings=[]) for tid in tickets}
         self.commit(s)
 
@@ -76,7 +86,7 @@ class Workflow:
 
         Without this link a step can pass while verifying nothing the user asked for.
         """
-        if stories is None: return ['SPEC.md is missing; the TICKETS gate needs its User Stories to check what each Golden Path step verifies']
+        if stories is None: return ['SPEC.md is missing; the approval gate needs its User Stories to check what each Golden Path step verifies']
         if not stories: return ['SPEC.md defines no User Stories; list them under a "User Stories" heading as "- US-NNN: ..." or "1. US-NNN: ..."']
         errors=[f'SPEC.md defines {sid} more than once' for sid in sorted({x for x in stories if stories.count(x)>1})]
         for x in steps:
@@ -87,14 +97,18 @@ class Workflow:
         return errors
 
     def check_plan(self,s):
-        """Refuse work on a plan that changed after TICKETS gate approval."""
+        """Refuse work on a plan that changed after the approval gate PASSed."""
         approved=(s.get('approved_plan') or {}).get('sha256')
         if not approved or s['project_status']!='IN_PROGRESS': return
         current=plan_hash(self.root)
         if current==approved: return
         self.prepare_pause(s,'PLAN_CHANGE_REQUIRES_DECISION',plan=current)
         self.commit(s)
-        raise ValueError(f"Approved plan (tickets, golden_path.json or SPEC.md) changed after TICKETS gate; project paused as {s['pause']['decision_ref']}. Review the change, then run decide --option CONTINUE --rationale ... --source ... and resume, or revert the change and resume")
+        try:
+            gate=definition_for_state(self.root,s).approval_stage or 'approval'
+        except Exception:
+            gate='approval'
+        raise ValueError(f"Approved plan (pipeline.json, tickets, golden_path.json or SPEC.md) changed after the {gate} gate; project paused as {s['pause']['decision_ref']}. Review the change, then run decide --option CONTINUE --rationale ... --source ... and resume, or revert the change and resume")
 
     def active(self,s,tid, ready=False):
         if s['project_status']!='IN_PROGRESS': raise ValueError('Project is not in progress')
@@ -130,7 +144,10 @@ class Workflow:
         if before!=source_hash(self.root): raise ValueError('Project changed during verification; rerun after stabilizing files')
         evidence=dict(ticket_id=tid,review_round=t.get('review_total',0)+1,source_hash=before,
             verification_id=uuid.uuid4().hex, all_passed=all(x.status.value=='PASSED' for x in results),
-            results=[dict(step_id=x.step_id,status=x.status.value,stdout=x.output,stderr=x.stderr,returncode=x.returncode,error=x.error) for x in results])
+            evidence_tiers=sorted({x.tier for x in results if x.status.value=='PASSED'}),
+            results=[dict(step_id=x.step_id,status=x.status.value,stdout=x.output,stderr=x.stderr,
+                returncode=x.returncode,error=x.error,tier=x.tier,artifacts=x.artifacts) for x in results])
+        validator(self.root/'harness','verification-receipt.schema.json').validate(evidence)
         t['verification']=self.artifact('verifications',evidence)
         self.commit(s)
         if not evidence['all_passed']: raise ValueError('Required verification FAIL or UNVERIFIED; receipt saved, completion blocked')
@@ -141,8 +158,47 @@ class Workflow:
         for key,value in expected.items():
             if payload.get(key)!=value: raise ValueError(f'Evidence binding mismatch: {key}')
 
+    @staticmethod
+    def receipt_tiers(receipt):
+        """Tiers supported by passed verification results; legacy receipts lack tier."""
+        return {x.get('tier','deterministic') for x in (receipt or {}).get('results',[])
+                if x.get('status')=='PASSED'}
+
+    def check_evidence_tiers(self,s,review,criteria,definition,receipt=None,enforce_required=False):
+        """T-008: declared fields, tier-to-receipt linkage, and stage tier requirements.
+
+        declared source/limitations are checked for every verdict. Stage-required
+        tiers describe acceptable PASS evidence, so they are only enforced when
+        the caller supplies the receipt and asks for acceptance (PASS). A failing
+        review must remain recordable; otherwise a tiered stage could never start
+        a FIX_REQUIRED -> fix -> PASS loop.
+        """
+        for item in review['criteria']:
+            if item['tier']=='declared' and (not item.get('source','').strip() or not item.get('limitations','').strip()):
+                raise ValueError(f"Declared criterion {item['id']} requires nonblank source and limitations")
+        if receipt:
+            step_tiers={x['step_id']:x.get('tier','deterministic') for x in receipt.get('results',[])}
+            for item in review['criteria']:
+                if item['tier']=='deterministic' and item['id'] not in step_tiers:
+                    raise ValueError(f"Deterministic criterion {item['id']} has no matching verification step")
+                if item['tier']=='captured' and step_tiers.get(item['id'])!='captured':
+                    raise ValueError(f"Captured criterion {item['id']} has no matching collector receipt")
+            for step_id,tier in step_tiers.items():
+                item=criteria.get(step_id)
+                if item is not None and item['tier']!=tier:
+                    raise ValueError(f"Criterion {step_id} tier {item['tier']} does not match receipt tier {tier}")
+        if enforce_required:
+            available=self.receipt_tiers(receipt) if receipt else set()
+            if any(item['tier']=='declared' and item['status']=='PASS' for item in review['criteria']):
+                available.add('declared')
+            required=definition.required_evidence_tiers(s['pipeline_stage'])
+            missing=[tier for tier in required if tier not in available]
+            if missing:
+                raise ValueError(f"Stage {s['pipeline_stage']} requires evidence tiers {required}; missing {missing}")
+
     def review(self,tid,verdict,review_path,handoff_path):
         s=self.state(); self.check_plan(s); t=self.active(s,tid,ready=True)
+        definition=definition_for_state(self.root,s)
         files=self.graph(s)
         if not review_path: raise ValueError('Missing review payload; PASS string is not evidence')
         review=json.loads(Path(review_path).read_text(encoding='utf-8'))
@@ -152,6 +208,9 @@ class Workflow:
         if review['verdict']!=verdict: raise ValueError('CLI verdict and review payload disagree')
         current=source_hash(self.root)
         self.binding(review,tid,t,current)
+        criteria={x['id']:x for x in review['criteria']}
+        if len(criteria)!=len(review['criteria']): raise ValueError('Duplicate review criteria')
+        if verdict!='PASS': self.check_evidence_tiers(s,review,criteria,definition,enforce_required=False)
         handoff=None
         if verdict=='PASS':
             if not handoff_path: raise ValueError('Missing handoff payload')
@@ -167,8 +226,7 @@ class Workflow:
                 if payload.get('verification_id')!=receipt['verification_id']: raise ValueError('Wrong verification_id')
             if any(x['status']!='PASS' for x in handoff['verification']): raise ValueError('Handoff contains UNVERIFIED required evidence')
             expected_ids={x['step_id'] for x in receipt['results']}
-            criteria={x['id']:x for x in review['criteria']}
-            if len(criteria)!=len(review['criteria']): raise ValueError('Duplicate review criteria')
+            self.check_evidence_tiers(s,review,criteria,definition,receipt,enforce_required=True)
             for cid in expected_ids:
                 if cid not in criteria or criteria[cid]['status']!='PASS' or not criteria[cid]['critical']:
                     raise ValueError(f'Missing or failed required criterion: {cid}')
@@ -185,12 +243,13 @@ class Workflow:
                 s['final_verification']=self.artifact('verifications',dict(source_hash=current,**final))
             t['status']='COMPLETE'
             s['active_ticket_id']=None
-            if last: s.update(project_status='COMPLETE',pipeline_stage='REVIEW')
+            if last:
+                s.update(project_status='COMPLETE',pipeline_stage=definition.terminal_stage)
             else:
                 nxt=self.runner.dependency_scheduler.get_next_ticket(s,files)
                 if not nxt: raise ValueError('No executable next ticket; completion not committed')
                 s['active_ticket_id']=nxt; s['tickets'][nxt]['status']='IN_PROGRESS'
-                s['pipeline_stage']='IMPLEMENTATION'
+                if not definition.is_execution(s['pipeline_stage']): s['pipeline_stage']=definition.work_stage
         elif verdict=='FIX_REQUIRED':
             t['review_attempts']+=1
             t['status']='IN_PROGRESS'
@@ -291,11 +350,14 @@ class Workflow:
     def gate(self,verdict,decision_ref=None):
         s=self.state()
         if s['project_status']!='IN_PROGRESS': raise ValueError('Project not in progress')
-        tickets_pass=s['pipeline_stage']=='TICKETS' and verdict=='PASS'
-        if s['pipeline_stage']=='TICKETS': files=self.graph(s)
+        definition=definition_for_state(self.root,s)
+        stage=s['pipeline_stage']
+        hook=definition.hook(stage,'on_gate_pass') if definition.is_planning(stage) else None
+        tickets_pass=hook=='validate_ticket_dependencies' and verdict=='PASS'
+        if hook=='validate_ticket_dependencies': files=self.graph(s)
         if tickets_pass:
             errors=self.coverage_errors(files)
-            if errors: raise ValueError('TICKETS gate refused: '+'; '.join(errors))
+            if errors: raise ValueError(f'{stage} gate refused: '+'; '.join(errors))
         result=self.runner.transition_engine.process_gate_verdict(s,GateVerdict(verdict),decision_ref)
         if not result.success: raise ValueError(result.error)
         if tickets_pass: result.new_state['approved_plan']=dict(sha256=plan_hash(self.root))

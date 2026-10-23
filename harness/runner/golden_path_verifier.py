@@ -6,10 +6,11 @@ Verifies executable golden path segments as vertical slices complete.
 Does NOT require full E2E per ticket.
 """
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Dict, List, Optional, Set
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 
@@ -28,6 +29,8 @@ class GoldenPathStep:
     ticket_ids: List[str]  # Tickets that implement this step
     verification_command: str  # Command to verify this step
     expected_output: str
+    verification_type: str = "assertion"  # assertion | collector
+    expected_artifacts: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -39,6 +42,8 @@ class VerificationResult:
     error: Optional[str] = None
     returncode: Optional[int] = None
     stderr: str = ""
+    tier: str = "deterministic"  # deterministic | captured
+    artifacts: List[Dict] = field(default_factory=list)
 
 
 class GoldenPathVerifier:
@@ -73,6 +78,18 @@ class GoldenPathVerifier:
             cmd=step.verification_command
             if not isinstance(cmd,(str,list)) or (isinstance(cmd,list) and (not cmd or not all(isinstance(x,str) and x for x in cmd))):
                 raise ValueError('verification_command must be a string or nonempty argv array')
+            if step.verification_type not in ('assertion','collector'):
+                raise ValueError(f'{step.id}: verification_type must be assertion or collector')
+            if not isinstance(step.expected_artifacts,list) or not all(isinstance(x,str) and x.strip() for x in step.expected_artifacts):
+                raise ValueError(f'{step.id}: expected_artifacts must be an array of nonempty relative paths')
+            if step.verification_type=='collector' and not step.expected_artifacts:
+                raise ValueError(f'{step.id}: collector steps must declare expected_artifacts')
+            if step.verification_type!='collector' and step.expected_artifacts:
+                raise ValueError(f'{step.id}: expected_artifacts is only valid for collector steps')
+            for relative in step.expected_artifacts:
+                parts=relative.replace('\\','/').split('/')
+                if relative.replace('\\','/').startswith('/') or ':' in relative or '..' in parts or relative.strip() in ('','.'):
+                    raise ValueError(f'{step.id}: artifact path must be a relative path inside the project: {relative}')
 
 
     def _load_golden_path(self):
@@ -169,7 +186,9 @@ class GoldenPathVerifier:
                     "user_story_ids": s.user_story_ids,
                     "ticket_ids": s.ticket_ids,
                     "verification_command": s.verification_command,
-                    "expected_output": s.expected_output
+                    "expected_output": s.expected_output,
+                    **({"verification_type": s.verification_type} if s.verification_type != "assertion" else {}),
+                    **({"expected_artifacts": s.expected_artifacts} if s.expected_artifacts else {})
                 }
                 for s in self._golden_path
             ]
@@ -219,15 +238,17 @@ class GoldenPathVerifier:
                 ))
                 continue
             
+            tier = "captured" if step.verification_type == "collector" else "deterministic"
             if not step.verification_command:
                 results.append(VerificationResult(
                     step_id=step_id,
                     status=VerificationStatus.UNVERIFIED,
                     output="",
-                    error="No verification command defined"
+                    error="No verification command defined",
+                    tier=tier
                 ))
                 continue
-            
+
             from command_execution import execute
             try:
                 result = execute(step.verification_command, self.project_root, trusted=self.trusted, timeout=self.timeout)
@@ -236,12 +257,35 @@ class GoldenPathVerifier:
                 if passed and step.expected_output and step.expected_output not in result['stdout']:
                     passed = False
                     error = f"Expected output not found: {step.expected_output}"
+                artifacts, missing = self._collect_artifacts(step)
+                if missing:
+                    passed = False
+                    missing_error = "Missing expected artifact(s): " + ", ".join(missing)
+                    error = f"{error}; {missing_error}" if error else missing_error
                 results.append(VerificationResult(step_id, VerificationStatus.PASSED if passed else VerificationStatus.FAILED,
-                    result['stdout'], error, result['returncode'], result['stderr']))
+                    result['stdout'], error, result['returncode'], result['stderr'], tier, artifacts))
             except Exception as exc:
-                results.append(VerificationResult(step_id, VerificationStatus.FAILED, '', str(exc)))
+                artifacts, missing = self._collect_artifacts(step)
+                error = str(exc)
+                if missing:
+                    error = f"{error}; Missing expected artifact(s): {', '.join(missing)}"
+                results.append(VerificationResult(step_id, VerificationStatus.FAILED, '', error,
+                    tier=tier, artifacts=artifacts))
 
         return results
+
+    def _collect_artifacts(self, step):
+        """Return (artifact receipts, missing declared artifact paths) for one step."""
+        root = self.project_root.resolve()
+        artifacts, missing = [], []
+        for relative in step.expected_artifacts:
+            path = (root / relative).resolve()
+            if not path.is_relative_to(root) or not path.is_file():
+                missing.append(relative)
+                continue
+            artifacts.append(dict(path=Path(relative).as_posix(),
+                sha256=hashlib.sha256(path.read_bytes()).hexdigest()))
+        return artifacts, missing
 
     def verify_incremental(self, completed_ticket_ids: List[str]) -> Dict:
         """Verify all newly enabled golden path steps."""
@@ -297,7 +341,9 @@ class GoldenPathVerifier:
                     "output": r.output,
                     "returncode": r.returncode,
                     "stderr": r.stderr,
-                    "error": r.error
+                    "error": r.error,
+                    "tier": r.tier,
+                    "artifacts": r.artifacts
                 }
                 for r in results
             ]
@@ -327,6 +373,9 @@ def main():
             print(f"{step.id}: {step.description}")
             print(f"  Tickets: {', '.join(step.ticket_ids) if step.ticket_ids else 'None'}")
             print(f"  Command: {step.verification_command or 'None'}")
+            print(f"  Type: {step.verification_type}")
+            if step.expected_artifacts:
+                print(f"  Artifacts: {', '.join(step.expected_artifacts)}")
             print()
     
     elif args.command == "verify-incremental":

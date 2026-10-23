@@ -105,9 +105,9 @@ def source_hash(root):
     return h.hexdigest()
 
 def plan_hash(root):
-    """Digest of the approved plan: tickets, golden_path.json and SPEC.md."""
+    """Digest of the approved plan: pipeline definition, tickets, golden_path.json and SPEC.md."""
     root=Path(root).resolve(); h=hashlib.sha256()
-    files=sorted((root/'.harness'/'tickets').glob('T-*.md'))+[root/'.harness'/'golden_path.json',root/'SPEC.md']
+    files=sorted((root/'.harness'/'tickets').glob('T-*.md'))+[root/'.harness'/'pipeline.json',root/'.harness'/'golden_path.json',root/'SPEC.md']
     for p in files:
         if p.is_file():
             h.update(p.relative_to(root).as_posix().encode()); h.update(b'\0'); h.update(p.read_bytes()); h.update(b'\0')

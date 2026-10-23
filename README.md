@@ -154,7 +154,7 @@ Runner 額外把所有驗收指令從頭再跑一遍。任何一條不過，整�
 | **Operator（你）** | — | 人 | `gate-verdict` / `decide` 是**人做的核准**。工具不會自己宣告 PASS |
 
 > [!IMPORTANT]
-> **Runner 從 TICKETS 開始接管。** `init` 會直接把階段設為 `TICKETS`（見 `harness/runner/workflow.py` 的 `initialize()`），因此 `DISCOVERY` 與 `SPEC` 兩階段**沒有 CLI 路徑可以到達**——`grill-me-audit` 與 `to-spec-audit` 的驗收條件目前只由 agent 側自律執行，Runner 不做階段層強制。唯一的例外是 TICKETS Gate 會讀 `SPEC.md` 的 User Stories 清單，檢查它與 Golden Path 的對應。若你需要 Runner 強制這兩段，那是未實作項目，見 [Deferred Items](docs/DEFERRED_ITEMS.md)。
+> **Runner 從 pipeline 定義檔的 entry stage 開始接管。** 預設定義的 entry stage 是 `TICKETS`（見 `harness/pipeline.default.json` 與 `harness/runner/workflow.py` 的 `initialize()`），因此預設情況下 `DISCOVERY` 與 `SPEC` 兩階段**沒有 CLI 路徑可以到達**——`grill-me-audit` 與 `to-spec-audit` 的驗收條件目前只由 agent 側自律執行，Runner 不做階段層強制。唯一的例外是 TICKETS Gate 會讀 `SPEC.md` 的 User Stories 清單，檢查它與 Golden Path 的對應。若你需要 Runner 強制這兩段，那是未實作項目，見 [Deferred Items](docs/DEFERRED_ITEMS.md)。
 
 ---
 
@@ -171,8 +171,9 @@ python -m pip install -r requirements.txt
 ```text
 Coding-Audit-Harness/
 ├── harness/              # CLI Runner、JSON Schema、正式測試
-│   ├── runner/           # 12 個實作模組 + 8 個測試模組 + 共用 fixture helper
-│   ├── *.schema.json    # 7 份 schema（state / gate-result / review-result / handoff / finding / decision / change-impact）
+│   ├── runner/           # 實作模組、測試模組與共用 fixture helper
+│   ├── *.schema.json     # state / pipeline / gate-result / review-result / verification-receipt / handoff / finding / decision / change-impact
+│   ├── pipeline.default.json  # 預設 pipeline 定義；複製到目標專案的 .harness/pipeline.json
 │   └── state.schema.json
 ├── skills/
 │   ├── *-audit/          # 5 個 audit wrapper（本專案原創）
@@ -186,6 +187,7 @@ Coding-Audit-Harness/
 ```text
 <target-project>/.harness/
 ├── state.json                    # 唯一事實來源
+├── pipeline.json                 # stage 順序、gate 類型與 tier 要求（init 的必要輸入）
 ├── golden_path.json              # 已核准計畫的一部分
 ├── tickets/T-NNN.md              # 工單
 ├── inbox/                        # 你手寫的 handoff.json / review.json
@@ -207,9 +209,11 @@ Coding-Audit-Harness/
 Copy-Item -Recurse <this-repo>\harness C:\work\calc\harness
 cd C:\work\calc
 python -m pip install -r requirements.txt
+New-Item -ItemType Directory -Force .harness | Out-Null
+Copy-Item harness\pipeline.default.json .harness\pipeline.json
 ```
 
-**`harness/` 必須在目標專案裡**——Runner 會相對於 `--project-root` 讀 `harness/*.schema.json`。若目標專案已有 `.harness/`，**先備份，不要重設既有狀態**。
+**`harness/` 必須在目標專案裡**——Runner 會相對於 `--project-root` 讀 `harness/*.schema.json`。**`init` 不會猜預設 pipeline**：沒有 `.harness/pipeline.json`（或 `--pipeline <path>`）就拒絕。純 code 專案直接複製 `harness/pipeline.default.json` 即可；要改 stage 順序、gate 類型或 tier 要求，改這份定義檔，不要改程式。若目標專案已有 `.harness/`，**先備份，不要重設既有狀態**。
 
 ### 1. 寫 SPEC.md 的 User Stories
 
@@ -268,6 +272,23 @@ assert add(2, 3) == 5
 
 每一個 step 都是必要驗證。指令要含真實 assertion，失敗時 exit 非 0；固定 `print` 不足以驗收功能。
 
+需要保留指令產生的檔案時，把 step 宣告成 collector：
+
+```json
+{
+  "id": "GP-002",
+  "description": "產生報表",
+  "user_story_ids": ["US-001"],
+  "ticket_ids": ["T-001"],
+  "verification_command": ["python", "collect_report.py"],
+  "expected_output": "",
+  "verification_type": "collector",
+  "expected_artifacts": ["artifacts/report.html"]
+}
+```
+
+收據會為每個存在的 artifact 記錄專案相對路徑與 SHA-256；宣告了卻沒產出，該 step 就是 FAILED，`verify-ticket` exit 非 0。collector 產出的目錄要列進 `source_hash_exclude`，否則會被當成「驗收期間專案內容變動」。沒宣告 `verification_type` 的舊 step 仍視為 assertion，行為不變。
+
 **每張工單至少要有一個 step，其 `ticket_ids` 只含該工單本身加上它的前置工單**（直接或間接 `depends_on`）。跨多張工單的端到端 step 可以另外加，但只在所列工單全部 COMPLETE 後才執行，**不能當任何工單唯一的驗證**。TICKETS Gate PASS 時會檢查：缺 step、step 沒指令、step 引用不存在的工單，都拒絕。
 
 **每個 step 的 `user_story_ids` 不能是空的，只能引用 `SPEC.md` 定義過的 ID；每個 User Story 都要被至少一個有指令的 step 引用。** 這條規則讓每條驗收都說得出「它在證明哪個需求」。一個 step 可以列多個 User Story，但斷言要真的驗到每一個；只證明程式跑得起來的 step，不算驗到任何需求。
@@ -276,7 +297,7 @@ assert add(2, 3) == 5
 
 寫在 `golden_path.json` 最上層，屬於核准計畫的一部分：
 
-- **`source_hash_exclude`** — 驗收指令產生的檔案（相對路徑 glob），例如 `[".coverage", "htmlcov", "dist", "*.log"]`。不設定時，指令只要寫檔，`verify-ticket` 就會以 `Project changed during verification` 拒絕。**不能涵蓋 `.harness`、`*` 或整個專案；排除原始碼會讓它的變更偵測不到。**
+- **`source_hash_exclude`** — 驗收指令產生的檔案或 artifact 目錄（相對路徑 glob），例如 `[".coverage", "htmlcov", "dist", "*.log", "artifacts"]`。不設定時，指令只要寫檔，`verify-ticket` 就會以 `Project changed during verification` 拒絕。**不能涵蓋 `.harness`、`*` 或整個專案；排除原始碼會讓它的變更偵測不到。**
 - **`env_passthrough`** — 指令額外需要的環境變數名稱。
 
 ### 5. 初始化並通過 TICKETS Gate
@@ -287,7 +308,7 @@ python harness/runner/runner.py set-ready-for-gate
 python harness/runner/runner.py gate-verdict --verdict PASS
 ```
 
-`init` 建立全 TODO state，**拒絕覆寫既有 state**。TICKETS Gate PASS 時會：驗證依賴圖與工單集合、檢查每張工單與每個 User Story 的驗收涵蓋、記錄核准計畫的指紋（工單檔 + `golden_path.json` + `SPEC.md`）、啟動第一張可執行工單。
+`init` 建立全 TODO state，**拒絕覆寫既有 state**。TICKETS Gate PASS 時會：驗證依賴圖與工單集合、檢查每張工單與每個 User Story 的驗收涵蓋、記錄核准計畫的指紋（`pipeline.json` + 工單檔 + `golden_path.json` + `SPEC.md`）、啟動第一張可執行工單。核准後修改其中任一檔案都會觸發 `PLAN_CHANGE_REQUIRES_DECISION`，不會靜默採用新定義。
 
 不要求所有前置工單在開工前已完成。
 
@@ -307,9 +328,16 @@ python harness/runner/runner.py mark-ticket-ready-for-review --ticket T-001
   "source_hash": "<64 位 SHA-256>",
   "verification_id": "<uuid4 hex>",
   "all_passed": true,
-  "results": [{"step_id": "GP-001", "status": "PASSED", "returncode": 0, "stdout": "", "stderr": ""}]
+  "evidence_tiers": ["deterministic"],
+  "results": [{
+    "step_id": "GP-001", "status": "PASSED", "returncode": 0,
+    "stdout": "", "stderr": "", "error": null,
+    "tier": "deterministic", "artifacts": []
+  }]
 }
 ```
+
+collector step 的 `tier` 是 `captured`，`artifacts` 會是 `[{"path": "artifacts/report.html", "sha256": "<64 位>"}]`。
 
 **把四個綁定欄位原樣抄進兩份 payload。** 這之後任何程式碼改動都會讓它們失效，必須重跑 `verify-ticket`。
 
@@ -336,12 +364,14 @@ python harness/runner/runner.py mark-ticket-ready-for-review --ticket T-001
   "source_hash": "<同上>",
   "verification_id": "<同上>",
   "verdict": "PASS",
-  "criteria": [{"id": "GP-001", "status": "PASS", "critical": true}],
+  "criteria": [{"id": "GP-001", "status": "PASS", "critical": true, "tier": "deterministic"}],
   "findings": []
 }
 ```
 
-**每個已啟用的 GP 都必須有一個 `critical: true` + `PASS` 的判準。** 額外的人工必要判準必須有 `status: "PASS"`、`source`（誰／何處觀察）、`limitations`（未涵蓋範圍），三個都缺 Runner 就拒收。
+**每個已啟用的 GP 都必須有一個 `critical: true` + `PASS` 的判準，且 `tier` 要和收據一致**（assertion → `deterministic`，collector → `captured`）。額外的人工必要判準必須 `tier: "declared"`、`status: "PASS"`，並附 `source`（誰／何處觀察）與 `limitations`（未涵蓋範圍）；缺任一欄 Runner 就拒收。
+
+舊版 review payload 沒有 `tier` 會被**明示拒收**；已存在的歷史 review artifact 不會被改寫。`pipeline.json` 可在 execution stage 宣告 `required_evidence_tiers`（例如 `["deterministic", "captured", "declared"]`），PASS 時少一層就拒收；`FIX_REQUIRED`／`USER_DECISION_REQUIRED` 不要求齊備，否則「失敗→修正→PASS」會被自己的證據門檻鎖死，但 `declared` 的 `source`／`limitations` 仍必填。
 
 人工文字**不能取代** GP 的受控執行證據——它是明確標示的操作者聲明，不是同一層級的東西。
 
@@ -358,9 +388,13 @@ python harness/runner/status.py --json
 
 ## 管線細節
 
+### Pipeline 定義檔
+
+`.harness/pipeline.json` 決定有哪些 stage、順序、planning／execution 類型、每個 planning stage 接受的 gate verdict、通過後前往哪個 stage、進入 execution stage 時要執行的 hook，以及該 stage 對 review 要求的 `required_evidence_tiers`。`status` 會依這份定義印出序列，條件 stage 加 `*`（例如 `DESIGN*`）。`init` 只接受專案檔案或明示的 `--pipeline <path>`，讀不到就拒絕，不會自動套用 bundled 預設；沒有記錄來源的舊 state 才會在執行期回退到 `harness/pipeline.default.json`，讓舊專案仍可讀。
+
 ### 規劃階段的 Gate
 
-`DISCOVERY`、`SPEC`、`TICKETS` 各自支援三種結果：
+預設 pipeline 的 `DISCOVERY`、`SPEC`、`TICKETS` 各自支援三種結果：
 
 | 結果 | 效果 |
 |---|---|
@@ -377,7 +411,7 @@ python harness/runner/status.py --json
 審查者另外要補一個人工判準：
 
 ```json
-{"id": "FINAL_INTEGRATION", "status": "PASS", "critical": true,
+{"id": "FINAL_INTEGRATION", "status": "PASS", "critical": true, "tier": "declared",
  "source": "執行完整測試套件並對照 US-001 行為", "limitations": "未涵蓋 Windows CI 環境"}
 ```
 

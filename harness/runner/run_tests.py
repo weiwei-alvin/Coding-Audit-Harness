@@ -44,6 +44,15 @@ def main():
     if not args.legacy_only:
         import test_review_fixes
         suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(test_review_fixes))
+    if not args.legacy_only:
+        import test_pipeline_definition
+        suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(test_pipeline_definition))
+    if not args.legacy_only:
+        import test_typed_verification
+        suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(test_typed_verification))
+    if not args.legacy_only:
+        import test_evidence_tiers
+        suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(test_evidence_tiers))
     log=io.StringIO()
     with contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
         result=unittest.TextTestRunner(stream=log,verbosity=2,resultclass=Result).run(suite)

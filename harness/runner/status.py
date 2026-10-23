@@ -37,6 +37,17 @@ class HarnessStatus:
         if not state:
             return {"error": "No valid state found"}
 
+        # Pipeline definition sequence (data-driven stages, conditional markers).
+        pipeline_sequence = None
+        pipeline_source = None
+        try:
+            from pipeline_definition import definition_for_state
+            definition = definition_for_state(self.project_root, state)
+            pipeline_sequence = definition.sequence_display()
+            pipeline_source = definition.source
+        except Exception:
+            pipeline_sequence = None
+
         # Ticket statistics
         tickets = state.get("tickets", {})
         total_tickets = len(tickets)
@@ -84,6 +95,8 @@ class HarnessStatus:
         return {
             "project_status": state.get("project_status"),
             "pipeline_stage": state.get("pipeline_stage"),
+            "pipeline_stages": pipeline_sequence,
+            "pipeline_definition_source": pipeline_source,
             "stage_status": state.get("stage_status"),
             "active_ticket_id": state.get("active_ticket_id"),
             "pause": pause_info,
@@ -126,6 +139,8 @@ class HarnessStatus:
         # Project status
         print(f"\nProject Status: {status['project_status']}")
         print(f"Pipeline Stage: {status['pipeline_stage']} ({status['stage_status']})")
+        if status.get('pipeline_stages'):
+            print(f"Pipeline Definition: {status['pipeline_stages']}")
         if status['active_ticket_id']:
             print(f"Active Ticket: {status['active_ticket_id']}")
         

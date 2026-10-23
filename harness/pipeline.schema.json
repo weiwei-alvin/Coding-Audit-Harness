@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pipeline.schema.json",
+  "title": "Harness Pipeline Definition",
+  "description": "Data-driven pipeline definition: which stages exist, their order, kind, gate verdicts and conditional markers. Replaces hardcoded stage tables (T-006).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "pipeline",
+    "stages"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1"
+    },
+    "pipeline": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable name of this pipeline definition."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stages": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "#/$defs/stage"
+      }
+    }
+  },
+  "$defs": {
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*$",
+          "description": "Stage identifier; becomes the state pipeline_stage value."
+        },
+        "kind": {
+          "enum": [
+            "planning",
+            "execution"
+          ],
+          "description": "planning stages are gated (READY_FOR_GATE) and forbid an active ticket; execution stages are ticket-driven."
+        },
+        "gate_verdicts": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "PASS",
+              "FIX_REQUIRED",
+              "USER_DECISION_REQUIRED"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Verdicts the gate accepts for this planning stage. Required for planning stages, forbidden for execution stages."
+        },
+        "next": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Stage entered when this planning stage's gate passes. Null only on a terminal stage."
+        },
+        "terminal": {
+          "type": "boolean",
+          "description": "True on the last stage; the project completes there."
+        },
+        "conditional": {
+          "type": "boolean",
+          "description": "True when the stage only applies under a condition (displayed with a marker, e.g. DESIGN*)."
+        },
+        "condition": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Machine-readable condition key for a conditional stage."
+        },
+        "on_gate_pass": {
+          "enum": [
+            "validate_ticket_dependencies"
+          ],
+          "description": "Extra check performed when this planning stage's gate passes."
+        },
+        "on_enter": {
+          "enum": [
+            "start_first_ticket"
+          ],
+          "description": "Action performed when the pipeline enters this execution stage."
+        },
+        "required_evidence_tiers": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "deterministic",
+              "captured",
+              "declared"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Evidence tiers a review at this execution stage must supply (T-008). A review missing any listed tier is rejected before state changes."
+        },
+        "entry": {
+          "type": "boolean",
+          "description": "Marks the stage where init lands (planning artifacts already exist as tickets). Exactly one stage per definition."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "planning"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "required": [
+              "gate_verdicts",
+              "next"
+            ],
+            "properties": {
+              "on_enter": false,
+              "required_evidence_tiers": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "execution"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "gate_verdicts": false,
+              "on_gate_pass": false,
+              "entry": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "conditional": {
+                "const": true
+              }
+            },
+            "required": [
+              "conditional"
+            ]
+          },
+          "then": {
+            "required": [
+              "condition"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

@@ -14,6 +14,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Set
 from dataclasses import dataclass
 
+from pipeline_definition import PipelineDefinitionError, definition_for_state, resolve_definition
+
 
 class ProjectStatus(Enum):
     IN_PROGRESS = "IN_PROGRESS"
@@ -78,33 +80,20 @@ class TransitionResult:
 class StateTransitionEngine:
     """
     Enforces all valid state transitions for the Harness.
-    
+
     State Model:
     - Project Status: IN_PROGRESS | PAUSED | COMPLETE
-    - Pipeline Stage: DISCOVERY | SPEC | TICKETS | IMPLEMENTATION | REVIEW
+    - Pipeline Stage: any stage declared by the resolved pipeline definition
     - Stage Status: IN_PROGRESS | READY_FOR_GATE
     - Active Ticket: T-<NNN> | null
     - Pause: {reason, decision_ref} | null
     - Tickets: {T-<NNN>: {status, review_attempts, active_findings}}
     - Findings: {F-<NNN>: {ticket_id, finding_key, status, ...}}
+
+    The stage set, order, gate verdicts and hooks come from the definition file.
+    The PipelineStage enum below is retained only as a compatibility alias for
+    callers that still import the historical names; it is not authoritative.
     """
-
-    # Valid Planning Stage Transitions (DISCOVERY, SPEC, TICKETS)
-    PLANNING_STAGE_TRANSITIONS = {
-        ("DISCOVERY", "IN_PROGRESS"): ["READY_FOR_GATE"],
-        ("DISCOVERY", "READY_FOR_GATE"): ["SPEC"],
-        ("SPEC", "IN_PROGRESS"): ["READY_FOR_GATE"],
-        ("SPEC", "READY_FOR_GATE"): ["TICKETS"],
-        ("TICKETS", "IN_PROGRESS"): ["READY_FOR_GATE"],
-        ("TICKETS", "READY_FOR_GATE"): ["IMPLEMENTATION"],
-    }
-
-    # Valid Gate Verdicts per Stage
-    GATE_VERDICTS = {
-        "DISCOVERY": [GateVerdict.PASS, GateVerdict.FIX_REQUIRED, GateVerdict.USER_DECISION_REQUIRED],
-        "SPEC": [GateVerdict.PASS, GateVerdict.FIX_REQUIRED, GateVerdict.USER_DECISION_REQUIRED],
-        "TICKETS": [GateVerdict.PASS, GateVerdict.FIX_REQUIRED, GateVerdict.USER_DECISION_REQUIRED],
-    }
 
     # Valid Ticket Status Transitions
     TICKET_TRANSITIONS = {
@@ -123,57 +112,64 @@ class StateTransitionEngine:
         ProjectStatus.COMPLETE: [],  # Terminal
     }
 
-    # Stage progression order
-    STAGE_ORDER = [
-        PipelineStage.DISCOVERY,
-        PipelineStage.SPEC,
-        PipelineStage.TICKETS,
-        PipelineStage.IMPLEMENTATION,
-        PipelineStage.REVIEW,
-    ]
-
-    def __init__(self, project_root=None):
+    def __init__(self, project_root=None, definition=None):
         self.project_root = Path(project_root or Path.cwd()).resolve()
+        resolved = definition or resolve_definition(self.project_root)
+        self.definition = resolved
+        # Compatibility views derived from the definition, never hardcoded stage
+        # data. Runtime methods re-resolve from the state so a recorded or
+        # project-owned definition wins over this construction-time view.
+        self.PLANNING_STAGE_TRANSITIONS = resolved.planning_transitions()
+        self.GATE_VERDICTS = {
+            stage_id: [GateVerdict(value) for value in resolved.gate_verdicts(stage_id)]
+            for stage_id in resolved.ids if resolved.kind(stage_id) == "planning"
+        }
+        self.STAGE_ORDER = list(resolved.ids)
 
     # ============================================================
     # PLANNING STAGE TRANSITIONS
     # ============================================================
 
     def advance_planning_stage(self, state: Dict, gate_verdict: GateVerdict) -> TransitionResult:
-        """Advance planning stage based on gate verdict."""
-        current_stage = PipelineStage(state["pipeline_stage"])
+        """Advance a planning stage using the stage's definition entry."""
+        try:
+            definition = definition_for_state(self.project_root, state)
+            stage_id = state["pipeline_stage"]
+            if not definition.is_planning(stage_id):
+                return TransitionResult(False, error=f"Stage {stage_id} is not a planning stage")
+            allowed = [GateVerdict(value) for value in definition.gate_verdicts(stage_id)]
+        except PipelineDefinitionError as exc:
+            return TransitionResult(False, error=str(exc))
+
         current_status = StageStatus(state["stage_status"])
 
         if state["project_status"] != "IN_PROGRESS":
             return TransitionResult(False, error="Project is not in progress")
         # Only allow gate when stage_status is READY_FOR_GATE
         if current_status != StageStatus.READY_FOR_GATE:
-            return TransitionResult(False, error=f"Stage {current_stage.value} not ready for gate (status: {current_status.value})")
+            return TransitionResult(False, error=f"Stage {stage_id} not ready for gate (status: {current_status.value})")
 
-        # Validate verdict
-        if gate_verdict not in self.GATE_VERDICTS.get(current_stage.value, []):
-            return TransitionResult(False, error=f"Invalid verdict {gate_verdict.value} for stage {current_stage.value}")
+        # Validate verdict against this stage's declared gate types
+        if gate_verdict not in allowed:
+            return TransitionResult(False, error=f"Invalid verdict {gate_verdict.value} for stage {stage_id}")
 
         if gate_verdict == GateVerdict.PASS:
-            # Advance to next stage
-            next_stage = self._get_next_planning_stage(current_stage)
+            next_stage = definition.next_stage(stage_id)
             if next_stage is None:
-                return TransitionResult(False, error=f"No next stage after {current_stage.value}")
+                return TransitionResult(False, error=f"No next stage after {stage_id}")
 
-            # If advancing from TICKETS to IMPLEMENTATION, validate all ticket dependencies
-            if current_stage == PipelineStage.TICKETS and next_stage == PipelineStage.IMPLEMENTATION:
+            # Definition-driven gate hook (e.g. ticket dependency validation).
+            if definition.hook(stage_id, "on_gate_pass") == "validate_ticket_dependencies":
                 dep_errors = self._validate_ticket_dependencies(state)
                 if dep_errors:
                     return TransitionResult(False, error="; ".join(dep_errors))
 
             new_state = self._deep_copy_state(state)
-            new_state["pipeline_stage"] = next_stage.value
+            new_state["pipeline_stage"] = next_stage
             new_state["stage_status"] = StageStatus.IN_PROGRESS.value
 
-            # If advancing to IMPLEMENTATION, need to start first available ticket
-            if next_stage == PipelineStage.IMPLEMENTATION:
-                # Find first TODO ticket to start (respecting dependencies)
-                tickets = new_state.get("tickets", {})
+            # Definition-driven entry hook (e.g. start the first ready ticket).
+            if definition.hook(next_stage, "on_enter") == "start_first_ticket":
                 from dependency_scheduler import DependencyScheduler
                 scheduler = DependencyScheduler(self.project_root)
                 first_todo = scheduler.get_next_ticket(new_state, scheduler.load_ticket_files())
@@ -181,11 +177,10 @@ class StateTransitionEngine:
                     new_state["tickets"][first_todo]["status"] = TicketStatus.IN_PROGRESS.value
                     new_state["active_ticket_id"] = first_todo
                 else:
-                    # No tickets yet - this is allowed, but active_ticket_id must be set when work starts
                     new_state["active_ticket_id"] = None
             else:
-                new_state["active_ticket_id"] = None  # Must be null in planning stages
-            
+                new_state["active_ticket_id"] = None  # Must be null outside ticket work
+
             return TransitionResult(True, new_state)
 
         elif gate_verdict == GateVerdict.FIX_REQUIRED:
@@ -199,20 +194,6 @@ class StateTransitionEngine:
             return TransitionResult(False, error="USER_DECISION_REQUIRED requires pause_project call with decision_ref")
 
         return TransitionResult(False, error=f"Unhandled verdict: {gate_verdict}")
-
-    def _get_next_planning_stage(self, current: PipelineStage) -> Optional[PipelineStage]:
-        """Get next planning stage."""
-        planning_stages = [PipelineStage.DISCOVERY, PipelineStage.SPEC, PipelineStage.TICKETS]
-        try:
-            idx = planning_stages.index(current)
-            if idx + 1 < len(planning_stages):
-                return planning_stages[idx + 1]
-            # After TICKETS, go to IMPLEMENTATION
-            if current == PipelineStage.TICKETS:
-                return PipelineStage.IMPLEMENTATION
-        except ValueError:
-            pass
-        return None
 
     def _validate_ticket_dependencies(self, state: Dict) -> List[str]:
         """Validate all ticket dependencies are satisfied before entering IMPLEMENTATION."""
@@ -237,12 +218,16 @@ class StateTransitionEngine:
         return errors
 
     def set_stage_ready_for_gate(self, state: Dict) -> TransitionResult:
-        """Mark current planning stage as ready for gate."""
+        """Mark a definition-declared planning stage as ready for gate."""
         if state["project_status"] != "IN_PROGRESS":
             return TransitionResult(False, error="Project is not in progress")
         current_stage = state["pipeline_stage"]
-        if current_stage not in [s.value for s in [PipelineStage.DISCOVERY, PipelineStage.SPEC, PipelineStage.TICKETS]]:
-            return TransitionResult(False, error=f"Stage {current_stage} is not a planning stage")
+        try:
+            definition = definition_for_state(self.project_root, state)
+            if not definition.is_planning(current_stage):
+                return TransitionResult(False, error=f"Stage {current_stage} is not a planning stage")
+        except PipelineDefinitionError as exc:
+            return TransitionResult(False, error=str(exc))
 
         if state["stage_status"] != StageStatus.IN_PROGRESS.value:
             return TransitionResult(False, error=f"Stage {current_stage} already {state['stage_status']}")
@@ -258,8 +243,12 @@ class StateTransitionEngine:
     def start_ticket(self, state: Dict, ticket_id: str) -> TransitionResult:
         """Start a ticket (TODO -> IN_PROGRESS)."""
         # Validate project state
-        if state["pipeline_stage"] not in [PipelineStage.IMPLEMENTATION.value, PipelineStage.REVIEW.value]:
-            return TransitionResult(False, error=f"Cannot start ticket in stage {state['pipeline_stage']}")
+        try:
+            definition = definition_for_state(self.project_root, state)
+            if not definition.is_execution(state["pipeline_stage"]):
+                return TransitionResult(False, error=f"Cannot start ticket in stage {state['pipeline_stage']}")
+        except PipelineDefinitionError as exc:
+            return TransitionResult(False, error=str(exc))
 
         if state["project_status"] != ProjectStatus.IN_PROGRESS.value:
             return TransitionResult(False, error=f"Project not in progress: {state['project_status']}")
@@ -436,14 +425,21 @@ class StateTransitionEngine:
     # ============================================================
 
     def process_gate_verdict(self, state: Dict, verdict: GateVerdict, decision_ref: Optional[str] = None) -> TransitionResult:
-        """Process gate verdict for planning stages."""
-        current_stage = PipelineStage(state["pipeline_stage"])
-
-        if current_stage not in [PipelineStage.DISCOVERY, PipelineStage.SPEC, PipelineStage.TICKETS]:
-            return TransitionResult(False, error=f"Gate verdict not applicable in stage {current_stage.value}")
+        """Process gate verdict for a definition-declared planning stage."""
+        try:
+            definition = definition_for_state(self.project_root, state)
+            stage_id = state["pipeline_stage"]
+            if not definition.is_planning(stage_id):
+                return TransitionResult(False, error=f"Gate verdict not applicable in stage {stage_id}")
+            allowed = [GateVerdict(value) for value in definition.gate_verdicts(stage_id)]
+        except PipelineDefinitionError as exc:
+            return TransitionResult(False, error=str(exc))
 
         if state["stage_status"] != StageStatus.READY_FOR_GATE.value:
             return TransitionResult(False, error=f"Stage not ready for gate: {state['stage_status']}")
+
+        if verdict not in allowed:
+            return TransitionResult(False, error=f"Invalid verdict {verdict.value} for stage {stage_id}")
 
         if verdict == GateVerdict.PASS:
             return self.advance_planning_stage(state, verdict)
@@ -659,12 +655,16 @@ class StateTransitionEngine:
 # CONVENIENCE FUNCTIONS
 # ============================================================
 
-def create_initial_state() -> Dict:
-    """Create initial state for a new project."""
+def create_initial_state(first_stage: str) -> Dict:
+    """Create initial state for a new project.
+
+    first_stage must be the resolved pipeline definition's entry stage (T-006);
+    no stage name is assumed here.
+    """
     return {
         "schema_version": "1.1",
         "project_status": ProjectStatus.IN_PROGRESS.value,
-        "pipeline_stage": PipelineStage.DISCOVERY.value,
+        "pipeline_stage": first_stage,
         "stage_status": StageStatus.IN_PROGRESS.value,
         "active_ticket_id": None,
         "pause": None,

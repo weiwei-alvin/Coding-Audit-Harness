@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "verification-receipt.schema.json",
+  "title": "Verification Receipt",
+  "description": "Machine-written receipt for one ticket verification round (T-007/T-008). New receipts always carry evidence_tiers, a per-result tier and SHA-256 artifact receipts for collector steps. Legacy receipts written before T-008 lack those fields and remain readable, but are never rewritten.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ticket_id",
+    "review_round",
+    "source_hash",
+    "verification_id",
+    "all_passed",
+    "evidence_tiers",
+    "results"
+  ],
+  "properties": {
+    "ticket_id": {
+      "type": "string",
+      "pattern": "^T-[0-9]{3,}$"
+    },
+    "review_round": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "source_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "verification_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "all_passed": {
+      "type": "boolean"
+    },
+    "evidence_tiers": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "deterministic",
+          "captured"
+        ]
+      },
+      "uniqueItems": true,
+      "description": "Tiers supported by passed results in this receipt. A failed receipt may have an empty list."
+    },
+    "results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "step_id",
+          "status",
+          "stdout",
+          "stderr",
+          "returncode",
+          "error",
+          "tier",
+          "artifacts"
+        ],
+        "properties": {
+          "step_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PASSED",
+              "FAILED",
+              "UNVERIFIED"
+            ]
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "returncode": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "deterministic",
+              "captured"
+            ],
+            "description": "assertion steps are deterministic; collector steps that declare expected_artifacts are captured."
+          },
+          "artifacts": {
+            "type": "array",
+            "description": "Existing declared artifacts, each with a project-relative path and SHA-256. Missing artifacts make the step fail.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "path",
+                "sha256"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "gate-result.schema.json",
   "title": "Gate Verdict Payload",
-  "description": "Structured payload an Agent submits for a DISCOVERY, SPEC or TICKETS Gate Check. The Runner validates this, checks it against the State Transition tables in the Harness main document, and only then updates state.json. This payload is never written directly into state.json.",
+  "description": "Structured payload an Agent submits for a planning-stage Gate Check. Valid stage IDs and their accepted verdicts come from the project's pipeline definition; the Runner validates the payload against state.json before updating it. This payload is never written directly into state.json.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -13,12 +13,8 @@
   "properties": {
     "stage": {
       "type": "string",
-      "enum": [
-        "DISCOVERY",
-        "SPEC",
-        "TICKETS"
-      ],
-      "description": "Which planning Stage this Gate Check evaluated."
+      "pattern": "^[A-Z][A-Z0-9_]*$",
+      "description": "Which definition-declared planning stage this Gate Check evaluated."
     },
     "verdict": {
       "type": "string",

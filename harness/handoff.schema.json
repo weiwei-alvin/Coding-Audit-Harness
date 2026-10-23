@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "handoff.schema.json",
   "title": "Implementation Handoff Payload",
-  "description": "Structured payload submitted by IMPLEMENTATION when a Ticket reaches READY_FOR_REVIEW. Mirrors implementation-audit's Verification Evidence and Handoff Completeness criteria.",
+  "description": "Structured payload submitted by the ticket execution stage when a Ticket reaches READY_FOR_REVIEW. Mirrors implementation-audit's Verification Evidence and Handoff Completeness criteria.",
   "type": "object",
   "additionalProperties": false,
   "required": [

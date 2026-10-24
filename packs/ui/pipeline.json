@@ -1,0 +1,71 @@
+{
+  "schema_version": "0.1",
+  "pipeline": "ui-pack",
+  "description": "Bundled reference pipeline for projects that enable the ui-pack (T-009). One conditional DESIGN stage is inserted between SPEC and TICKETS: it is active when the project's declared golden path contains any collector verification step (golden_path_declares_collector), and the TICKETS gate refuses PASS until DESIGN's own gate has PASSed. Pure-code projects keep the code-default pipeline, which has no UI stage. Entry is DISCOVERY so a real UI case walks every gate and records gate history.",
+  "stages": [
+    {
+      "id": "DISCOVERY",
+      "kind": "planning",
+      "gate_verdicts": [
+        "PASS",
+        "FIX_REQUIRED",
+        "USER_DECISION_REQUIRED"
+      ],
+      "next": "SPEC",
+      "entry": true
+    },
+    {
+      "id": "SPEC",
+      "kind": "planning",
+      "gate_verdicts": [
+        "PASS",
+        "FIX_REQUIRED",
+        "USER_DECISION_REQUIRED"
+      ],
+      "next": "DESIGN"
+    },
+    {
+      "id": "DESIGN",
+      "kind": "planning",
+      "gate_verdicts": [
+        "PASS",
+        "FIX_REQUIRED",
+        "USER_DECISION_REQUIRED"
+      ],
+      "next": "TICKETS",
+      "conditional": true,
+      "condition": "golden_path_declares_collector"
+    },
+    {
+      "id": "TICKETS",
+      "kind": "planning",
+      "gate_verdicts": [
+        "PASS",
+        "FIX_REQUIRED",
+        "USER_DECISION_REQUIRED"
+      ],
+      "next": "IMPLEMENTATION",
+      "on_gate_pass": [
+        "validate_ticket_dependencies",
+        "require_conditional_gates"
+      ]
+    },
+    {
+      "id": "IMPLEMENTATION",
+      "kind": "execution",
+      "next": "REVIEW",
+      "on_enter": "start_first_ticket"
+    },
+    {
+      "id": "REVIEW",
+      "kind": "execution",
+      "next": null,
+      "terminal": true,
+      "required_evidence_tiers": [
+        "deterministic",
+        "captured",
+        "declared"
+      ]
+    }
+  ]
+}

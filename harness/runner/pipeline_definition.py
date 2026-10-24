@@ -21,6 +21,11 @@ PROJECT_PIPELINE_RELATIVE = Path(".harness") / "pipeline.json"
 
 STAGE_STATUSES = ("IN_PROGRESS", "READY_FOR_GATE")
 KNOWN_HOOKS = ("validate_ticket_dependencies", "start_first_ticket")
+GATE_HOOKS = ("validate_ticket_dependencies", "require_conditional_gates")
+# Kernel-evaluated activation conditions for conditional stages. Keys are
+# domain-neutral: a value is active when the project's own declared data
+# matches it. Unknown keys stay display-only unless a gate hook evaluates them.
+CONDITION_KEYS = ("golden_path_declares_collector",)
 
 
 class PipelineDefinitionError(ValueError):
@@ -65,7 +70,7 @@ class PipelineDefinition:
     def approval_stage(self):
         """Planning stage whose PASS approves the plan, if the definition declares one."""
         for stage in self.stages:
-            if stage.get("on_gate_pass") == "validate_ticket_dependencies":
+            if "validate_ticket_dependencies" in self.gate_hooks(stage["id"]):
                 return stage["id"]
         return None
 
@@ -92,6 +97,30 @@ class PipelineDefinition:
 
     def hook(self, stage_id, name):
         return self._stage(stage_id).get(name)
+
+    def gate_hooks(self, stage_id):
+        """Gate hooks declared for a planning stage; a string stays accepted."""
+        value = self._stage(stage_id).get("on_gate_pass")
+        if value is None:
+            return []
+        return [value] if isinstance(value, str) else list(value)
+
+    def conditional_stage_errors(self):
+        """Strictness for definitions that ask the kernel to enforce conditions.
+
+        Without this hook a conditional stage is a display marker only. With it,
+        every condition must be one the kernel can actually evaluate, so an
+        unenforceable stage can never claim enforcement.
+        """
+        errors = []
+        if any("require_conditional_gates" in self.gate_hooks(s["id"]) for s in self.stages):
+            for stage in self.stages:
+                if stage.get("conditional") and stage.get("condition") not in CONDITION_KEYS:
+                    errors.append(
+                        f"Stage {stage['id']} uses condition {stage.get('condition')!r} "
+                        f"but a require_conditional_gates hook is declared; "
+                        f"supported conditions: {', '.join(CONDITION_KEYS)}")
+        return errors
 
     def is_conditional(self, stage_id):
         return bool(self._stage(stage_id).get("conditional"))
@@ -139,7 +168,17 @@ def _semantic_errors(data):
             errors.append(f"Stage {stage['id']} cannot be its own next stage")
         for hook_name in ("on_gate_pass", "on_enter"):
             hook = stage.get(hook_name)
-            if hook is not None and hook not in KNOWN_HOOKS:
+            if hook is None:
+                continue
+            if hook_name == "on_gate_pass":
+                hooks = [hook] if isinstance(hook, str) else hook
+                if isinstance(hook, list):
+                    for name in hooks:
+                        if name not in GATE_HOOKS:
+                            errors.append(f"Stage {stage['id']} uses unknown gate hook on_gate_pass={name}")
+                    if len(hooks) != len(set(hooks)):
+                        errors.append(f"Stage {stage['id']} declares duplicate gate hooks")
+            elif hook not in KNOWN_HOOKS:
                 errors.append(f"Stage {stage['id']} uses unknown hook {hook_name}={hook}")
         if stage.get("required_evidence_tiers") and stage["kind"] != "execution":
             errors.append(f"Stage {stage['id']} must be an execution stage to require evidence tiers")
@@ -176,7 +215,12 @@ def load_definition(path):
     if semantic:
         raise PipelineDefinitionError(
             f"Pipeline definition is inconsistent: {path}: {'; '.join(semantic)}")
-    return PipelineDefinition(data, path, raw)
+    definition = PipelineDefinition(data, path, raw)
+    strict = definition.conditional_stage_errors()
+    if strict:
+        raise PipelineDefinitionError(
+            f"Pipeline definition is inconsistent: {path}: {'; '.join(strict)}")
+    return definition
 
 
 def resolve_definition(project_root, explicit_path=None, allow_bundled=True):

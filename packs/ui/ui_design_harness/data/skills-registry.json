@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.1",
+  "kind": "skills_registry",
+  "updated_date": "2026-10-19",
+  "note": "v1 只登錄 docs/replan/SPEC.md 30 repo 盤點中可解析出 owner/repo 的平台層參考；desktop/mobile 與三個 need 層刻意留空（未知平台或未推導 need 即空路由，合法）。三筆皆為 unverified：pin 只是 2026-10-19 由 GitHub API 讀到的 default branch HEAD，本機未 clone、未讀內容、未執行。",
+  "platforms": {
+    "web": {
+      "skills": [
+        {
+          "id": "SKL-001",
+          "name": "web-interface-guidelines",
+          "repo": "vercel-labs/web-interface-guidelines",
+          "version_pin": "434b7f91364665f2f733b310ec54809bf8f37937",
+          "pin_kind": "commit",
+          "status": "unverified",
+          "why": "交接 rules 欄位的條目蒸餾自這份 Web 介面指南；實作者需要完整規範時查閱它。",
+          "source": "docs/replan/SPEC.md 30 repo 盤點（2026-10-17）",
+          "pinned_at": "2026-10-19"
+        },
+        {
+          "id": "SKL-002",
+          "name": "impeccable",
+          "repo": "pbakaus/impeccable",
+          "version_pin": "0665bd812ae0908fcab17b96fd4f840defb882d9",
+          "pin_kind": "commit",
+          "status": "unverified",
+          "why": "設計語言與品味判斷的參考來源；品味屬人工判定，本階段不執行任何判定。",
+          "source": "docs/replan/SPEC.md 30 repo 盤點（2026-10-17）",
+          "pinned_at": "2026-10-19"
+        },
+        {
+          "id": "SKL-003",
+          "name": "no-slop-ui",
+          "repo": "LeoStehlik/no-slop-ui",
+          "version_pin": "3c8f9e5ef5ca18f5632f7b9ad8f95e2d68188bcf",
+          "pin_kind": "commit",
+          "status": "unverified",
+          "why": "禁用 AI-slop 模式的來源；決定性規則庫由其蒸餾，此處提供上游原文。",
+          "source": "docs/replan/SPEC.md 30 repo 盤點（2026-10-17）",
+          "pinned_at": "2026-10-19"
+        }
+      ],
+      "needs": {
+        "motion": [],
+        "iconography": [],
+        "design_reference": []
+      }
+    }
+  }
+}

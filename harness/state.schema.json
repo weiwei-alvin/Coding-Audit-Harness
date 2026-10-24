@@ -43,6 +43,16 @@
       ],
       "description": "Execution status within the current stage. Planning stages use it for gate readiness; ticket-driven stages use ticket status for detailed state."
     },
+    "stage_gates": {
+      "type": "object",
+      "description": "Gate history: each PASSed planning stage is recorded here when its gate passes (T-009 conditional-stage guard). Optional; states written before T-009 lack it and read unchanged.",
+      "patternProperties": {
+        "^[A-Z][A-Z0-9_]*$": {
+          "const": "PASS"
+        }
+      },
+      "additionalProperties": false
+    },
     "active_ticket_id": {
       "oneOf": [
         {

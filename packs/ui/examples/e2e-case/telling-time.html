@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4f7cff">
+<meta name="robots" content="noindex">
+<title>英文報時大挑戰 Telling the Time</title>
+<style>
+:root{--bg:#f3f6ff;--card:#fff;--ink:#1f2a44;--muted:#6b7591;--pri:#4f7cff;--pri2:#3a62e0;--ok:#1fa971;--okbg:#e6f8f0;--bad:#e5484d;--badbg:#fdecec;--warn:#ffb020;--r:18px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;font-size:18px;line-height:1.45}
+body{min-height:100vh;min-height:100dvh}
+.wrap{max-width:560px;margin:0 auto;padding:16px 16px calc(96px + env(safe-area-inset-bottom))}
+.card{background:var(--card);border-radius:var(--r);box-shadow:0 6px 24px rgba(40,60,120,.08);padding:20px}
+h1{font-size:1.6rem;margin:.2em 0 .1em;text-align:center}
+.sub{color:var(--muted);text-align:center;margin:0 0 16px}
+.hero{font-size:3.2rem;text-align:center;margin-top:6px}
+label{font-weight:700;display:block;margin:14px 0 6px}
+input[type=text]{width:100%;font-size:1.15rem;padding:14px 16px;border:2px solid #d6dcef;border-radius:14px;outline:none;background:#fbfcff}
+input[type=text]:focus{border-color:var(--pri)}
+.btn{display:block;width:100%;min-height:56px;border:0;border-radius:16px;font-size:1.15rem;font-weight:800;background:var(--pri);color:#fff;cursor:pointer;margin-top:16px;box-shadow:0 4px 0 var(--pri2)}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 var(--pri2)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:#eef2ff;color:var(--pri2);box-shadow:none}
+.rules{background:#f7f9ff;border-radius:14px;padding:10px 14px;margin-top:14px;color:#3d4766;font-size:.95rem}
+.rules li{margin:3px 0}
+.err{color:var(--bad);font-size:.95rem;min-height:1.3em;margin-top:6px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;font-weight:700}
+.pill{background:#fff;border-radius:999px;padding:6px 12px;box-shadow:0 2px 8px rgba(40,60,120,.07);font-size:.95rem;white-space:nowrap}
+.streak{color:#e46b00}
+.prog{height:12px;background:#dfe5f7;border-radius:999px;overflow:hidden;margin:6px 0 12px}
+.prog>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#4f7cff,#7aa2ff);transition:width .35s}
+.timer{height:8px;background:#e9ecf5;border-radius:999px;overflow:hidden;margin:0 0 14px}
+.timer>i{display:block;height:100%;width:100%;background:var(--ok);transition:width 1s linear,background .3s}
+.qtag{display:inline-block;font-size:.8rem;font-weight:800;color:var(--pri2);background:#eef2ff;border-radius:999px;padding:3px 10px;margin-bottom:6px}
+.qtext{font-size:1.2rem;font-weight:700;margin:4px 0 10px}
+.qtext .en{display:block;font-size:1.35rem;color:#16306e}
+.say{font-size:1.5rem;font-weight:800;text-align:center;background:#fff7e6;border-radius:14px;padding:12px;margin:6px 0 12px;color:#7a4a00}
+.clockbox{display:flex;justify-content:center;margin:4px 0 10px}
+.clockbox svg{width:min(62vw,230px);height:auto}
+.digital{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:2.4rem;font-weight:800;text-align:center;background:#1f2a44;color:#7dffb2;border-radius:14px;padding:8px 0;margin:6px auto 12px;max-width:220px;letter-spacing:2px}
+.opts{display:grid;gap:10px}
+.opts.grid2{grid-template-columns:1fr 1fr}
+.opt{min-height:58px;border:2px solid #d6dcef;background:#fff;border-radius:16px;font-size:1.15rem;font-weight:700;color:var(--ink);padding:10px 12px;cursor:pointer;text-align:center}
+.opt.time{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:1.5rem}
+.opt:active{background:#f1f4ff}
+.opt.correct{border-color:var(--ok);background:var(--okbg);color:#0d6b45}
+.opt.wrong{border-color:var(--bad);background:var(--badbg);color:#a3181c}
+.opt:disabled{cursor:default}
+.answerline{min-height:64px;border:2px dashed #b9c4e6;border-radius:16px;padding:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#fbfcff;margin-bottom:10px}
+.answerline .ph{color:#9aa3bd;font-size:.95rem;padding-left:6px}
+.tiles{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:6px}
+.tile{min-height:52px;min-width:64px;padding:8px 16px;border-radius:14px;border:0;background:#eef2ff;color:#1b3a8f;font-size:1.2rem;font-weight:800;box-shadow:0 3px 0 #c8d3f5;cursor:pointer}
+.tile.used{visibility:hidden}
+.tile.inline{background:#4f7cff;color:#fff;box-shadow:0 3px 0 var(--pri2)}
+.row{display:flex;gap:10px}
+.row .btn{margin-top:8px}
+.fb{margin-top:14px;border-radius:14px;padding:12px 14px;display:none}
+.fb.show{display:block;animation:pop .25s ease}
+.fb.ok{background:var(--okbg);border:2px solid #9be0c2}
+.fb.bad{background:var(--badbg);border:2px solid #f5b5b7}
+.fb .h{font-weight:800;font-size:1.15rem}
+.fb .ans{margin-top:4px;font-weight:700}
+.fb .ex{margin-top:6px;color:#3d4766;font-size:1rem}
+.pts{float:right;font-weight:800;color:var(--ok)}
+@keyframes pop{from{transform:scale(.97);opacity:0}to{transform:scale(1);opacity:1}}
+.result{text-align:center;border-radius:22px;padding:22px 18px;color:#fff;background:linear-gradient(135deg,#4f7cff,#7b5cff);box-shadow:0 10px 30px rgba(79,124,255,.35)}
+.result .nm{font-size:1.5rem;font-weight:800;word-break:break-all}
+.result .big{font-size:3.6rem;font-weight:900;line-height:1.1;margin:6px 0}
+.result .stars{font-size:2rem;letter-spacing:4px}
+.result .meta{display:flex;justify-content:space-around;margin-top:10px;font-weight:700}
+.result .meta b{display:block;font-size:1.5rem}
+.result .stamp{margin-top:10px;font-size:.85rem;opacity:.85}
+.missed{margin-top:16px}
+.missed h3{margin:0 0 8px;font-size:1.1rem}
+.mi{border-left:5px solid var(--bad);background:#fff;border-radius:12px;padding:10px 12px;margin-bottom:8px;box-shadow:0 2px 8px rgba(40,60,120,.06)}
+.mi .q{font-weight:700}
+.mi .a{color:#0d6b45;font-weight:800}
+.mi .y{color:#a3181c;font-size:.95rem}
+.allok{background:var(--okbg);border-radius:12px;padding:12px;text-align:center;font-weight:800;color:#0d6b45}
+.hidden{display:none!important}
+.foot{color:var(--muted);font-size:.8rem;text-align:center;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- START -->
+<section id="start" class="card">
+  <div class="hero">⏰</div>
+  <h1>英文報時大挑戰</h1>
+  <p class="sub">Telling the Time · past / to / a quarter / half</p>
+  <label for="nick">暱稱或座號（登入）</label>
+  <input id="nick" type="text" maxlength="16" placeholder="例如：12號 小明" autocomplete="off">
+  <div class="err" id="nickErr"></div>
+  <ul class="rules">
+    <li>共 60 題，包含 5 種題型 💪</li>
+    <li>每題 30 秒，答對 +100 分</li>
+    <li>連續答對有連勝加分 🔥（最多 +50）</li>
+    <li>名字只存在這支手機的畫面上，不會傳送到任何地方</li>
+  </ul>
+  <button class="btn" id="startBtn">開始挑戰 ▶</button>
+</section>
+
+<!-- QUIZ -->
+<section id="quiz" class="hidden">
+  <div class="topbar">
+    <span class="pill" id="qnum">第 1 / 60 題</span>
+    <span class="pill streak" id="streak">🔥 0</span>
+    <span class="pill" id="score">⭐ 0</span>
+  </div>
+  <div class="prog"><i id="progBar"></i></div>
+  <div class="card">
+    <div class="timer"><i id="timerBar"></i></div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span class="qtag" id="qtag"></span>
+      <span class="pill" id="timeLeft" style="box-shadow:none;background:#f3f6ff">⏱ 30</span>
+    </div>
+    <div id="qbody"></div>
+    <div class="fb" id="fb"></div>
+    <button class="btn hidden" id="nextBtn">下一題 ➜</button>
+  </div>
+</section>
+
+<!-- END -->
+<section id="end" class="hidden">
+  <div class="result" id="resultCard"></div>
+  <div class="card missed" id="missed"></div>
+  <button class="btn" id="againBtn">🔀 再玩一次（題目重新洗牌）</button>
+  <button class="btn ghost" id="homeBtn">換人玩（回到開始）</button>
+  <p class="foot">截圖或把這張成績卡拿給老師看 📸</p>
+</section>
+
+</div>
+<script>
+"use strict";
+/* ===================== 題目資料 QUESTIONS ===================== */
+/* type: clock (看鐘選說法) | phrase (看說法選數字時間) | build (點字卡組句) | type (輸入) | situation */
+var QUESTIONS = [
+  { id:1, type:"clock", h:5, m:30, level:1,
+    prompt:"What time is it?", zh:"看時鐘，選出正確的說法。",
+    options:["half past five","half past six","half to six","a quarter past five"],
+    answer:"half past five",
+    ex:"5:30 → 剛好過了一半：half past five。half 只搭配 past，不說 half to。" },
+  { id:2, type:"clock", h:10, m:15, level:1,
+    prompt:"What time is it?", zh:"看時鐘，選出正確的說法。",
+    options:["a quarter past ten","a quarter to ten","a quarter to eleven","half past ten"],
+    answer:"a quarter past ten",
+    ex:"10:15 → 過了 15 分 = 一刻（a quarter），用 past 加「現在的小時」：a quarter past ten（美式也可說 a quarter after ten）。" },
+  { id:3, type:"phrase", h:4, m:10, level:1,
+    prompt:"ten past four", zh:"這個說法是幾點幾分？",
+    options:["4:10","3:50","10:04","4:40"],
+    answer:"4:10",
+    ex:"past = 過了。ten past four = 4 點過 10 分 = 4:10。（3:50 是 ten to four）" },
+  { id:4, type:"clock", h:1, m:45, level:2,
+    prompt:"What time is it?", zh:"看時鐘，選出正確的說法。",
+    options:["a quarter to two","a quarter to one","a quarter past one","a quarter past two"],
+    answer:"a quarter to two",
+    ex:"1:45 → 過了 30 分改用 to：還差 15 分（a quarter）到 2 點。小時要加 1，所以是 a quarter to two，不是 a quarter to one。" },
+  { id:5, type:"phrase", h:10, m:55, level:2,
+    prompt:"five to eleven", zh:"這個說法是幾點幾分？",
+    options:["10:55","11:55","11:05","10:05"],
+    answer:"10:55",
+    ex:"to = 還差幾分到。five to eleven = 還差 5 分到 11 點 = 10:55。看到 to，數字時間的小時要減 1。" },
+  { id:6, type:"clock", h:8, m:40, level:2,
+    prompt:"What time is it?", zh:"看時鐘，選出正確的說法。",
+    options:["twenty to nine","twenty to eight","twenty past eight","ten to nine"],
+    answer:"twenty to nine",
+    ex:"8:40 → 過了 30 分用 to：60 − 40 = 還差 20 分到 9 點 → twenty to nine（美式也可說 twenty of nine）。" },
+  { id:7, type:"build", h:4, m:45, level:3,
+    prompt:"點字卡，拼出這個時間的英文說法。", zh:"",
+    tiles:["a","quarter","to","past","half","four","five"],
+    accept:["a quarter to five","a quarter of five"],
+    answer:"a quarter to five",
+    ex:"4:45 → 還差 15 分到 5 點：a quarter to five。小時要加 1（five，不是 four）；quarter 前面要加 a。" },
+  { id:8, type:"type", h:7, m:20, level:3,
+    prompt:"用英文寫出這個時間（請用 past 或 to）。", zh:"",
+    accept:["twenty past seven","twenty after seven","20 past 7","20 past seven","twenty past 7"],
+    answer:"twenty past seven",
+    placeholder:"例如：ten past six",
+    ex:"7:20 → 還沒過 30 分，用 past：twenty past seven（美式也可說 twenty after seven）。" },
+  { id:9, type:"situation", h:7, m:55, level:3, showDigital:true,
+    prompt:"School starts at 7:55. Your friend asks you, \"What time does school start?\"",
+    zh:"學校 7:55 上課，你要怎麼回答？",
+    say:"It starts at ______.",
+    options:["five to eight","five past seven","five to seven","fifty-five past seven"],
+    answer:"five to eight",
+    ex:"7:55 → 還差 5 分到 8 點：five to eight。過了 30 分要用 to，而且小時加 1；英文不說 fifty-five past。" },
+  { id:10, type:"situation", h:9, m:35, level:3, timeOptions:true,
+    prompt:"Ben: \"The concert starts at twenty-five to ten.\"",
+    zh:"演唱會門票上印的時間應該是哪一個？",
+    options:["9:35","10:35","9:25","10:25"],
+    answer:"9:35",
+    ex:"twenty-five to ten = 還差 25 分到 10 點 → 60 − 25 = 35，所以是 9:35。to 的說法，數字時間小時要減 1。" },
+  {"id":11,"type":"clock","h":2,"m":5,"level":1,"prompt":"What time is it?","zh":"看時鐘，選出正確的說法。","options":["five past two","five past three","five to three","five past one"],"answer":"five past two","ex":"2:05 → 過了 5 分，用 past 加現在的小時：five past two。"},
+  {"id":12,"type":"clock","h":6,"m":10,"level":1,"prompt":"What time is it?","zh":"看時鐘，選出正確的說法。","options":["ten past six","ten past seven","ten to seven","ten past five"],"answer":"ten past six","ex":"6:10 → 過了 10 分，用 past 加現在的小時：ten past six。"},
+  {"id":13,"type":"clock","h":9,"m":15,"level":1,"prompt":"What time is it?","zh":"看時鐘，選出正確的說法。","options":["a quarter past nine","a quarter past ten","a quarter to ten","a quarter past eight"],"answer":"a quarter past nine","ex":"9:15 → 過了 15 分，用 past 加現在的小時：a quarter past nine。"},
+  {"id":14,"type":"clock","h":12,"m":30,"level":1,"prompt":"What time is it?","zh":"看時鐘，選出正確的說法。","options":["half past twelve","half past one","a quarter past twelve","half past eleven"],"answer":"half past twelve","ex":"12:30 → 過了半小時，用 past 加現在的小時：half past twelve。"},
+  {"id":15,"type":"clock","h":3,"m":40,"level":2,"prompt":"What time is it?","zh":"看時鐘，選出正確的說法。","options":["twenty to four","twenty to five","twenty past three","twenty to three"],"answer":"twenty to four","ex":"3:40 → 60 − 40 = 20，還差 20 分到 4 點：twenty to four。"},
+  {"id":16,"type":"clock","h":11,"m":45,"level":2,"prompt":"What time is it?","zh":"看時鐘，選出正確的說法。","options":["a quarter to twelve","a quarter to one","a quarter past eleven","a quarter to eleven"],"answer":"a quarter to twelve","ex":"11:45 → 60 − 45 = 15，還差 15 分到 12 點：a quarter to twelve。11 點的下一個小時是 12 點。"},
+  {"id":17,"type":"clock","h":4,"m":50,"level":2,"prompt":"What time is it?","zh":"看時鐘，選出正確的說法。","options":["ten to five","ten to six","ten past four","ten to four"],"answer":"ten to five","ex":"4:50 → 60 − 50 = 10，還差 10 分到 5 點：ten to five。"},
+  {"id":18,"type":"clock","h":12,"m":55,"level":2,"prompt":"What time is it?","zh":"看時鐘，選出正確的說法。","options":["five to one","five to two","five past twelve","five to twelve"],"answer":"five to one","ex":"12:55 → 60 − 55 = 5，還差 5 分到 1 點：five to one。12 點的下一個小時是 1 點。"},
+  {"id":19,"type":"phrase","h":1,"m":5,"level":1,"prompt":"five past one","zh":"這個說法是幾點幾分？","options":["1:05","2:05","1:55","12:05"],"answer":"1:05","ex":"1:05 → 過了 5 分，用 past 加現在的小時：five past one。"},
+  {"id":20,"type":"phrase","h":8,"m":10,"level":1,"prompt":"ten past eight","zh":"這個說法是幾點幾分？","options":["8:10","9:10","8:50","7:10"],"answer":"8:10","ex":"8:10 → 過了 10 分，用 past 加現在的小時：ten past eight。"},
+  {"id":21,"type":"phrase","h":3,"m":15,"level":1,"prompt":"a quarter past three","zh":"這個說法是幾點幾分？","options":["3:15","4:15","3:45","2:15"],"answer":"3:15","ex":"3:15 → 過了 15 分，用 past 加現在的小時：a quarter past three。"},
+  {"id":22,"type":"phrase","h":6,"m":20,"level":1,"prompt":"twenty past six","zh":"這個說法是幾點幾分？","options":["6:20","7:20","6:40","5:20"],"answer":"6:20","ex":"6:20 → 過了 20 分，用 past 加現在的小時：twenty past six。"},
+  {"id":23,"type":"phrase","h":10,"m":25,"level":1,"prompt":"twenty-five past ten","zh":"這個說法是幾點幾分？","options":["10:25","11:25","10:35","9:25"],"answer":"10:25","ex":"10:25 → 過了 25 分，用 past 加現在的小時：twenty-five past ten。"},
+  {"id":24,"type":"phrase","h":2,"m":30,"level":1,"prompt":"half past two","zh":"這個說法是幾點幾分？","options":["2:30","3:30","2:15","1:30"],"answer":"2:30","ex":"2:30 → 過了半小時，用 past 加現在的小時：half past two。"},
+  {"id":25,"type":"phrase","h":5,"m":35,"level":2,"prompt":"twenty-five to six","zh":"這個說法是幾點幾分？","options":["5:35","6:35","5:25","4:35"],"answer":"5:35","ex":"5:35 → 60 − 35 = 25，還差 25 分到 6 點：twenty-five to six。"},
+  {"id":26,"type":"phrase","h":9,"m":40,"level":2,"prompt":"twenty to ten","zh":"這個說法是幾點幾分？","options":["9:40","10:40","9:20","8:40"],"answer":"9:40","ex":"9:40 → 60 − 40 = 20，還差 20 分到 10 點：twenty to ten。"},
+  {"id":27,"type":"phrase","h":11,"m":50,"level":2,"prompt":"ten to twelve","zh":"這個說法是幾點幾分？","options":["11:50","12:50","11:10","10:50"],"answer":"11:50","ex":"11:50 → 60 − 50 = 10，還差 10 分到 12 點：ten to twelve。11 點的下一個小時是 12 點。"},
+  {"id":28,"type":"phrase","h":12,"m":45,"level":2,"prompt":"a quarter to one","zh":"這個說法是幾點幾分？","options":["12:45","1:45","12:15","11:45"],"answer":"12:45","ex":"12:45 → 60 − 45 = 15，還差 15 分到 1 點：a quarter to one。12 點的下一個小時是 1 點。"},
+  {"id":29,"type":"build","h":7,"m":5,"level":3,"prompt":"點字卡，拼出這個時間的英文說法。","zh":"","tiles":["five","past","seven","to","eight","half","quarter"],"accept":["five past seven"],"answer":"five past seven","ex":"7:05 → 過了 5 分，用 past 加現在的小時：five past seven。"},
+  {"id":30,"type":"build","h":11,"m":10,"level":3,"prompt":"點字卡，拼出這個時間的英文說法。","zh":"","tiles":["ten","past","eleven","to","twelve","half","quarter"],"accept":["ten past eleven"],"answer":"ten past eleven","ex":"11:10 → 過了 10 分，用 past 加現在的小時：ten past eleven。"},
+  {"id":31,"type":"build","h":4,"m":15,"level":3,"prompt":"點字卡，拼出這個時間的英文說法。","zh":"","tiles":["a","quarter","past","four","to","five","half"],"accept":["a quarter past four"],"answer":"a quarter past four","ex":"4:15 → 過了 15 分，用 past 加現在的小時：a quarter past four。"},
+  {"id":32,"type":"build","h":8,"m":20,"level":3,"prompt":"點字卡，拼出這個時間的英文說法。","zh":"","tiles":["twenty","past","eight","to","nine","half","quarter"],"accept":["twenty past eight"],"answer":"twenty past eight","ex":"8:20 → 過了 20 分，用 past 加現在的小時：twenty past eight。"},
+  {"id":33,"type":"build","h":1,"m":25,"level":3,"prompt":"點字卡，拼出這個時間的英文說法。","zh":"","tiles":["twenty-five","past","one","to","two","half","quarter"],"accept":["twenty-five past one"],"answer":"twenty-five past one","ex":"1:25 → 過了 25 分，用 past 加現在的小時：twenty-five past one。"},
+  {"id":34,"type":"build","h":6,"m":30,"level":3,"prompt":"點字卡，拼出這個時間的英文說法。","zh":"","tiles":["half","past","six","to","seven","quarter"],"accept":["half past six"],"answer":"half past six","ex":"6:30 → 過了半小時，用 past 加現在的小時：half past six。"},
+  {"id":35,"type":"build","h":2,"m":35,"level":3,"prompt":"點字卡，拼出這個時間的英文說法。","zh":"","tiles":["twenty-five","to","three","past","two","half","quarter"],"accept":["twenty-five to three"],"answer":"twenty-five to three","ex":"2:35 → 60 − 35 = 25，還差 25 分到 3 點：twenty-five to three。"},
+  {"id":36,"type":"build","h":10,"m":40,"level":3,"prompt":"點字卡，拼出這個時間的英文說法。","zh":"","tiles":["twenty","to","eleven","past","ten","half","quarter"],"accept":["twenty to eleven"],"answer":"twenty to eleven","ex":"10:40 → 60 − 40 = 20，還差 20 分到 11 點：twenty to eleven。"},
+  {"id":37,"type":"build","h":3,"m":45,"level":3,"prompt":"點字卡，拼出這個時間的英文說法。","zh":"","tiles":["a","quarter","to","four","past","three","half"],"accept":["a quarter to four"],"answer":"a quarter to four","ex":"3:45 → 60 − 45 = 15，還差 15 分到 4 點：a quarter to four。"},
+  {"id":38,"type":"build","h":9,"m":50,"level":3,"prompt":"點字卡，拼出這個時間的英文說法。","zh":"","tiles":["ten","to","ten","past","nine","half","quarter"],"accept":["ten to ten"],"answer":"ten to ten","ex":"9:50 → 60 − 50 = 10，還差 10 分到 10 點：ten to ten。"},
+  {"id":39,"type":"build","h":11,"m":55,"level":3,"prompt":"點字卡，拼出這個時間的英文說法。","zh":"","tiles":["five","to","twelve","past","eleven","half","quarter"],"accept":["five to twelve"],"answer":"five to twelve","ex":"11:55 → 60 − 55 = 5，還差 5 分到 12 點：five to twelve。11 點的下一個小時是 12 點。"},
+  {"id":40,"type":"type","h":3,"m":5,"level":3,"prompt":"用英文寫出這個時間（請用 past 或 to）。","zh":"","accept":["five past three","five after three","5 past three","5 past 3","five past 3"],"answer":"five past three","placeholder":"例如：ten past six","ex":"3:05 → 過了 5 分，用 past 加現在的小時：five past three。"},
+  {"id":41,"type":"type","h":5,"m":10,"level":3,"prompt":"用英文寫出這個時間（請用 past 或 to）。","zh":"","accept":["ten past five","ten after five","10 past five","10 past 5","ten past 5"],"answer":"ten past five","placeholder":"例如：ten past six","ex":"5:10 → 過了 10 分，用 past 加現在的小時：ten past five。"},
+  {"id":42,"type":"type","h":7,"m":15,"level":3,"prompt":"用英文寫出這個時間（請用 past 或 to）。","zh":"","accept":["a quarter past seven","a quarter after seven","quarter past seven","fifteen past seven"],"answer":"a quarter past seven","placeholder":"例如：ten past six","ex":"7:15 → 過了 15 分，用 past 加現在的小時：a quarter past seven。"},
+  {"id":43,"type":"type","h":9,"m":20,"level":3,"prompt":"用英文寫出這個時間（請用 past 或 to）。","zh":"","accept":["twenty past nine","twenty after nine","20 past nine","20 past 9","twenty past 9"],"answer":"twenty past nine","placeholder":"例如：ten past six","ex":"9:20 → 過了 20 分，用 past 加現在的小時：twenty past nine。"},
+  {"id":44,"type":"type","h":12,"m":25,"level":3,"prompt":"用英文寫出這個時間（請用 past 或 to）。","zh":"","accept":["twenty-five past twelve","twenty-five after twelve","25 past twelve","25 past 12","twenty-five past 12"],"answer":"twenty-five past twelve","placeholder":"例如：ten past six","ex":"12:25 → 過了 25 分，用 past 加現在的小時：twenty-five past twelve。"},
+  {"id":45,"type":"type","h":4,"m":30,"level":3,"prompt":"用英文寫出這個時間（請用 past 或 to）。","zh":"","accept":["half past four","half after four"],"answer":"half past four","placeholder":"例如：ten past six","ex":"4:30 → 過了半小時，用 past 加現在的小時：half past four。"},
+  {"id":46,"type":"type","h":6,"m":35,"level":3,"prompt":"用英文寫出這個時間（請用 past 或 to）。","zh":"","accept":["twenty-five to seven","twenty-five of seven","25 to seven","25 to 7","twenty-five to 7"],"answer":"twenty-five to seven","placeholder":"例如：ten past six","ex":"6:35 → 60 − 35 = 25，還差 25 分到 7 點：twenty-five to seven。"},
+  {"id":47,"type":"type","h":1,"m":40,"level":3,"prompt":"用英文寫出這個時間（請用 past 或 to）。","zh":"","accept":["twenty to two","twenty of two","20 to two","20 to 2","twenty to 2"],"answer":"twenty to two","placeholder":"例如：ten past six","ex":"1:40 → 60 − 40 = 20，還差 20 分到 2 點：twenty to two。"},
+  {"id":48,"type":"type","h":8,"m":45,"level":3,"prompt":"用英文寫出這個時間（請用 past 或 to）。","zh":"","accept":["a quarter to nine","a quarter of nine","quarter to nine","fifteen to nine"],"answer":"a quarter to nine","placeholder":"例如：ten past six","ex":"8:45 → 60 − 45 = 15，還差 15 分到 9 點：a quarter to nine。"},
+  {"id":49,"type":"type","h":2,"m":50,"level":3,"prompt":"用英文寫出這個時間（請用 past 或 to）。","zh":"","accept":["ten to three","ten of three","10 to three","10 to 3","ten to 3"],"answer":"ten to three","placeholder":"例如：ten past six","ex":"2:50 → 60 − 50 = 10，還差 10 分到 3 點：ten to three。"},
+  {"id":50,"type":"type","h":12,"m":35,"level":3,"prompt":"用英文寫出這個時間（請用 past 或 to）。","zh":"","accept":["twenty-five to one","twenty-five of one","25 to one","25 to 1","twenty-five to 1"],"answer":"twenty-five to one","placeholder":"例如：ten past six","ex":"12:35 → 60 − 35 = 25，還差 25 分到 1 點：twenty-five to one。12 點的下一個小時是 1 點。"},
+  {"id":51,"type":"situation","h":10,"m":5,"level":3,"prompt":"The bus leaves at 10:05. How do you say the time?","zh":"公車發車的時間是 10:05，該怎麼說？","options":["five past ten","five past eleven","five to eleven","five past nine"],"answer":"five past ten","ex":"10:05 → 過了 5 分，用 past 加現在的小時：five past ten。","showDigital":true,"say":"At ______."},
+  {"id":52,"type":"situation","h":2,"m":10,"level":3,"prompt":"The library opens at ten past two.","zh":"圖書館開門的時間是幾點幾分？","options":["2:10","3:10","2:50","1:10"],"answer":"2:10","ex":"2:10 → 過了 10 分，用 past 加現在的小時：ten past two。","timeOptions":true},
+  {"id":53,"type":"situation","h":5,"m":15,"level":3,"prompt":"Lunch starts at 5:15. How do you say the time?","zh":"午餐開始的時間是 5:15，該怎麼說？","options":["a quarter past five","a quarter past six","a quarter to six","a quarter past four"],"answer":"a quarter past five","ex":"5:15 → 過了 15 分，用 past 加現在的小時：a quarter past five。","showDigital":true,"say":"At ______."},
+  {"id":54,"type":"situation","h":11,"m":20,"level":3,"prompt":"Our English class starts at twenty past eleven.","zh":"英文課開始的時間是幾點幾分？","options":["11:20","12:20","11:40","10:20"],"answer":"11:20","ex":"11:20 → 過了 20 分，用 past 加現在的小時：twenty past eleven。","timeOptions":true},
+  {"id":55,"type":"situation","h":3,"m":25,"level":3,"prompt":"The movie starts at 3:25. How do you say the time?","zh":"電影開演的時間是 3:25，該怎麼說？","options":["twenty-five past three","twenty-five past four","twenty-five to four","twenty-five past two"],"answer":"twenty-five past three","ex":"3:25 → 過了 25 分，用 past 加現在的小時：twenty-five past three。","showDigital":true,"say":"At ______."},
+  {"id":56,"type":"situation","h":8,"m":30,"level":3,"prompt":"The swimming lesson starts at half past eight.","zh":"游泳課開始的時間是幾點幾分？","options":["8:30","9:30","8:15","7:30"],"answer":"8:30","ex":"8:30 → 過了半小時，用 past 加現在的小時：half past eight。","timeOptions":true},
+  {"id":57,"type":"situation","h":4,"m":35,"level":3,"prompt":"The train leaves at 4:35. How do you say the time?","zh":"火車發車的時間是 4:35，該怎麼說？","options":["twenty-five to five","twenty-five to six","twenty-five past four","twenty-five to four"],"answer":"twenty-five to five","ex":"4:35 → 60 − 35 = 25，還差 25 分到 5 點：twenty-five to five。","showDigital":true,"say":"At ______."},
+  {"id":58,"type":"situation","h":7,"m":40,"level":3,"prompt":"The basketball game starts at twenty to eight.","zh":"籃球賽開始的時間是幾點幾分？","options":["7:40","8:40","7:20","6:40"],"answer":"7:40","ex":"7:40 → 60 − 40 = 20，還差 20 分到 8 點：twenty to eight。","timeOptions":true},
+  {"id":59,"type":"situation","h":6,"m":45,"level":3,"prompt":"The shop closes at 6:45. How do you say the time?","zh":"商店打烊的時間是 6:45，該怎麼說？","options":["a quarter to seven","a quarter to eight","a quarter past six","a quarter to six"],"answer":"a quarter to seven","ex":"6:45 → 60 − 45 = 15，還差 15 分到 7 點：a quarter to seven。","showDigital":true,"say":"At ______."},
+  {"id":60,"type":"situation","h":1,"m":55,"level":3,"prompt":"The online meeting starts at five to two.","zh":"線上會議開始的時間是幾點幾分？","options":["1:55","2:55","1:05","12:55"],"answer":"1:55","ex":"1:55 → 60 − 55 = 5，還差 5 分到 2 點：five to two。","timeOptions":true}
+];
+
+/* ===================== 共用邏輯 LOGIC ===================== */
+var BASE = 100, STREAK_STEP = 10, STREAK_MAX = 50, TIME_LIMIT = 30;
+function norm(s){ return String(s).toLowerCase().replace(/[\u2019']/g,"").replace(/[-_]/g," ").replace(/[^a-z0-9: ]/g," ").replace(/\s+/g," ").trim(); }
+function isCorrect(q, given){
+  var g = norm(given);
+  var list = q.accept ? q.accept : [q.answer];
+  for (var i=0;i<list.length;i++){ if (norm(list[i]) === g) return true; }
+  return false;
+}
+function streakBonus(streak){ return streak >= 2 ? Math.min(STREAK_MAX, (streak-1)*STREAK_STEP) : 0; }
+function pad(n){ return (n<10?"0":"")+n; }
+function digital(h,m){ return h+":"+pad(m); }
+function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];}); }
+
+function clockSVG(h,m){
+  var cx=100, cy=100, s='<svg viewBox="0 0 200 200" role="img" aria-label="analog clock">';
+  s+='<circle cx="100" cy="100" r="94" fill="#fff" stroke="#1f2a44" stroke-width="6"/>';
+  for (var i=0;i<60;i++){
+    var a=i*6*Math.PI/180, big=(i%5===0), r1=big?78:84, r2=88;
+    s+='<line x1="'+(cx+r1*Math.sin(a)).toFixed(1)+'" y1="'+(cy-r1*Math.cos(a)).toFixed(1)+'" x2="'+(cx+r2*Math.sin(a)).toFixed(1)+'" y2="'+(cy-r2*Math.cos(a)).toFixed(1)+'" stroke="'+(big?"#1f2a44":"#aab3cc")+'" stroke-width="'+(big?3:1.5)+'" stroke-linecap="round"/>';
+  }
+  for (var n=1;n<=12;n++){
+    var b=n*30*Math.PI/180, rr=67;
+    s+='<text x="'+(cx+rr*Math.sin(b)).toFixed(1)+'" y="'+(cy-rr*Math.cos(b)+6).toFixed(1)+'" text-anchor="middle" font-size="17" font-weight="700" fill="#1f2a44" font-family="Arial,Helvetica,sans-serif">'+n+'</text>';
+  }
+  var ha=((h%12)*30 + m*0.5), ma=m*6;
+  s+='<line x1="100" y1="100" x2="100" y2="62" stroke="#1f2a44" stroke-width="9" stroke-linecap="round" transform="rotate('+ha+' 100 100)"/>';
+  s+='<line x1="100" y1="100" x2="100" y2="44" stroke="#4f7cff" stroke-width="6" stroke-linecap="round" transform="rotate('+ma+' 100 100)"/>';
+  s+='<circle cx="100" cy="100" r="6" fill="#e5484d"/></svg>';
+  return s;
+}
+
+/* ===================== 遊戲狀態 STATE ===================== */
+var st = { nick:"", order:[], idx:0, score:0, streak:0, best:0, correct:0, results:[], timer:null, left:TIME_LIMIT, answered:false, built:[] };
+var $ = function(id){ return document.getElementById(id); };
+function show(id){ ["start","quiz","end"].forEach(function(s){ $(s).classList.toggle("hidden", s!==id); }); window.scrollTo(0,0); }
+
+function startGame(shuffled){
+  st.order = shuffled ? shuffle(QUESTIONS) : QUESTIONS.slice();
+  st.idx=0; st.score=0; st.streak=0; st.best=0; st.correct=0; st.results=[];
+  show("quiz"); renderQ();
+}
+
+var TAGS = { clock:"🕒 看時鐘選說法", phrase:"🔤 看說法選時間", build:"🧩 點字卡組句", type:"⌨️ 打字作答", situation:"🌏 生活情境" };
+
+function renderQ(){
+  var q = st.order[st.idx], total = st.order.length, html="";
+  st.answered=false; st.built=[];
+  $("qnum").textContent = "第 "+(st.idx+1)+" / "+total+" 題";
+  $("progBar").style.width = (st.idx/total*100)+"%";
+  $("streak").textContent = "🔥 "+st.streak;
+  $("score").textContent = "⭐ "+st.score;
+  $("qtag").textContent = TAGS[q.type];
+  $("fb").className="fb"; $("fb").innerHTML="";
+  $("nextBtn").classList.add("hidden");
+
+  if (q.type==="clock"){
+    html += '<div class="qtext"><span class="en">'+esc(q.prompt)+'</span>'+esc(q.zh)+'</div>';
+    html += '<div class="clockbox">'+clockSVG(q.h,q.m)+'</div>';
+    html += optsHTML(shuffle(q.options), false);
+  } else if (q.type==="phrase"){
+    html += '<div class="qtext">'+esc(q.zh)+'</div><div class="say">'+esc(q.prompt)+'</div>';
+    html += optsHTML(shuffle(q.options), true);
+  } else if (q.type==="build"){
+    html += '<div class="qtext">'+esc(q.prompt)+'</div>';
+    html += '<div class="clockbox">'+clockSVG(q.h,q.m)+'</div>';
+    html += '<div class="answerline" id="line"><span class="ph">點下面的字卡放到這裡（再點一次可以拿掉）</span></div>';
+    html += '<div class="tiles" id="tiles">';
+    shuffle(q.tiles.map(function(t,i){return {t:t,i:i};})).forEach(function(o){ html += '<button class="tile" data-i="'+o.i+'">'+esc(o.t)+'</button>'; });
+    html += '</div><div class="row"><button class="btn ghost" id="clearBtn">清除</button><button class="btn" id="submitBtn" disabled>送出</button></div>';
+  } else if (q.type==="type"){
+    html += '<div class="qtext">'+esc(q.prompt)+'</div>';
+    html += '<div class="digital">'+digital(q.h,q.m)+'</div>';
+    html += '<input type="text" id="typeIn" placeholder="'+esc(q.placeholder||"")+'" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="text">';
+    html += '<button class="btn" id="submitBtn" disabled>送出</button>';
+  } else if (q.type==="situation"){
+    html += '<div class="qtext"><span class="en">'+esc(q.prompt)+'</span>'+esc(q.zh)+'</div>';
+    if (q.showDigital) html += '<div class="digital">'+digital(q.h,q.m)+'</div>';
+    if (q.say) html += '<div class="say">'+esc(q.say)+'</div>';
+    html += optsHTML(shuffle(q.options), !!q.timeOptions);
+  }
+  $("qbody").innerHTML = html;
+  bindQ(q);
+  startTimer();
+}
+function optsHTML(opts, isTime){
+  var h='<div class="opts'+(isTime?' grid2':'')+'">';
+  opts.forEach(function(o){ h+='<button class="opt'+(isTime?' time':'')+'" data-v="'+esc(o)+'">'+esc(o)+'</button>'; });
+  return h+'</div>';
+}
+function bindQ(q){
+  var opts = document.querySelectorAll("#qbody .opt");
+  opts.forEach(function(b){ b.addEventListener("click", function(){ answer(q, b.getAttribute("data-v")); }); });
+  if (q.type==="build"){
+    document.querySelectorAll("#tiles .tile").forEach(function(t){
+      t.addEventListener("click", function(){ if (st.answered) return; st.built.push(+t.getAttribute("data-i")); t.classList.add("used"); drawLine(q); });
+    });
+    $("clearBtn").addEventListener("click", function(){ if (st.answered) return; st.built=[]; document.querySelectorAll("#tiles .tile").forEach(function(t){t.classList.remove("used");}); drawLine(q); });
+    $("submitBtn").addEventListener("click", function(){ answer(q, st.built.map(function(i){return q.tiles[i];}).join(" ")); });
+  }
+  if (q.type==="type"){
+    var inp=$("typeIn");
+    inp.addEventListener("input", function(){ $("submitBtn").disabled = norm(inp.value)===""; });
+    inp.addEventListener("keydown", function(e){ if (e.key==="Enter" && norm(inp.value)!=="") answer(q, inp.value); });
+    $("submitBtn").addEventListener("click", function(){ answer(q, inp.value); });
+  }
+}
+function drawLine(q){
+  var line=$("line");
+  if (!st.built.length){ line.innerHTML='<span class="ph">點下面的字卡放到這裡（再點一次可以拿掉）</span>'; $("submitBtn").disabled=true; return; }
+  line.innerHTML = st.built.map(function(i,pos){ return '<button class="tile inline" data-pos="'+pos+'">'+esc(q.tiles[i])+'</button>'; }).join("");
+  line.querySelectorAll(".tile").forEach(function(b){
+    b.addEventListener("click", function(){
+      if (st.answered) return;
+      var pos=+b.getAttribute("data-pos"), ti=st.built[pos];
+      st.built.splice(pos,1);
+      var src=document.querySelector('#tiles .tile[data-i="'+ti+'"]'); if (src) src.classList.remove("used");
+      drawLine(q);
+    });
+  });
+  $("submitBtn").disabled=false;
+}
+function startTimer(){
+  clearInterval(st.timer); st.left=TIME_LIMIT; tick();
+  st.timer=setInterval(function(){ st.left--; tick(); if (st.left<=0){ clearInterval(st.timer); answer(st.order[st.idx], null); } }, 1000);
+}
+function tick(){
+  var p = Math.max(0, st.left/TIME_LIMIT*100), bar=$("timerBar");
+  bar.style.width=p+"%"; bar.style.background = st.left>15 ? "var(--ok)" : (st.left>7 ? "var(--warn)" : "var(--bad)");
+  $("timeLeft").textContent="⏱ "+Math.max(0,st.left);
+}
+function answer(q, given){
+  if (st.answered) return;
+  st.answered=true; clearInterval(st.timer);
+  var timeout = (given===null), ok = !timeout && isCorrect(q, given), gained=0;
+  if (ok){ st.streak++; st.best=Math.max(st.best,st.streak); st.correct++; gained = BASE + streakBonus(st.streak); st.score += gained; }
+  else st.streak=0;
+  st.results.push({ q:q, given: timeout ? "（時間到，未作答）" : String(given), ok:ok });
+
+  document.querySelectorAll("#qbody .opt").forEach(function(b){
+    b.disabled=true; var v=b.getAttribute("data-v");
+    if (v===q.answer) b.classList.add("correct"); else if (!timeout && v===given) b.classList.add("wrong");
+  });
+  document.querySelectorAll("#qbody .tile, #clearBtn, #submitBtn").forEach(function(b){ b.disabled=true; });
+  if ($("typeIn")) $("typeIn").disabled=true;
+
+  var fb=$("fb"), bonus=streakBonus(st.streak);
+  fb.className="fb show "+(ok?"ok":"bad");
+  fb.innerHTML = ok
+    ? '<div class="h">✅ 答對了！<span class="pts">+'+gained+'</span></div>'+(bonus?'<div class="ans">🔥 '+st.streak+' 連勝！加分 +'+bonus+'</div>':'')+'<div class="ex">'+esc(q.ex)+'</div>'
+    : '<div class="h">'+(timeout?'⏰ 時間到！':'❌ 差一點！')+'</div><div class="ans">正確答案：'+esc(q.answer)+'</div><div class="ex">'+esc(q.ex)+'</div>';
+  $("streak").textContent="🔥 "+st.streak; $("score").textContent="⭐ "+st.score;
+  $("progBar").style.width=((st.idx+1)/st.order.length*100)+"%";
+  var nb=$("nextBtn"); nb.textContent = (st.idx+1<st.order.length) ? "下一題 ➜" : "看成績 🏆"; nb.classList.remove("hidden");
+  setTimeout(function(){ nb.scrollIntoView({behavior:"smooth", block:"center"}); }, 60);
+}
+function next(){ st.idx++; if (st.idx<st.order.length) renderQ(); else endGame(); }
+
+function qLabel(q){
+  if (q.type==="clock") return "🕒 時鐘 "+digital(q.h,q.m)+" → 說法";
+  if (q.type==="phrase") return "🔤 "+q.prompt+" → 數字時間";
+  if (q.type==="build") return "🧩 "+digital(q.h,q.m)+" 字卡組句";
+  if (q.type==="type") return "⌨️ "+digital(q.h,q.m)+" 打字";
+  return "🌏 "+q.prompt;
+}
+function endGame(){
+  clearInterval(st.timer);
+  var total=st.order.length, acc=Math.round(st.correct/total*100);
+  var stars = acc>=90?"⭐⭐⭐":(acc>=70?"⭐⭐":(acc>=40?"⭐":"💪"));
+  var msg = acc===100?"滿分！報時高手！":(acc>=70?"很棒！再接再厲！":(acc>=40?"不錯，複習錯題再挑戰！":"別灰心，再玩一次就會進步！"));
+  var d=new Date(), stamp=d.getFullYear()+"/"+pad(d.getMonth()+1)+"/"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes());
+  $("resultCard").innerHTML =
+    '<div style="font-size:.95rem;opacity:.9">英文報時大挑戰 成績卡</div>'+
+    '<div class="nm">'+esc(st.nick)+'</div>'+
+    '<div class="stars">'+stars+'</div>'+
+    '<div class="big">'+st.score+'<span style="font-size:1.2rem"> 分</span></div>'+
+    '<div style="font-weight:800">'+msg+'</div>'+
+    '<div class="meta"><div><b>'+st.correct+'/'+total+'</b>答對</div><div><b>'+acc+'%</b>正確率</div><div><b>🔥'+st.best+'</b>最長連勝</div></div>'+
+    '<div class="stamp">'+stamp+'</div>';
+  var miss = st.results.filter(function(r){return !r.ok;});
+  var h = '<h3>📝 錯題複習（'+miss.length+' 題）</h3>';
+  if (!miss.length) h += '<div class="allok">🎉 全部答對，沒有錯題！</div>';
+  miss.forEach(function(r){
+    h += '<div class="mi"><div class="q">'+esc(qLabel(r.q))+'</div><div class="y">你的答案：'+esc(r.given||"（空白）")+'</div><div class="a">正確答案：'+esc(r.q.answer)+'</div><div class="ex" style="font-size:.92rem;color:#3d4766;margin-top:3px">'+esc(r.q.ex)+'</div></div>';
+  });
+  $("missed").innerHTML = h;
+  show("end");
+}
+
+/* ===================== 事件 EVENTS ===================== */
+$("startBtn").addEventListener("click", function(){
+  var v=$("nick").value.trim();
+  if (!v){ $("nickErr").textContent="請先輸入暱稱或座號喔！"; $("nick").focus(); return; }
+  st.nick=v; $("nickErr").textContent=""; startGame(false);
+});
+$("nick").addEventListener("keydown", function(e){ if (e.key==="Enter") $("startBtn").click(); });
+$("nextBtn").addEventListener("click", next);
+$("againBtn").addEventListener("click", function(){ startGame(true); });
+$("homeBtn").addEventListener("click", function(){ $("nick").value=""; show("start"); });
+</script>
+</body>
+</html>
+

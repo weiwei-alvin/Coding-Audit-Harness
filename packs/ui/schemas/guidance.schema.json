@@ -1,0 +1,969 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UI Design Harness Implementation Guidance 0.1",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "0.1"
+    },
+    "kind": {
+      "const": "implementation_guidance"
+    },
+    "status": {
+      "const": "PASS"
+    },
+    "story_id": {
+      "type": "string",
+      "pattern": "^US-[0-9]{3}$"
+    },
+    "generated_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ui_acceptance": {
+      "const": "UNVERIFIED"
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "story": {
+      "$ref": "#/$defs/story"
+    },
+    "user": {
+      "$ref": "#/$defs/user"
+    },
+    "task": {
+      "$ref": "#/$defs/task"
+    },
+    "flow": {
+      "$ref": "#/$defs/flow"
+    },
+    "success_criteria": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/success"
+      },
+      "minItems": 1
+    },
+    "screens": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/guidance_screen"
+      },
+      "minItems": 1
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/component"
+      },
+      "minItems": 1
+    },
+    "tokens": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/token"
+      },
+      "minItems": 1
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/guidance_rule"
+      },
+      "minItems": 1
+    },
+    "review_criteria": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/review"
+      },
+      "minItems": 1
+    },
+    "suggested_skills": {
+      "$ref": "#/$defs/suggested_skills"
+    },
+    "verification": {
+      "$ref": "#/$defs/verification"
+    },
+    "not_included": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    }
+  },
+  "required": [
+    "schema_version",
+    "kind",
+    "status",
+    "story_id",
+    "generated_at",
+    "ui_acceptance",
+    "source",
+    "story",
+    "user",
+    "task",
+    "flow",
+    "success_criteria",
+    "screens",
+    "components",
+    "tokens",
+    "rules",
+    "review_criteria",
+    "suggested_skills",
+    "verification",
+    "not_included",
+    "limitations"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "source": {
+      "type": "object",
+      "properties": {
+        "stage": {
+          "const": "design"
+        },
+        "source_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "engine_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "receipt_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "document_hashes": {
+          "type": "object",
+          "properties": {
+            "UI-BRIEF.md": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "UI-SPEC.md": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "DESIGN.md": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "UI-BRIEF.md",
+            "UI-SPEC.md",
+            "DESIGN.md"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "stage",
+        "source_hash",
+        "engine_hash",
+        "receipt_hash",
+        "document_hashes"
+      ],
+      "additionalProperties": false
+    },
+    "user": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^USR-[0-9]{3}$"
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "context": {
+          "type": "string",
+          "minLength": 1
+        },
+        "task_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^TASK-[0-9]{3}$"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "id",
+        "role",
+        "context",
+        "task_ids"
+      ],
+      "additionalProperties": false
+    },
+    "task": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^TASK-[0-9]{3}$"
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^USR-[0-9]{3}$"
+        },
+        "frequency": {
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "trigger": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outcome": {
+          "type": "string",
+          "minLength": 1
+        },
+        "flow_id": {
+          "type": "string",
+          "pattern": "^FLOW-[0-9]{3}$"
+        }
+      },
+      "required": [
+        "id",
+        "user_id",
+        "frequency",
+        "trigger",
+        "outcome",
+        "flow_id"
+      ],
+      "additionalProperties": false
+    },
+    "flow": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^FLOW-[0-9]{3}$"
+        },
+        "task_id": {
+          "type": "string",
+          "pattern": "^TASK-[0-9]{3}$"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "minLength": 1
+              },
+              "result": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "action",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "exceptions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "steps",
+        "exceptions"
+      ],
+      "additionalProperties": false
+    },
+    "success": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^SUCCESS-[0-9]{3}$"
+        },
+        "measure": {
+          "type": "string",
+          "minLength": 1
+        },
+        "threshold": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verification": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "measure",
+        "threshold",
+        "verification"
+      ],
+      "additionalProperties": false
+    },
+    "story": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^US-[0-9]{3}$"
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^USR-[0-9]{3}$"
+        },
+        "task_id": {
+          "type": "string",
+          "pattern": "^TASK-[0-9]{3}$"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "screen_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^SCR-[0-9]{3}$"
+          },
+          "minItems": 1
+        },
+        "ac_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^UI-AC-[0-9]{3}$"
+          },
+          "minItems": 1
+        },
+        "success_criteria_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^SUCCESS-[0-9]{3}$"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "id",
+        "user_id",
+        "task_id",
+        "statement",
+        "screen_ids",
+        "ac_ids",
+        "success_criteria_ids"
+      ],
+      "additionalProperties": false
+    },
+    "state": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "default",
+            "loading",
+            "empty",
+            "error",
+            "success",
+            "validation_error",
+            "disabled"
+          ]
+        },
+        "presentation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "interaction": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "kind",
+        "presentation",
+        "interaction"
+      ],
+      "additionalProperties": false
+    },
+    "state_exclusion": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "default",
+            "loading",
+            "empty",
+            "error",
+            "success",
+            "validation_error",
+            "disabled"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "kind",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "wireframe": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "const": "text"
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "format",
+        "content"
+      ],
+      "additionalProperties": false
+    },
+    "ac": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^UI-AC-[0-9]{3}$"
+        },
+        "story_id": {
+          "type": "string",
+          "pattern": "^US-[0-9]{3}$"
+        },
+        "screen_id": {
+          "type": "string",
+          "pattern": "^SCR-[0-9]{3}$"
+        },
+        "state": {
+          "enum": [
+            "default",
+            "loading",
+            "empty",
+            "error",
+            "success",
+            "validation_error",
+            "disabled"
+          ]
+        },
+        "given": {
+          "type": "string",
+          "minLength": 1
+        },
+        "when": {
+          "type": "string",
+          "minLength": 1
+        },
+        "then": {
+          "type": "string",
+          "minLength": 1
+        },
+        "method": {
+          "enum": [
+            "automated",
+            "manual",
+            "hybrid"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "evidence": {
+          "type": "object",
+          "properties": {
+            "artifact": {
+              "type": "string",
+              "minLength": 1
+            },
+            "procedure": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "artifact",
+            "procedure"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "id",
+        "story_id",
+        "screen_id",
+        "state",
+        "given",
+        "when",
+        "then",
+        "method",
+        "required",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "guidance_screen": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^SCR-[0-9]{3}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "flow_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^FLOW-[0-9]{3}$"
+          },
+          "minItems": 1
+        },
+        "object_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^OBJ-[0-9]{3}$"
+          },
+          "minItems": 1
+        },
+        "states": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/state"
+          },
+          "minItems": 1
+        },
+        "state_exclusions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/state_exclusion"
+          }
+        },
+        "wireframe": {
+          "$ref": "#/$defs/wireframe"
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ac"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "purpose",
+        "flow_ids",
+        "object_ids",
+        "states",
+        "state_exclusions",
+        "wireframe",
+        "acceptance_criteria"
+      ],
+      "additionalProperties": false
+    },
+    "token": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^TOK-[0-9]{3}$"
+        },
+        "category": {
+          "enum": [
+            "color",
+            "typography",
+            "spacing",
+            "layout",
+            "motion"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "category",
+        "name",
+        "value",
+        "rationale"
+      ],
+      "additionalProperties": false
+    },
+    "component": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^CMP-[0-9]{3}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "screen_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^SCR-[0-9]{3}$"
+          },
+          "minItems": 1
+        },
+        "state_kinds": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "default",
+              "loading",
+              "empty",
+              "error",
+              "success",
+              "validation_error",
+              "disabled"
+            ]
+          },
+          "minItems": 1
+        },
+        "token_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^TOK-[0-9]{3}$"
+          },
+          "minItems": 1
+        },
+        "behavior": {
+          "type": "string",
+          "minLength": 1
+        },
+        "keyboard": {
+          "type": "string",
+          "minLength": 1
+        },
+        "accessible_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parent_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^CMP-[0-9]{3}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "screen_ids",
+        "state_kinds",
+        "token_ids",
+        "behavior",
+        "keyboard",
+        "accessible_name",
+        "parent_id"
+      ],
+      "additionalProperties": false
+    },
+    "guidance_rule": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^RULE-[0-9]{3}$"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verification": {
+          "type": "string",
+          "minLength": 1
+        },
+        "section": {
+          "enum": [
+            "anti_generic",
+            "layout",
+            "typography",
+            "spacing",
+            "color"
+          ]
+        },
+        "criterion_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^RV-[0-9]{3}$"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "id",
+        "statement",
+        "verification",
+        "section",
+        "criterion_ids"
+      ],
+      "additionalProperties": false
+    },
+    "review": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^RV-[0-9]{3}$"
+        },
+        "category": {
+          "enum": [
+            "art_direction",
+            "design_system",
+            "anti_generic",
+            "responsive",
+            "accessibility"
+          ]
+        },
+        "required": {
+          "const": true
+        },
+        "procedure": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rule_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^RULE-[0-9]{3}$"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "category",
+        "required",
+        "procedure",
+        "evidence",
+        "rule_ids"
+      ],
+      "additionalProperties": false
+    },
+    "suggested_skills": {
+      "type": "object",
+      "properties": {
+        "platform": {
+          "type": "string",
+          "minLength": 1
+        },
+        "needs": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "motion",
+              "iconography",
+              "design_reference"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "registry_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/suggested_skill"
+          }
+        }
+      },
+      "required": [
+        "platform",
+        "needs",
+        "registry_hash",
+        "statement",
+        "skills"
+      ],
+      "additionalProperties": false
+    },
+    "suggested_skill": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^SKL-[0-9]{3}$"
+        },
+        "need": {
+          "anyOf": [
+            {
+              "enum": [
+                "motion",
+                "iconography",
+                "design_reference"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repo": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$"
+        },
+        "version_pin": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pin_kind": {
+          "enum": [
+            "commit",
+            "release",
+            "unpinned"
+          ]
+        },
+        "status": {
+          "enum": [
+            "available",
+            "missing",
+            "unverified"
+          ]
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "need",
+        "name",
+        "repo",
+        "version_pin",
+        "pin_kind",
+        "status",
+        "why"
+      ],
+      "additionalProperties": false
+    },
+    "verification": {
+      "type": "object",
+      "properties": {
+        "reproduce": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "acceptance_methods": {
+          "type": "object",
+          "properties": {
+            "automated": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "manual": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "hybrid": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "automated",
+            "manual",
+            "hybrid"
+          ],
+          "additionalProperties": false
+        },
+        "before_implementation": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "reproduce",
+        "acceptance_methods",
+        "before_implementation"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

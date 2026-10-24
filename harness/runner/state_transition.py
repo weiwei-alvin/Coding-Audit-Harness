@@ -10,6 +10,7 @@ Enforces all valid state transitions per Harness spec.
 
 from datetime import datetime
 from enum import Enum
+import json
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Set
 from dataclasses import dataclass
@@ -158,15 +159,24 @@ class StateTransitionEngine:
             if next_stage is None:
                 return TransitionResult(False, error=f"No next stage after {stage_id}")
 
-            # Definition-driven gate hook (e.g. ticket dependency validation).
-            if definition.hook(stage_id, "on_gate_pass") == "validate_ticket_dependencies":
+            # Definition-driven gate hooks (e.g. ticket dependency validation
+            # and T-009 conditional-stage guard); a string hook stays accepted.
+            hooks = definition.gate_hooks(stage_id)
+            if "validate_ticket_dependencies" in hooks:
                 dep_errors = self._validate_ticket_dependencies(state)
                 if dep_errors:
                     return TransitionResult(False, error="; ".join(dep_errors))
+            if "require_conditional_gates" in hooks:
+                gate_errors = self._conditional_gate_errors(state, definition, stage_id)
+                if gate_errors:
+                    return TransitionResult(False, error="; ".join(gate_errors))
 
             new_state = self._deep_copy_state(state)
             new_state["pipeline_stage"] = next_stage
             new_state["stage_status"] = StageStatus.IN_PROGRESS.value
+            # Gate history: one entry per PASSed planning stage; the T-009
+            # guard reads it, older states without it keep working unchanged.
+            new_state.setdefault("stage_gates", {})[stage_id] = "PASS"
 
             # Definition-driven entry hook (e.g. start the first ready ticket).
             if definition.hook(next_stage, "on_enter") == "start_first_ticket":
@@ -216,6 +226,47 @@ class StateTransitionEngine:
             errors.append(f"Tickets in state but not in .harness/tickets/: {', '.join(sorted(missing_in_files))}")
         
         return errors
+
+    def _conditional_gate_errors(self, state, definition, stage_id):
+        """T-009 hook: every active conditional stage must have a recorded PASS.
+
+        A conditional stage whose kernel-evaluated condition is active may not
+        be skipped by any state that reaches this gate: init landing past a
+        DESIGN stage, or a stage history missing its PASS, refuses the gate and
+        names the stage and condition. The stage whose gate is passing right
+        now is exempt from its own history (it is being recorded here).
+        """
+        from pipeline_definition import CONDITION_KEYS
+        errors = []
+        gates = state.get("stage_gates") or {}
+        for stage in definition.stages:
+            other_id = stage["id"]
+            if other_id == stage_id or not definition.is_conditional(other_id):
+                continue
+            condition = stage.get("condition")
+            if condition not in CONDITION_KEYS:
+                continue
+            if not self._condition_active(condition):
+                continue
+            if gates.get(other_id) != "PASS":
+                errors.append(
+                    f"Conditional stage {other_id} is active (condition {condition}) "
+                    f"but has no recorded gate PASS; the {stage_id} gate refuses "
+                    f"until {other_id} passes its own gate")
+        return errors
+
+    def _condition_active(self, condition):
+        """Evaluate one kernel-owned condition key against project data."""
+        if condition != "golden_path_declares_collector":
+            return False
+        golden_path = self.project_root / ".harness" / "golden_path.json"
+        try:
+            data = json.loads(golden_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return False
+        steps = data.get("steps", []) if isinstance(data, dict) else []
+        return any(isinstance(step, dict) and step.get("verification_type") == "collector"
+            for step in steps)
 
     def set_stage_ready_for_gate(self, state: Dict) -> TransitionResult:
         """Mark a definition-declared planning stage as ready for gate."""

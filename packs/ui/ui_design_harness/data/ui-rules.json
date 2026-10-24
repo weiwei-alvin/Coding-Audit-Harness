@@ -1,0 +1,313 @@
+{
+  "schema_version": "0.1",
+  "ruleset": "ui-slop-guardrails",
+  "compiled_at": "2026-10-19",
+  "sources": [
+    {
+      "repo": "LeoStehlik/no-slop-ui",
+      "url": "https://github.com/LeoStehlik/no-slop-ui",
+      "commit": "3c8f9e5ef5ca18f5632f7b9ad8f95e2d68188bcf",
+      "observed": "2026-10-19",
+      "license": "MIT",
+      "notes": "banned patterns 與 anti-generic 規則的蒸餾來源；只取靜態內容可判的子集。"
+    },
+    {
+      "repo": "pbakaus/impeccable",
+      "url": "https://github.com/pbakaus/impeccable",
+      "commit": "0665bd812ae0908fcab17b96fd4f840defb882d9",
+      "observed": "2026-10-19",
+      "license": "Apache-2.0",
+      "notes": "確定性偵測器反模式；README 實查為 61 條規則（2026-10-17 盤點記為 59，會過期）。"
+    },
+    {
+      "repo": "vercel-labs/web-interface-guidelines",
+      "url": "https://github.com/vercel-labs/web-interface-guidelines",
+      "commit": "434b7f91364665f2f733b310ec54809bf8f37937",
+      "observed": "2026-10-19",
+      "license": "unknown-at-distillation",
+      "notes": "interface guidelines；只取靜態可判條目（transition:all、reduced-motion、ellipsis、labels）。"
+    }
+  ],
+  "rules": [
+    {
+      "id": "SLOP-001",
+      "title": "禁止裝飾性漸層",
+      "severity": "blocking",
+      "kind": "forbidden",
+      "applies_to": ["html", "css", "js", "jsx", "ts", "tsx", "vue", "svelte"],
+      "patterns": [
+        "background[^:;{}]*:[^;{}]*(?:linear|radial|conic)-gradient\\s*\\(",
+        "-webkit-background-clip\\s*:\\s*text"
+      ],
+      "message": "裝飾性漸層（背景漸層、漸層文字）是 AI slop 最常見的特徵之一。",
+      "remediation": "改用純色表面與文字；確需漸層（如圖表）時以 --rules 自有規則集調整本條。",
+      "source": {
+        "repo": "LeoStehlik/no-slop-ui",
+        "entry": "README「What It Blocks」：Decorative gradient backgrounds, gradient text, and glow",
+        "url": "https://github.com/LeoStehlik/no-slop-ui#what-it-blocks",
+        "commit": "3c8f9e5ef5ca18f5632f7b9ad8f95e2d68188bcf",
+        "observed": "2026-10-19"
+      }
+    },
+    {
+      "id": "SLOP-002",
+      "title": "禁止玻璃擬態",
+      "severity": "blocking",
+      "kind": "forbidden",
+      "applies_to": ["html", "css", "js", "jsx", "ts", "tsx", "vue", "svelte"],
+      "patterns": [
+        "backdrop-filter\\s*:"
+      ],
+      "message": "玻璃擬態／磨砂面板是被明令禁止的 AI slop 模式。",
+      "remediation": "改用實心表面、細邊框與克制陰影。",
+      "source": {
+        "repo": "LeoStehlik/no-slop-ui",
+        "entry": "README「What It Blocks」：Glassmorphism and frosted panels",
+        "url": "https://github.com/LeoStehlik/no-slop-ui#what-it-blocks",
+        "commit": "3c8f9e5ef5ca18f5632f7b9ad8f95e2d68188bcf",
+        "observed": "2026-10-19"
+      }
+    },
+    {
+      "id": "SLOP-003",
+      "title": "單一色調 AI 紫藍色系",
+      "severity": "blocking",
+      "kind": "distinct_threshold",
+      "applies_to": ["html", "css", "js", "jsx", "ts", "tsx", "vue", "svelte"],
+      "patterns": [
+        "#(8B5CF6|7C3AED|6D28D9|5B21B6|A855F7|9333EA|C084FC|D946EF|E879F9|818CF8|6366F1|4F46E5)"
+      ],
+      "threshold": 3,
+      "message": "單一色調的紫／藍紫色系是 generic AI 輸出的標誌性特徵。",
+      "remediation": "選一個有依據的品牌色階；至少打破同色相壟斷。",
+      "source": {
+        "repo": "LeoStehlik/no-slop-ui",
+        "entry": "README「What It Blocks」：One-hue purple/blue-dark palettes that read as generic AI output",
+        "url": "https://github.com/LeoStehlik/no-slop-ui#what-it-blocks",
+        "commit": "3c8f9e5ef5ca18f5632f7b9ad8f95e2d68188bcf",
+        "observed": "2026-10-19"
+      }
+    },
+    {
+      "id": "SLOP-004",
+      "title": "發光陰影效果",
+      "severity": "major",
+      "kind": "forbidden",
+      "applies_to": ["html", "css", "js", "jsx", "ts", "tsx", "vue", "svelte"],
+      "patterns": [
+        "box-shadow\\s*:\\s*[^;{}]*\\b0\\s+0\\s+\\d",
+        "filter\\s*:\\s*[^;{}]*drop-shadow\\s*\\([^)]*\\b0\\s+0",
+        "text-shadow\\s*:\\s*[^;{}]*\\b0\\s+0\\s+\\d"
+      ],
+      "message": "零位移發光（glow）是 AI slop 偵測的固定項目。",
+      "remediation": "改用有方向、有層次的真實陰影。",
+      "source": {
+        "repo": "pbakaus/impeccable",
+        "entry": "README「Why Impeccable?」：the detector catches AI slop (… dark glows)",
+        "url": "https://github.com/pbakaus/impeccable#why-impeccable",
+        "commit": "0665bd812ae0908fcab17b96fd4f840defb882d9",
+        "observed": "2026-10-19"
+      }
+    },
+    {
+      "id": "SLOP-005",
+      "title": "彈跳與過衝 easing",
+      "severity": "major",
+      "kind": "forbidden",
+      "applies_to": ["html", "css", "js", "jsx", "ts", "tsx", "vue", "svelte"],
+      "patterns": [
+        "cubic-bezier\\s*\\([^)]*,\\s*-",
+        "\\b(?:ease-in-back|ease-out-back|ease-in-out-back)\\b",
+        "(?:transition|animation)[^:{}]*:[^;{}]*\\b(?:bounce|elastic|spring)\\b"
+      ],
+      "message": "彈跳／彈性／過衝 easing 給人過時、廉價的動感。",
+      "remediation": "依動畫主體選擇合適的標準 easing。",
+      "source": {
+        "repo": "pbakaus/impeccable",
+        "entry": "README「Anti-Patterns」：Don't use bounce/elastic easing (feels dated)",
+        "url": "https://github.com/pbakaus/impeccable#anti-patterns",
+        "commit": "0665bd812ae0908fcab17b96fd4f840defb882d9",
+        "observed": "2026-10-19"
+      }
+    },
+    {
+      "id": "SLOP-006",
+      "title": "hover 位移縮放",
+      "severity": "major",
+      "kind": "forbidden",
+      "applies_to": ["html", "css", "js", "jsx", "ts", "tsx", "vue", "svelte"],
+      "patterns": [
+        ":hover[^{}]*\\{[^{}]*transform\\s*:"
+      ],
+      "message": "hover 時的 transform／scale 是被明令禁止的 slop 模式。",
+      "remediation": "以顏色、邊框、陰影等屬性變化回饋 hover。",
+      "source": {
+        "repo": "LeoStehlik/no-slop-ui",
+        "entry": "README「What It Blocks」：Transform, bounce, scale, or spring hover effects",
+        "url": "https://github.com/LeoStehlik/no-slop-ui#what-it-blocks",
+        "commit": "3c8f9e5ef5ca18f5632f7b9ad8f95e2d68188bcf",
+        "observed": "2026-10-19"
+      }
+    },
+    {
+      "id": "SLOP-007",
+      "title": "空泛 SaaS 填充文案",
+      "severity": "major",
+      "kind": "forbidden",
+      "applies_to": ["html", "css", "js", "jsx", "ts", "tsx", "vue", "svelte"],
+      "patterns": [
+        "\\b(?:supercharge|unlock the power of|elevate your|seamlessly|revolutioniz\\w+|cutting-edge|game-changing|to the next level|empower your)\\b"
+      ],
+      "message": "空泛的 SaaS 填充文案不傳達任何產品事實。",
+      "remediation": "寫出具體、可驗證的內容；說清楚使用者能做什麼。",
+      "source": {
+        "repo": "LeoStehlik/no-slop-ui",
+        "entry": "README「What It Blocks」：Eyebrow labels and vague SaaS filler copy",
+        "url": "https://github.com/LeoStehlik/no-slop-ui#what-it-blocks",
+        "commit": "3c8f9e5ef5ca18f5632f7b9ad8f95e2d68188bcf",
+        "observed": "2026-10-19"
+      }
+    },
+    {
+      "id": "SLOP-008",
+      "title": "eyebrow 標籤",
+      "severity": "major",
+      "kind": "forbidden",
+      "applies_to": ["html", "css", "js", "jsx", "ts", "tsx", "vue", "svelte"],
+      "patterns": [
+        "(?:class|id)\\s*=\\s*[\"'][^\"']*\\beyebrow\\b"
+      ],
+      "message": "eyebrow 標籤是模板化行銷頁的遺跡。",
+      "remediation": "若資訊重要，直接寫進標題；若不重要，刪掉。",
+      "source": {
+        "repo": "LeoStehlik/no-slop-ui",
+        "entry": "README「What It Blocks」：Eyebrow labels and vague SaaS filler copy",
+        "url": "https://github.com/LeoStehlik/no-slop-ui#what-it-blocks",
+        "commit": "3c8f9e5ef5ca18f5632f7b9ad8f95e2d68188bcf",
+        "observed": "2026-10-19"
+      }
+    },
+    {
+      "id": "SLOP-009",
+      "title": "未著色的純中性色",
+      "severity": "minor",
+      "kind": "forbidden",
+      "applies_to": ["html", "css", "js", "jsx", "ts", "tsx", "vue", "svelte"],
+      "patterns": [
+        "#([0-9a-fA-F]{2})\\1{2}\\b",
+        "#([0-9a-fA-F])\\1{2}\\b",
+        "(?:color|background|border)[^:;{}]*:\\s*(?:black|white)\\b"
+      ],
+      "message": "純黑／純白／未著色的中性灰；一律帶一點色相。",
+      "remediation": "使用帶色相的中性色（例如 #1c1f26 而非 #000000）。",
+      "source": {
+        "repo": "pbakaus/impeccable",
+        "entry": "README「Anti-Patterns」：Don't use pure black/gray (always tint)",
+        "url": "https://github.com/pbakaus/impeccable#anti-patterns",
+        "commit": "0665bd812ae0908fcab17b96fd4f840defb882d9",
+        "observed": "2026-10-19"
+      }
+    },
+    {
+      "id": "SLOP-010",
+      "title": "全濫用字型字型堆疊",
+      "severity": "minor",
+      "kind": "forbidden",
+      "applies_to": ["html", "css", "js", "jsx", "ts", "tsx", "vue", "svelte"],
+      "patterns": [
+        "font-family\\s*:\\s*[\"']?(?:Inter|Arial|Helvetica|system-ui|-apple-system|sans-serif)[\"']?(?:\\s*,\\s*[\"']?(?:Inter|Arial|Helvetica|system-ui|-apple-system|sans-serif)[\"']?)*\\s*[;}]"
+      ],
+      "message": "字型堆疊全部由濫用字型／系統預設組成。",
+      "remediation": "為產品選一個有依據的字型，系統字型只當最後 fallback。",
+      "source": {
+        "repo": "pbakaus/impeccable",
+        "entry": "README「Anti-Patterns」：Don't use overused fonts (Arial, Inter, system defaults)",
+        "url": "https://github.com/pbakaus/impeccable#anti-patterns",
+        "commit": "0665bd812ae0908fcab17b96fd4f840defb882d9",
+        "observed": "2026-10-19"
+      }
+    },
+    {
+      "id": "WIG-001",
+      "title": "禁止 transition: all",
+      "severity": "major",
+      "kind": "forbidden",
+      "applies_to": ["html", "css", "js", "jsx", "ts", "tsx", "vue", "svelte"],
+      "patterns": [
+        "transition\\s*:\\s*[^;{}]*\\ball\\b"
+      ],
+      "message": "transition: all 會意外動到佈局屬性，造成 jank。",
+      "remediation": "明確列出要動畫的屬性（通常只有 opacity、transform）。",
+      "source": {
+        "repo": "vercel-labs/web-interface-guidelines",
+        "entry": "README「Animations」：Never transition: all",
+        "url": "https://github.com/vercel-labs/web-interface-guidelines#animations",
+        "commit": "434b7f91364665f2f733b310ec54809bf8f37937",
+        "observed": "2026-10-19"
+      }
+    },
+    {
+      "id": "WIG-002",
+      "title": "動畫缺少 reduced-motion 變體",
+      "severity": "major",
+      "kind": "required_when",
+      "applies_to": ["html", "css", "js", "jsx", "ts", "tsx", "vue", "svelte"],
+      "when": [
+        "@keyframes|\\banimation(-name)?\\s*:"
+      ],
+      "require": [
+        "prefers-reduced-motion"
+      ],
+      "message": "有效果動畫卻沒有 reduced-motion 變體。",
+      "remediation": "提供 @media (prefers-reduced-motion: reduce) 變體。",
+      "source": {
+        "repo": "vercel-labs/web-interface-guidelines",
+        "entry": "README「Animations」：Honor prefers-reduced-motion. Provide a reduced-motion variant.",
+        "url": "https://github.com/vercel-labs/web-interface-guidelines#animations",
+        "commit": "434b7f91364665f2f733b310ec54809bf8f37937",
+        "observed": "2026-10-19"
+      }
+    },
+    {
+      "id": "WIG-003",
+      "title": "三點省略號",
+      "severity": "minor",
+      "kind": "forbidden",
+      "applies_to": ["html"],
+      "patterns": [
+        "\\.\\.\\."
+      ],
+      "message": "內文使用三個半角句點而非省略字元。",
+      "remediation": "使用 …（U+2026）。",
+      "source": {
+        "repo": "vercel-labs/web-interface-guidelines",
+        "entry": "README「Content」：Use the ellipsis character. … over three periods ...",
+        "url": "https://github.com/vercel-labs/web-interface-guidelines#content",
+        "commit": "434b7f91364665f2f733b310ec54809bf8f37937",
+        "observed": "2026-10-19"
+      }
+    },
+    {
+      "id": "WIG-004",
+      "title": "表件控制項缺少標籤",
+      "severity": "minor",
+      "kind": "required_when",
+      "applies_to": ["html"],
+      "when": [
+        "<input\\b|<select\\b|<textarea\\b"
+      ],
+      "require": [
+        "<label\\b|aria-label\\s*=|aria-labelledby\\s*="
+      ],
+      "message": "本檔出現表件控制項卻看不到標籤（元件化專案可能把標籤拆到其他檔）。",
+      "remediation": "為每個控制項提供 <label> 或 aria-label；拆檔專案請以自有規則集調整本條。",
+      "source": {
+        "repo": "vercel-labs/web-interface-guidelines",
+        "entry": "README「Forms」：Labels everywhere. Every control has a <label> or is associated with a label",
+        "url": "https://github.com/vercel-labs/web-interface-guidelines#forms",
+        "commit": "434b7f91364665f2f733b310ec54809bf8f37937",
+        "observed": "2026-10-19"
+      }
+    }
+  ]
+}

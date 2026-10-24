@@ -86,10 +86,28 @@
           "description": "Machine-readable condition key for a conditional stage."
         },
         "on_gate_pass": {
-          "enum": [
-            "validate_ticket_dependencies"
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "validate_ticket_dependencies",
+                "require_conditional_gates"
+              ]
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "validate_ticket_dependencies",
+                  "require_conditional_gates"
+                ]
+              }
+            }
           ],
-          "description": "Extra check performed when this planning stage's gate passes."
+          "description": "Extra checks performed when this planning stage's gate passes. A single hook name is accepted for compatibility; multiple hooks compose."
         },
         "on_enter": {
           "enum": [

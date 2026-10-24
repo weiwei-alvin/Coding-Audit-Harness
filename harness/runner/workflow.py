@@ -352,9 +352,9 @@ class Workflow:
         if s['project_status']!='IN_PROGRESS': raise ValueError('Project not in progress')
         definition=definition_for_state(self.root,s)
         stage=s['pipeline_stage']
-        hook=definition.hook(stage,'on_gate_pass') if definition.is_planning(stage) else None
-        tickets_pass=hook=='validate_ticket_dependencies' and verdict=='PASS'
-        if hook=='validate_ticket_dependencies': files=self.graph(s)
+        hooks=definition.gate_hooks(stage) if definition.is_planning(stage) else []
+        tickets_pass='validate_ticket_dependencies' in hooks and verdict=='PASS'
+        if 'validate_ticket_dependencies' in hooks: files=self.graph(s)
         if tickets_pass:
             errors=self.coverage_errors(files)
             if errors: raise ValueError(f'{stage} gate refused: '+'; '.join(errors))

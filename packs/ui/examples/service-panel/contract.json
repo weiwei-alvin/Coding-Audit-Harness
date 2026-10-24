@@ -1,0 +1,511 @@
+{
+  "schema_version": "0.1",
+  "metadata": {
+    "established_date": "2026-10-15",
+    "updated_date": "2026-10-15",
+    "version": "0.1.0"
+  },
+  "project": {
+    "id": "PRJ-001",
+    "name": "Synthetic Service Connection Panel",
+    "platform": "web",
+    "kind": "operational"
+  },
+  "brief": {
+    "problem": "合成範例：操作者需要測試單一服務的連線並理解失敗原因；本案例沒有真實產品實作。",
+    "users": [
+      {
+        "id": "USR-001",
+        "role": "服務操作者",
+        "context": "每天檢查服務是否可連線。",
+        "task_ids": [
+          "TASK-001"
+        ]
+      }
+    ],
+    "tasks": [
+      {
+        "id": "TASK-001",
+        "user_id": "USR-001",
+        "frequency": "high",
+        "trigger": "服務異常或日常檢查。",
+        "outcome": "得到單一服務的測試結果與可採取動作。",
+        "flow_id": "FLOW-001"
+      }
+    ],
+    "objects": [
+      {
+        "id": "OBJ-001",
+        "name": "Service",
+        "description": "名稱、URL、狀態與最近測試時間。"
+      }
+    ],
+    "flows": [
+      {
+        "id": "FLOW-001",
+        "task_id": "TASK-001",
+        "steps": [
+          {
+            "action": "選擇服務並檢查 URL。",
+            "result": "輸入符合格式才能啟動測試。"
+          },
+          {
+            "action": "啟動測試。",
+            "result": "顯示進度並避免重複請求。"
+          },
+          {
+            "action": "讀取結果。",
+            "result": "成功顯示時間；失敗可保留輸入重試。"
+          }
+        ],
+        "exceptions": [
+          "無服務時提供新增入口。",
+          "無效 URL 在欄位旁提示。",
+          "測試失敗保留資料並顯示重試。"
+        ]
+      }
+    ],
+    "data_density": {
+      "typical_records": 8,
+      "maximum_records": 50,
+      "primary_fields": [
+        "name",
+        "URL",
+        "status",
+        "last_checked"
+      ],
+      "rationale": "本合成案例刻意採小型清單，數值僅供契約測試。"
+    },
+    "platform_constraints": [
+      "合成範例平台為桌面與窄螢幕瀏覽器。",
+      "操作可使用鍵盤、滑鼠或觸控。"
+    ],
+    "success_criteria": [
+      {
+        "id": "SUCCESS-001",
+        "measure": "連線測試核心流程。",
+        "threshold": "可由服務選擇完成至明確結果，錯誤時能重試。",
+        "verification": "M5 以瀏覽器 assertion 驗證；M1 僅驗證此條件有定義。"
+      }
+    ],
+    "assumptions": [
+      {
+        "statement": "此範例使用系統字體與自訂範例 tokens。",
+        "validation": "真實專案需以實際品牌、資料量與平台資料取代。"
+      }
+    ],
+    "unknowns": []
+  },
+  "spec": {
+    "stories": [
+      {
+        "id": "US-001",
+        "user_id": "USR-001",
+        "task_id": "TASK-001",
+        "statement": "身為操作者，我要測試服務連線，以便決定是否需要重試。",
+        "screen_ids": [
+          "SCR-001"
+        ],
+        "ac_ids": [
+          "UI-AC-001",
+          "UI-AC-002",
+          "UI-AC-003",
+          "UI-AC-004",
+          "UI-AC-005",
+          "UI-AC-006",
+          "UI-AC-007"
+        ],
+        "success_criteria_ids": [
+          "SUCCESS-001"
+        ]
+      }
+    ],
+    "screens": [
+      {
+        "id": "SCR-001",
+        "name": "服務連線檢查",
+        "purpose": "一個主要操作區完成服務選擇、測試與結果處理。",
+        "flow_ids": [
+          "FLOW-001"
+        ],
+        "object_ids": [
+          "OBJ-001"
+        ],
+        "states": [
+          {
+            "kind": "default",
+            "presentation": "顯示服務名稱、連線狀態與測試按鈕。",
+            "interaction": "使用鍵盤或指標完成對應操作。"
+          },
+          {
+            "kind": "loading",
+            "presentation": "測試按鈕顯示進度文字並防止重複提交。",
+            "interaction": "測試期間禁止重複提交並可讀取進度。"
+          },
+          {
+            "kind": "empty",
+            "presentation": "沒有服務時顯示新增入口與說明。",
+            "interaction": "使用鍵盤或指標完成對應操作。"
+          },
+          {
+            "kind": "error",
+            "presentation": "連線失敗保留輸入並提供重試。",
+            "interaction": "使用鍵盤或指標完成對應操作。"
+          },
+          {
+            "kind": "success",
+            "presentation": "結果區顯示連線成功與最近測試時間。",
+            "interaction": "使用鍵盤或指標完成對應操作。"
+          },
+          {
+            "kind": "validation_error",
+            "presentation": "網址錯誤顯示欄位訊息與修正提示。",
+            "interaction": "使用鍵盤或指標完成對應操作。"
+          },
+          {
+            "kind": "disabled",
+            "presentation": "缺少網址時測試按鈕不可提交。",
+            "interaction": "控制項不可提交且有原因文字。"
+          }
+        ],
+        "state_exclusions": [],
+        "wireframe": {
+          "format": "text",
+          "content": "[標題：服務連線檢查]\n[服務選擇] [服務網址____________] [測試連線]\n[清單：服務名 | URL | 狀態 | 最近測試時間]\n[結果區：進度／結果文字／重試動作]\n窄螢幕：以上區域依序垂直排列。"
+        }
+      }
+    ],
+    "acceptance_criteria": [
+      {
+        "id": "UI-AC-001",
+        "story_id": "US-001",
+        "screen_id": "SCR-001",
+        "state": "default",
+        "given": "服務檢查畫面處於 default 條件。",
+        "when": "使用者進入此狀態並操作服務檢查。",
+        "then": "顯示服務名稱、連線狀態與測試按鈕。",
+        "method": "hybrid",
+        "required": true,
+        "evidence": {
+          "artifact": "M5 browser assertion log 與 SCR-001-default.png（尚未產生）。",
+          "procedure": "建立 default 測試資料，執行對應操作並斷言文字、控制項狀態及結果；視覺部分另由人工審查。"
+        }
+      },
+      {
+        "id": "UI-AC-002",
+        "story_id": "US-001",
+        "screen_id": "SCR-001",
+        "state": "loading",
+        "given": "服務檢查畫面處於 loading 條件。",
+        "when": "使用者進入此狀態並操作服務檢查。",
+        "then": "測試按鈕顯示進度文字並防止重複提交。",
+        "method": "automated",
+        "required": true,
+        "evidence": {
+          "artifact": "M5 browser assertion log 與 SCR-001-loading.png（尚未產生）。",
+          "procedure": "建立 loading 測試資料，執行對應操作並斷言文字、控制項狀態及結果；視覺部分另由人工審查。"
+        }
+      },
+      {
+        "id": "UI-AC-003",
+        "story_id": "US-001",
+        "screen_id": "SCR-001",
+        "state": "empty",
+        "given": "服務檢查畫面處於 empty 條件。",
+        "when": "使用者進入此狀態並操作服務檢查。",
+        "then": "沒有服務時顯示新增入口與說明。",
+        "method": "automated",
+        "required": true,
+        "evidence": {
+          "artifact": "M5 browser assertion log 與 SCR-001-empty.png（尚未產生）。",
+          "procedure": "建立 empty 測試資料，執行對應操作並斷言文字、控制項狀態及結果；視覺部分另由人工審查。"
+        }
+      },
+      {
+        "id": "UI-AC-004",
+        "story_id": "US-001",
+        "screen_id": "SCR-001",
+        "state": "error",
+        "given": "服務檢查畫面處於 error 條件。",
+        "when": "使用者進入此狀態並操作服務檢查。",
+        "then": "連線失敗保留輸入並提供重試。",
+        "method": "automated",
+        "required": true,
+        "evidence": {
+          "artifact": "M5 browser assertion log 與 SCR-001-error.png（尚未產生）。",
+          "procedure": "建立 error 測試資料，執行對應操作並斷言文字、控制項狀態及結果；視覺部分另由人工審查。"
+        }
+      },
+      {
+        "id": "UI-AC-005",
+        "story_id": "US-001",
+        "screen_id": "SCR-001",
+        "state": "success",
+        "given": "服務檢查畫面處於 success 條件。",
+        "when": "使用者進入此狀態並操作服務檢查。",
+        "then": "結果區顯示連線成功與最近測試時間。",
+        "method": "automated",
+        "required": true,
+        "evidence": {
+          "artifact": "M5 browser assertion log 與 SCR-001-success.png（尚未產生）。",
+          "procedure": "建立 success 測試資料，執行對應操作並斷言文字、控制項狀態及結果；視覺部分另由人工審查。"
+        }
+      },
+      {
+        "id": "UI-AC-006",
+        "story_id": "US-001",
+        "screen_id": "SCR-001",
+        "state": "validation_error",
+        "given": "服務檢查畫面處於 validation_error 條件。",
+        "when": "使用者進入此狀態並操作服務檢查。",
+        "then": "網址錯誤顯示欄位訊息與修正提示。",
+        "method": "automated",
+        "required": true,
+        "evidence": {
+          "artifact": "M5 browser assertion log 與 SCR-001-validation_error.png（尚未產生）。",
+          "procedure": "建立 validation_error 測試資料，執行對應操作並斷言文字、控制項狀態及結果；視覺部分另由人工審查。"
+        }
+      },
+      {
+        "id": "UI-AC-007",
+        "story_id": "US-001",
+        "screen_id": "SCR-001",
+        "state": "disabled",
+        "given": "服務檢查畫面處於 disabled 條件。",
+        "when": "使用者進入此狀態並操作服務檢查。",
+        "then": "缺少網址時測試按鈕不可提交。",
+        "method": "automated",
+        "required": true,
+        "evidence": {
+          "artifact": "M5 browser assertion log 與 SCR-001-disabled.png（尚未產生）。",
+          "procedure": "建立 disabled 測試資料，執行對應操作並斷言文字、控制項狀態及結果；視覺部分另由人工審查。"
+        }
+      }
+    ],
+    "information_architecture": {
+      "entry_screen_id": "SCR-001",
+      "navigation": [
+        {
+          "screen_id": "SCR-001",
+          "parent_screen_id": null,
+          "label": "服務連線檢查"
+        }
+      ]
+    }
+  },
+  "design": {
+    "art_direction": {
+      "route": "restrained",
+      "intent": "合成操作型案例以可掃讀清單、清楚狀態與單一主要動作為核心。",
+      "references": [
+        {
+          "label": "Synthetic example design choice",
+          "source": "此合成契約內的明確設計選擇；非外部樣式來源。",
+          "status": "chosen_example",
+          "limitation": "僅供欄位與關卡測試，尚未產生或審查畫面。"
+        }
+      ],
+      "anti_generic_rules": [
+        {
+          "id": "RULE-001",
+          "statement": "不使用與操作無關的 hero、裝飾漸層或大型指標卡片。",
+          "verification": "M4 對照當前畫面與此規則，記錄符合或違反的區域、觀察來源與限制；必要時保留截圖及操作步驟。"
+        },
+        {
+          "id": "RULE-002",
+          "statement": "狀態與動作必須反映服務目前可做的事情。",
+          "verification": "M4 對照當前畫面與此規則，記錄符合或違反的區域、觀察來源與限制；必要時保留截圖及操作步驟。"
+        }
+      ]
+    },
+    "layout_rules": [
+      {
+        "id": "RULE-003",
+        "statement": "單一服務清單搭配結果區；主要動作靠近所作用的服務。",
+        "verification": "M4 對照當前畫面與此規則，記錄符合或違反的區域、觀察來源與限制；必要時保留截圖及操作步驟。"
+      }
+    ],
+    "typography_rules": [
+      {
+        "id": "RULE-004",
+        "statement": "使用系統字體，服務名、欄位與輔助文字依層級區分。",
+        "verification": "M4 對照當前畫面與此規則，記錄符合或違反的區域、觀察來源與限制；必要時保留截圖及操作步驟。"
+      }
+    ],
+    "spacing_rules": [
+      {
+        "id": "RULE-005",
+        "statement": "使用 4px 的範例基本單位，相關欄位群組靠近。",
+        "verification": "M4 對照當前畫面與此規則，記錄符合或違反的區域、觀察來源與限制；必要時保留截圖及操作步驟。"
+      }
+    ],
+    "color_rules": [
+      {
+        "id": "RULE-006",
+        "statement": "狀態同時以文字與圖示表達；顏色不作唯一辨識。",
+        "verification": "M4 對照當前畫面與此規則，記錄符合或違反的區域、觀察來源與限制；必要時保留截圖及操作步驟。"
+      },
+      {
+        "id": "RULE-007",
+        "statement": "本例色值需在 M5 對比與實機審查，M1 不聲稱符合無障礙。",
+        "verification": "M4 對照當前畫面與此規則，記錄符合或違反的區域、觀察來源與限制；必要時保留截圖及操作步驟。"
+      }
+    ],
+    "tokens": [
+      {
+        "id": "TOK-001",
+        "category": "color",
+        "name": "surface",
+        "value": "#FFFFFF",
+        "rationale": "合成範例表面色，非使用者品牌值。"
+      },
+      {
+        "id": "TOK-002",
+        "category": "typography",
+        "name": "body",
+        "value": "system-ui, 16px",
+        "rationale": "可用系統字體且不下載字型。"
+      },
+      {
+        "id": "TOK-003",
+        "category": "spacing",
+        "name": "unit",
+        "value": "4px",
+        "rationale": "小型操作面板的範例間距單位。"
+      },
+      {
+        "id": "TOK-004",
+        "category": "layout",
+        "name": "content_width",
+        "value": "960px",
+        "rationale": "桌面範例內容上限，窄螢幕使用流式版面。"
+      }
+    ],
+    "components": [
+      {
+        "id": "CMP-001",
+        "name": "ServiceConnectionForm",
+        "screen_ids": [
+          "SCR-001"
+        ],
+        "state_kinds": [
+          "default",
+          "loading",
+          "empty",
+          "error",
+          "success",
+          "validation_error",
+          "disabled"
+        ],
+        "token_ids": [
+          "TOK-001",
+          "TOK-002",
+          "TOK-003",
+          "TOK-004"
+        ],
+        "behavior": "保留輸入、控制提交、將結果綁定至目前服務。",
+        "keyboard": "依服務選擇、URL、測試按鈕、結果區順序操作；錯誤時焦點回到有問題欄位。",
+        "accessible_name": "服務、服務網址、測試連線。",
+        "parent_id": null
+      }
+    ],
+    "responsive": [
+      {
+        "id": "RESP-001",
+        "viewport": {
+          "label": "wide",
+          "width": 1280,
+          "height": 800,
+          "input": [
+            "mouse",
+            "keyboard"
+          ]
+        },
+        "screen_ids": [
+          "SCR-001"
+        ],
+        "behavior": "清單與結果並列，標籤保持可見。",
+        "verification": "M5 實際於 1280x800 檢查沒有遮擋與橫向溢出。"
+      },
+      {
+        "id": "RESP-002",
+        "viewport": {
+          "label": "narrow",
+          "width": 390,
+          "height": 844,
+          "input": [
+            "touch",
+            "keyboard"
+          ]
+        },
+        "screen_ids": [
+          "SCR-001"
+        ],
+        "behavior": "清單與結果垂直排列，動作仍靠近服務。",
+        "verification": "M5 實際於 390x844 檢查換行、焦點與操作。"
+      }
+    ],
+    "accessibility": [
+      {
+        "id": "AX-001",
+        "screen_ids": [
+          "SCR-001"
+        ],
+        "rule": "鍵盤可完成核心流程，欄位有名稱且進度與錯誤可辨識。",
+        "method": "hybrid",
+        "verification": "M5 自動檢查語意名稱並人工鍵盤巡覽及輔助技術確認。"
+      }
+    ],
+    "review_criteria": [
+      {
+        "id": "RV-001",
+        "category": "art_direction",
+        "required": true,
+        "procedure": "在 M4 對照 art_direction 規則與當前畫面，記錄觀察來源、限制及 Blocking/Major/Minor 問題。",
+        "evidence": "當前 build 的畫面、觀察紀錄與可重現步驟；M1 尚未產生。",
+        "rule_ids": []
+      },
+      {
+        "id": "RV-002",
+        "category": "design_system",
+        "required": true,
+        "procedure": "在 M4 對照 design_system 規則與當前畫面，記錄觀察來源、限制及 Blocking/Major/Minor 問題。",
+        "evidence": "當前 build 的畫面、觀察紀錄與可重現步驟；M1 尚未產生。",
+        "rule_ids": [
+          "RULE-003",
+          "RULE-004",
+          "RULE-005",
+          "RULE-006",
+          "RULE-007"
+        ]
+      },
+      {
+        "id": "RV-003",
+        "category": "anti_generic",
+        "required": true,
+        "procedure": "在 M4 對照 anti_generic 規則與當前畫面，記錄觀察來源、限制及 Blocking/Major/Minor 問題。",
+        "evidence": "當前 build 的畫面、觀察紀錄與可重現步驟；M1 尚未產生。",
+        "rule_ids": [
+          "RULE-001",
+          "RULE-002"
+        ]
+      },
+      {
+        "id": "RV-004",
+        "category": "responsive",
+        "required": true,
+        "procedure": "在 M4 對照 responsive 規則與當前畫面，記錄觀察來源、限制及 Blocking/Major/Minor 問題。",
+        "evidence": "當前 build 的畫面、觀察紀錄與可重現步驟；M1 尚未產生。",
+        "rule_ids": []
+      },
+      {
+        "id": "RV-005",
+        "category": "accessibility",
+        "required": true,
+        "procedure": "在 M4 對照 accessibility 規則與當前畫面，記錄觀察來源、限制及 Blocking/Major/Minor 問題。",
+        "evidence": "當前 build 的畫面、觀察紀錄與可重現步驟；M1 尚未產生。",
+        "rule_ids": []
+      }
+    ]
+  }
+}

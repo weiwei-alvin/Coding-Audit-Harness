@@ -1,0 +1,23 @@
+:root {
+  --brand: #b45309;
+  --brand-deep: #92400e;
+  --brand-soft: #d97706;
+}
+body {
+  margin: 0;
+  font-family: "Sora", system-ui, sans-serif;
+  color: #1c1f26;
+  background: #f7f7f8;
+}
+.panel {
+  padding: 16px;
+  border: 1px solid #d4d6dd;
+  border-radius: 8px;
+  background: #fbfbfc;
+}
+.cta {
+  padding: 8px 16px;
+  border: 1px solid #d4d6dd;
+  border-radius: 8px;
+  transition: color 200ms ease, background-color 200ms ease;
+}

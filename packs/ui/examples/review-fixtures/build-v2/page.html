@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>合成 review build v2</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main>
+  <h1>服務面板</h1>
+  <p>輸入主機位址，執行連線測試並查看結果。</p>
+  <form id="probe-form">
+    <label for="host">主機位址</label>
+    <input id="host" type="text" autocomplete="off">
+    <button type="submit">執行連線測試</button>
+  </form>
+  <p id="status" role="status">尚未執行測試。</p>
+</main>
+<script>
+  document.getElementById("probe-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var host = document.getElementById("host").value.trim() || "127.0.0.1";
+    document.getElementById("status").textContent = host + "：連線通過（合成結果）。";
+  });
+</script>
+</body>
+</html>

@@ -172,7 +172,7 @@ def _semantic_errors(data):
                 continue
             if hook_name == "on_gate_pass":
                 hooks = [hook] if isinstance(hook, str) else hook
-                if isinstance(hook, list):
+                if isinstance(hooks, list):
                     for name in hooks:
                         if name not in GATE_HOOKS:
                             errors.append(f"Stage {stage['id']} uses unknown gate hook on_gate_pass={name}")

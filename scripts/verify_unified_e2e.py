@@ -182,13 +182,20 @@ def main():
     parser.add_argument("--output", type=Path, required=True, help="New evidence directory; existing paths rejected")
     parser.add_argument("--old-evidence", type=Path, default=None,
         help="T-005 evidence directory used for the new/old hash cross-check "
-             "(default: D:\\Workplace\\01_Projects\\UI-Design-Harness\\outputs\\validation\\t005-e2e-fix1)")
+             "(default: UI-Design-Harness outputs/validation/t005-e2e-fix1, "
+             "from 01_Projects or the readme-only archive in 04_Archives)")
     args = parser.parse_args()
     output = args.output.resolve()
     if output.exists():
         parser.error("Use a new output directory")
-    old_evidence = args.old_evidence or Path(
-        r"D:\Workplace\01_Projects\UI-Design-Harness\outputs\validation\t005-e2e-fix1")
+    if args.old_evidence is not None:
+        old_evidence = args.old_evidence
+    else:
+        candidates = [
+            Path(r"D:\Workplace\01_Projects\UI-Design-Harness\outputs\validation\t005-e2e-fix1"),
+            Path(r"D:\Workplace\04_Archives\UI-Design-Harness\outputs\validation\t005-e2e-fix1"),
+        ]
+        old_evidence = next((p for p in candidates if p.is_dir()), candidates[0])
     steps_dir = output / "steps"
     steps_dir.mkdir(parents=True)
     case = output / "case"

@@ -3,8 +3,8 @@ document_title: Coding Audit Harness
 chinese_title: AI 寫的程式，驗過才算數
 aka: []
 established_date: 2026-09-29
-updated_date: 2026-10-01
-version: 3.1.0
+updated_date: 2026-10-24
+version: 3.2.0
 -->
 
 <div align="center">
@@ -18,7 +18,7 @@ version: 3.1.0
 
 繁體中文 · [简体中文](README.zh-CN.md) · [English](README.en.md) · [Français](README.fr.md) · [Latina](README.la.md)
 
-[運作方式](#一張工單怎麼從頭走到尾) · [安裝](#安裝) · [快速上手](#快速上手) · [指令參考](#指令參考) · [信任邊界](#信任邊界)
+[目前狀態](#目前狀態) · [快速上手](#快速上手) · [UI 專案](#ui-pack) · [指令參考](#指令參考) · [信任邊界](#信任邊界)
 
 </div>
 
@@ -40,7 +40,26 @@ Coding Audit Harness 存在的理由就一句：**讓「驗收過」從一句話
 
 ---
 
-## 這套系統由五個東西組成
+## 目前狀態
+
+目前提供 **Runner kernel + 可選的 UI pack**。Kernel 管理工單、管線、執行證據與審查；UI pack 加入設計契約、規則掃描、瀏覽器證據與 UI review／fix 指令。
+
+| 使用情境 | 選用定義 | Runner 起點與要求 |
+|---|---|---|
+| CLI、API、library 等純 code 專案 | [`harness/pipeline.default.json`](harness/pipeline.default.json) | 從 `TICKETS` 開始；先由操作者與 Agent 完成 Discovery／Spec |
+| 包含使用者介面的專案 | [`packs/ui/pipeline.json`](packs/ui/pipeline.json) | 從 `DISCOVERY` 開始，依序經過 `SPEC → DESIGN → TICKETS`；Review PASS 要求三層證據 |
+
+**V2 主線是 UI Design Integration**，方向見 [`milestone.md`](milestone.md)。目前實作使用的 stage ID 是 `DESIGN`；指令文件中的概念名稱 `UI_DESIGN` 不應直接代入設定。Audit Console（本機 Web UI）仍為延後的獨立里程碑，見 [`PLAN.md`](PLAN.md)／[`SPEC.md`](SPEC.md)，尚未提供操作介面。
+
+2026-10-24 的 [P3 審查紀錄](docs/reviews/p3-review.md) 為 `P3_ACCEPTED`。本機既有紀錄包含 **174 項回歸通過**與報時遊戲案例 **35/35 統一驗收通過**；案例 final gate 為 `ui_acceptance=VERIFIED`。原始 JSON 位於本機 `test-results/`，未納入 Git；這些是既有執行紀錄，本次 README 更新未重新執行完整套件。
+
+此 UI 驗收僅涵蓋單一案例、Chromium 與已列名的人工判準。未涵蓋跨瀏覽器、真人／輔助科技測試或對比量測；固定次數 Tab 巡覽也不等於完整互動流程驗收。CI 狀態請查看 [GitHub Actions](https://github.com/weiwei-alvin/Coding-Audit-Harness/actions/workflows/harness-validation.yml)，本機結果不能代替遠端 CI。
+
+以下快速上手先示範純 code 專案；UI 專案另見 [UI pack 入口](#ui-pack)。其他語言 README 尚未同步本次 V2 說明，最新範圍以本頁為準。
+
+---
+
+## 核心元件
 
 | 元件 | 比喻 | 它其實是 |
 |---|---|---|
@@ -48,7 +67,8 @@ Coding Audit Harness 存在的理由就一句：**讓「驗收過」從一句話
 | **Runner** | 裁判 | 一個 CLI 程式（`harness/runner/runner.py`）。它不參與開發，只做一件事：檢查「這個 PASS 有沒有對應的證據」。沒有就直接 exit 非 0。 |
 | **state.json** | 流程紀錄 | 專案裡的一個 JSON 檔，記錄現在走到哪一階段、每張工單的狀態、有哪些還沒解決的問題。唯一的事實來源，所有判斷都從它讀。 |
 | **驗證證據**<br>`evidence` | 驗收收據 | 每執行一次驗收指令，Runner 就存一份收據：跑了什麼指令、exit code 幾、當下程式碼的指紋是多少。 |
-| **Gate** | 關卡 | 一個必須由**你（人）**按下「通過」的關卡。Agent 沒有權限自己過關。 |
+| **Gate** | 關卡 | 操作者審閱產出後，以 `gate-verdict` 記錄決策；Runner 檢查流程與必要條件。 |
+| **UI pack（選用）** | UI 檢查工具包 | `packs/ui/` 提供契約、規則、瀏覽器收集與審查指令，由 pipeline 設定接入。 |
 
 ### 為什麼不能只相信 Agent 說「測試通過」
 
@@ -56,11 +76,11 @@ Coding Audit Harness 存在的理由就一句：**讓「驗收過」從一句話
 
 - **Agent 寫程式，也寫測試，也報告結果。** 三個角色是同一個模型。同一個模型寫出來的測試，只會蓋到它自己想得到的狀況。漏了什麼它自己看不到，於是沒有人知道它漏了什麼。
 - **Runner 不相信 Agent 的報告，只相信收據。** 它自己重跑一次驗收指令，自己算一次程式碼指紋，再自己比對。Agent 說「測試通過」對它來說等於沒說。
-- **Gate 是人按的。** 那道指令只有你會下。它代表「我看過了，我批准」，不是「系統偵測到一切正常」。
+- **Gate 由操作者負責核准。** 它代表「我看過了，我批准」。這是操作規範；CLI 沒有身分驗證或人類在場偵測，無法阻止同權限 Agent 呼叫指令。
 
 三者不能互相代替：Agent 提出，Runner 強制，Operator 核准，少一環流程就走不動。
 
-### 接在 Matt Pocock 的五個技能後面
+### 純 code 流程：接在 Matt Pocock 的五個技能後面
 
 這套 harness 不自己產出規格或程式碼。產出靠 [Matt Pocock 的五個技能](https://github.com/mattpocock/skills)，harness 負責在每一步之後檢查產出物。每個 `*-audit` 技能都是入口：它先呼叫對應的 Matt 技能，等上游跑完，再用自己的規則檢查產出。上游技能不存在就直接失敗，不會跳過。
 
@@ -132,11 +152,12 @@ Runner 額外把所有驗收指令從頭再跑一遍。任何一條不過，整�
 
 ## 系統包含什麼
 
-- 五階段管線：`DISCOVERY → SPEC → TICKETS → IMPLEMENTATION → REVIEW → COMPLETE`
-- 25 個 Runner 指令選項（其中 3 個已明確拒絕，以防止繞過驗收），以 `state.json` 為唯一事實來源
+- 資料驅動管線：stage 順序、entry、Gate hook 與證據層級由 `pipeline.json` 定義；以 `state.json` 為流程狀態權威
+- 純 code 預設管線與可選 UI pack；三個舊指令已明確拒絕，以防止繞過驗收
 - 5 個 audit skills，替每個階段定義可判定的驗收條件
 - Golden Path 驗證：每張工單都要有自己能獨立跑出 PASS/FAIL 的指令，每條指令都要指向 `SPEC.md` 的 User Story
 - 證據綁定：`source_hash`（程式碼指紋）+ `verification_id`（單次驗證的唯一編號）+ `review_round`（第幾輪審查）三者綁定，PASS 不能用在別的程式碼狀態上
+- Typed verification：assertion 產生 `deterministic` 證據，collector 記錄 `captured` artifact 與 SHA-256；人工判準以 `declared` 標示來源與限制
 
 ### 這不是什麼
 
@@ -154,13 +175,13 @@ Runner 額外把所有驗收指令從頭再跑一遍。任何一條不過，整�
 | **Operator（你）** | — | 人 | `gate-verdict` / `decide` 是**人做的核准**。工具不會自己宣告 PASS |
 
 > [!IMPORTANT]
-> **Runner 從 pipeline 定義檔的 entry stage 開始接管。** 預設定義的 entry stage 是 `TICKETS`（見 `harness/pipeline.default.json` 與 `harness/runner/workflow.py` 的 `initialize()`），因此預設情況下 `DISCOVERY` 與 `SPEC` 兩階段**沒有 CLI 路徑可以到達**——`grill-me-audit` 與 `to-spec-audit` 的驗收條件目前只由 agent 側自律執行，Runner 不做階段層強制。唯一的例外是 TICKETS Gate 會讀 `SPEC.md` 的 User Stories 清單，檢查它與 Golden Path 的對應。若你需要 Runner 強制這兩段，那是未實作項目，見 [Deferred Items](docs/DEFERRED_ITEMS.md)。
+> **Runner 從所選 pipeline 的 entry stage 開始接管。** 純 code 預設從 `TICKETS` 開始，不會走前面的 Discovery／Spec Gate；UI pack 則從 `DISCOVERY` 開始，會留下各 planning Gate 的決策紀錄。Planning Gate 的內容仍由操作者審閱，kernel 不會自動判斷需求或設計品質。TICKETS Gate 會另外檢查依賴、Golden Path 與 `SPEC.md` User Stories 的涵蓋關係。
 
 ---
 
 ## 安裝
 
-需要 Python 3.12（CI 指定版本）。唯一的第三方依賴是 `jsonschema>=4.18,<5`（`referencing` 是它的既有依賴）。
+需要 Python 3.12（CI 指定版本）。Kernel 的直接第三方依賴是 `jsonschema>=4.18,<5`（`referencing` 是它的既有依賴）。UI 瀏覽器收集器另需 Playwright 與 Chromium，未列入根目錄的 kernel `requirements.txt`；詳見 [UI pack](packs/ui/README.md)。
 
 ```powershell
 python -m pip install -r requirements.txt
@@ -178,7 +199,11 @@ Coding-Audit-Harness/
 ├── skills/
 │   ├── *-audit/          # 5 個 audit wrapper（本專案原創）
 │   └── matt-upstream/    # Matt Pocock 上游技能（vendored，未修改）
-├── docs/                 # CHANGELOG / Deferred Items / Symbol-first Context
+├── packs/ui/             # UI 契約、rules / collect / review / fix 與 pipeline
+├── scripts/              # 統一 UI E2E 驗證入口
+├── docs/                 # CHANGELOG / 審查紀錄 / Deferred Items
+├── milestone.md          # V2 UI Design Integration 主線
+├── PLAN.md / SPEC.md     # 延後的 Audit Console 獨立里程碑
 └── .github/workflows/    # Windows + Ubuntu CI
 ```
 
@@ -206,8 +231,12 @@ Coding-Audit-Harness/
 ### 0. 把 Harness 放進目標專案
 
 ```powershell
-Copy-Item -Recurse <this-repo>\harness C:\work\calc\harness
-cd C:\work\calc
+$HarnessRepo = 'C:\src\Coding-Audit-Harness' # 改成此 repo 的實際位置
+$TargetProject = 'C:\work\calc'             # 使用全新示範目錄
+New-Item -ItemType Directory -Path $TargetProject | Out-Null
+Copy-Item -Recurse -LiteralPath "$HarnessRepo\harness" -Destination "$TargetProject\harness"
+Copy-Item -LiteralPath "$HarnessRepo\requirements.txt" -Destination "$TargetProject\requirements.txt"
+Set-Location -LiteralPath $TargetProject
 python -m pip install -r requirements.txt
 New-Item -ItemType Directory -Force .harness | Out-Null
 Copy-Item harness\pipeline.default.json .harness\pipeline.json
@@ -314,6 +343,13 @@ python harness/runner/runner.py gate-verdict --verdict PASS
 
 ### 6. 實作 → 驗收 → 審查
 
+建立 `calc.py`：
+
+```python
+def add(a, b):
+    return a + b
+```
+
 ```powershell
 python harness/runner/runner.py verify-ticket --ticket T-001 --trust-commands
 python harness/runner/runner.py mark-ticket-ready-for-review --ticket T-001
@@ -364,7 +400,12 @@ collector step 的 `tier` 是 `captured`，`artifacts` 會是 `[{"path": "artifa
   "source_hash": "<同上>",
   "verification_id": "<同上>",
   "verdict": "PASS",
-  "criteria": [{"id": "GP-001", "status": "PASS", "critical": true, "tier": "deterministic"}],
+  "criteria": [
+    {"id": "GP-001", "status": "PASS", "critical": true, "tier": "deterministic"},
+    {"id": "FINAL_INTEGRATION", "status": "PASS", "critical": true, "tier": "declared",
+     "source": "操作者已執行 check_calc.py 並核對 US-001 的加法需求",
+     "limitations": "僅涵蓋 add(2, 3)，未驗證其他輸入或平台"}
+  ],
   "findings": []
 }
 ```
@@ -384,6 +425,43 @@ python harness/runner/status.py --json
 
 非最後一張工單完成後，同一份 state 會自動啟動下一張依賴已完成的 TODO。
 
+範例中的人工 `source`／`limitations` 必須按實際觀察填寫；未完成該項確認時，不可照抄 `PASS`。
+
+---
+
+<a id="ui-pack"></a>
+
+## UI 專案：使用 UI pack
+
+UI pack 與 kernel 共用工單及證據機制。啟用前先完成 UI 需求與設計契約，再把 UI 驗證接到各張垂直工單的 Golden Path。詳細宣告格式見 [`packs/ui/README.md`](packs/ui/README.md)。
+
+1. 將 `harness/` 與 `packs/ui/` 保留原目錄結構放入目標專案，安裝 kernel 依賴；需要 `collect` 時另外準備 Playwright／Chromium。
+2. 將 `packs/ui/pipeline.json` 複製成目標專案的 `.harness/pipeline.json`，再執行 `init`。使用新的專案狀態，不覆蓋既有 `.harness/`。
+3. 操作者依序審閱並記錄 `DISCOVERY`、`SPEC`、`DESIGN` Gate；在 TICKETS Gate 核對工單、User Stories 與 Golden Path。
+4. 將契約檢查／rules 宣告為 assertion，瀏覽器 `collect` 宣告為 collector 並列出 `expected_artifacts`；Review PASS 需要 `deterministic`、`captured`、`declared` 三層證據。
+
+**條件式 DESIGN 目前是 Gate 守衛。** 只要 Golden Path 宣告任一 collector，TICKETS Gate 就要求 DESIGN 已記錄 PASS；它不會自動判定 collector 是否用於 UI。管線仍是固定順序，沒有自動跳過 DESIGN 的分支；純 code 專案請選 `code-default`。
+
+| UI 指令 | 用途 |
+|---|---|
+| `check` / `render` | 驗證 discovery／design 契約與文件；從契約產生文件 |
+| `guidance` | 依選定 User Story 產生實作交接範圍 |
+| `rules` | 掃描可判定的 UI 規則並產生與內容綁定的收據 |
+| `collect` | 用真實瀏覽器保留截圖、ARIA、鍵盤巡覽與 console 證據 |
+| `review` / `fix` | 綁定 build 與證據，追蹤 findings、修正與重試限制 |
+
+以下可在 repo 根目錄體驗既有報時案例的設計契約，不需啟動瀏覽器。請將 `readme-demo` 改成尚未存在的輸出目錄；工具拒絕覆寫既有產物。
+
+```powershell
+python packs/ui/cli.py render --contract packs/ui/examples/e2e-case/contract.json `
+  --stage design --output test-results/readme-demo/docs
+python packs/ui/cli.py check --contract packs/ui/examples/e2e-case/contract.json `
+  --stage design --documents test-results/readme-demo/docs `
+  --receipt test-results/readme-demo/design-receipt.json
+```
+
+契約 PASS、瀏覽器檔案成功收集或 `review` 的 PASS，都不能單獨當作整體 UI 驗收。UI CLI 的報告保留 `ui_acceptance=UNVERIFIED`；完整案例的 final gate 還需核對 Runner 整合驗證、三層證據與未解決問題。P3 的可重跑入口是 [`scripts/verify_unified_e2e.py`](scripts/verify_unified_e2e.py)；它另需先前案例證據，並非只 clone repo 就能完成的獨立範例。
+
 ---
 
 ## 管線細節
@@ -402,7 +480,7 @@ python harness/runner/status.py --json
 | `FIX_REQUIRED` | 留在原階段，stage_status 回到 `IN_PROGRESS` |
 | `USER_DECISION_REQUIRED` | 專案 pause，需 `--decision-ref DEC-NNN` |
 
-（實務上 CLI 只會停在 `TICKETS`，理由見上方三層分工的說明。）
+純 code 預設從 `TICKETS` 開始；UI pack 從 `DISCOVERY` 開始。Gate 決策可被記錄，不代表 kernel 已自動審核 planning 文件的內容。
 
 ### 最後一張工單
 
@@ -423,7 +501,7 @@ python harness/runner/status.py --json
 
 ### 已核准計畫變更
 
-核准後（`golden_path.json`、工單檔、`SPEC.md`）若有變更——例如放寬驗收指令、刪減工單內容——下一次 `verify-ticket` 或 `review-verdict` 會自動 pause，reason 為 `PLAN_CHANGE_REQUIRES_DECISION`，**不產生新證據**。
+核准後（`pipeline.json`、`golden_path.json`、工單檔、`SPEC.md`）若有變更——例如放寬驗收指令、刪減工單內容——下一次 `verify-ticket` 或 `review-verdict` 會自動 pause，reason 為 `PLAN_CHANGE_REQUIRES_DECISION`，**不產生新證據**。
 
 ```powershell
 python harness/runner/runner.py decide --option CONTINUE --rationale '...' --source '...'
@@ -516,7 +594,7 @@ python harness/runner/runner.py pause --reason REVIEW_USER_DECISION_REQUIRED --d
 | `executable-tickets` / `next-ticket` / `blocked-tickets` / `validate-deps` | 相依關係查詢 |
 | `start-ticket` | 手動啟動工單（會檢查依賴） |
 
-全域參數：`--project-root`（預設 cwd）、`--trust-commands`、`--timeout`（預設 60 秒，合法範圍 `0 < t <= 3600`）、`--ticket`、`--verdict`、`--review`、`--handoff`、`--reason`、`--decision-ref`、`--finding-id`、`--finding-data`、`--option`、`--rationale`、`--source`。
+全域參數：`--project-root`（預設 cwd）、`--trust-commands`、`--timeout`（預設 60 秒，合法範圍 `0 < t <= 3600`）、`--ticket`、`--verdict`、`--review`、`--handoff`、`--reason`、`--decision-ref`、`--finding-id`、`--finding-data`、`--option`、`--rationale`、`--source`、`--pipeline`。
 
 未帶 `--trust-commands` 時，`verify-ticket` 與 `review-verdict` 會直接以 `PermissionError` 拒絕執行任何專案指令——這是刻意的，不是錯誤。
 
@@ -590,12 +668,16 @@ python harness/runner/run_tests.py
 
 每個案例自行建立 temporary project，CLI、schema、工單、state 指同一 fixture。預設將 JSON、log、CLI/state 快照寫到 `test-results/results.json` 與 `test-results/results.log`（已排除於 Git），並**核對測試前後的程式碼雜湊與既有 `.harness/` 資料雜湊**——測試若污染了不該動的東西，會直接判定失敗。
 
-`--legacy-only` 會跳過 `test_reliability` 與 `test_review_fixes` 兩組，僅跑原本的六個模組。CI 使用相同入口，遠端執行結果以 GitHub Actions 為準。
+`--legacy-only` 僅跑原本的六個模組，會跳過 reliability、review fixes、pipeline、typed verification、evidence tiers 與 pack gates 測試。CI 使用相同入口，執行 Windows／Ubuntu 的 kernel 測試；不會安裝瀏覽器或執行完整 UI E2E，遠端結果以 GitHub Actions 為準。
 
 ---
 
 ## 相關文件
 
+- [UI pack](packs/ui/README.md) — 註冊、啟用與 typed command 宣告
+- [V2 主線](milestone.md) — UI Design Integration 方向與驗收要求
+- [P3 審查](docs/reviews/p3-review.md) — 已合併範圍、驗證結果與限制
+- [Audit Console 計畫](PLAN.md)／[規格](SPEC.md) — 延後的獨立里程碑
 - [CHANGELOG](docs/CHANGELOG.md) — 可靠性修復與目錄整理紀錄
 - [Symbol-first Context](docs/SYMBOL_FIRST_CONTEXT.md) — 讀碼時先看符號再看實作的展開原則
 - [Deferred Items](docs/DEFERRED_ITEMS.md) — 明確**未實作**的項目，含 reconsideration trigger

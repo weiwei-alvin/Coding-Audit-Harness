@@ -1,6 +1,8 @@
-# Coding Audit Harness 2.0 — SPEC.md
+# Coding Audit Harness — Audit Console SPEC.md（後續獨立里程碑）
 
-> Source of truth: `PLAN.md` (Status: PROPOSED · 2026-10-19)
+> **命名與範圍澄清（2026-10-24）**：本檔為「Audit Console」（後續獨立里程碑）的 SPEC。「V2」一名保留給 `milestone.md` 的 UI Design Integration；本方向不稱「2.0」。
+>
+> Source of truth: `PLAN.md` (Status: PROPOSED（deferred）· 2026-10-19)
 > Stage output of `to-spec` / `to-spec-audit`
 > Scope: local single-operator Audit Console, CLI recovery UX, onboarding and calculator demo
 

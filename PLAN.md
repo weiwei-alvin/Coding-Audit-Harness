@@ -1,8 +1,10 @@
-# Coding Audit Harness 2.0 — PLAN.md
+# Coding Audit Harness — Audit Console PLAN.md（後續獨立里程碑）
 
-> Status: PROPOSED · 2026-10-19  
-> Product: Coding Audit Harness 2.0  
-> UI module: Audit Console  
+> **命名與範圍澄清（2026-10-24）**：本檔描述的「Audit Console」（本機 Web UI）保留為**後續獨立里程碑**，不與 `milestone.md` 的「UI Design Integration」主線並行。「V2」一名保留給 `milestone.md`；本方向不再稱「Coding Audit Harness 2.0」。
+>
+> Status: PROPOSED（deferred）· 2026-10-19
+> Product: Audit Console（本機 Web UI，後續里程碑）
+> UI module: Audit Console
 > Scope: Single-user local developer experience, CLI UX, and evidence-first review UI
 
 ## 1. 目標與定位

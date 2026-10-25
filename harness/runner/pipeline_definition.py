@@ -98,6 +98,10 @@ class PipelineDefinition:
     def hook(self, stage_id, name):
         return self._stage(stage_id).get(name)
 
+    def review_receipt(self, stage_id):
+        """Optional content-bound final acceptance evidence on execution stages."""
+        return self._stage(stage_id).get("review_receipt")
+
     def gate_receipt(self, stage_id):
         """Optional project-relative, content-bound planning gate evidence."""
         return self._stage(stage_id).get("gate_receipt")

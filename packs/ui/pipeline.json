@@ -1,7 +1,7 @@
 {
   "schema_version": "0.1",
   "pipeline": "ui-pack",
-  "description": "UI pack pipeline: planning DESIGN PASS requires a current, content-bound contract receipt; TICKETS rechecks its freshness if the collector condition is active. Place contract.json, docs/, design-receipt.json and packs/ui/ in the project root (or customize the DESIGN gate_receipt paths).",
+  "description": "UI pack pipeline: planning DESIGN PASS requires a current, content-bound contract receipt; TICKETS rechecks its freshness if the collector condition is active. Place contract.json, docs/, design-receipt.json and packs/ui/ in the project root (or customize the DESIGN gate_receipt paths). REVIEW PASS requires a final contract receipt rejecting unsupported proposed thresholds.",
   "stages": [
     {
       "id": "DISCOVERY",
@@ -76,7 +76,18 @@
         "deterministic",
         "captured",
         "declared"
-      ]
+      ],
+      "review_receipt": {
+        "path": "receipts/final-receipt.json",
+        "source": "contract.json",
+        "documents": "docs",
+        "engine_root": "packs/ui",
+        "engine_patterns": [
+          "ui_design_harness/*.py",
+          "schemas/contract.schema.json"
+        ],
+        "stage": "final"
+      }
     }
   ]
 }

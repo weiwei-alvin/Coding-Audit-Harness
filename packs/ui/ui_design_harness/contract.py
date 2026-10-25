@@ -94,6 +94,22 @@ def _schema_errors(data, stage):
 def validate_contract(data, stage):
     findings = _schema_errors(data, stage)
     if findings:
+        # Keep independent unresolved-content evidence even when typed schema
+        # validation also rejects an invalid token (e.g. color: N/A).
+        custom = data.get("brief", {}).get("placeholder_terms", []) if isinstance(data, dict) else []
+        def walk(obj, path=""):
+            if isinstance(obj, dict):
+                for key, value in obj.items():
+                    if stage == "discovery" and path == "" and key in ("spec", "design"):
+                        continue
+                    walk(value, path + "/" + key)
+            elif isinstance(obj, list):
+                for index, value in enumerate(obj):
+                    walk(value, path + "/" + str(index))
+            elif isinstance(obj, str) and not re.fullmatch(r"/brief/unknowns/[0-9]+/resolution", path) \\
+                    and not path.startswith("/brief/placeholder_terms/") and unresolved(obj, custom):
+                _add(findings, "UNRESOLVED_VALUE", path, "Required content has an unresolved value")
+        walk(data)
         return findings
 
     def add(code, path, message):

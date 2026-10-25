@@ -19,6 +19,21 @@ def sample(which="e2e-case"):
 
 
 class ContractCompletionTests(unittest.TestCase):
+
+    def test_nine_embedded_placeholders_are_reported(self):
+        for phrase in ("待補充", "之後再定", "N/A"):
+            for slot in ("problem", "then", "token"):
+                with self.subTest(phrase=phrase, slot=slot):
+                    data = sample()
+                    if slot == "problem":
+                        data["brief"]["problem"] = phrase
+                    elif slot == "then":
+                        data["spec"]["acceptance_criteria"][0]["then"] = phrase
+                    else:
+                        data["design"]["tokens"][0]["value"] = phrase
+                    self.assertTrue(any(f["code"] == "UNRESOLVED_VALUE"
+                        for f in validate_contract(data, "design")))
+
     def test_basis_is_required_and_proposal_rejected_only_at_final(self):
         data = sample()
         data["brief"]["success_criteria"][0].pop("basis")

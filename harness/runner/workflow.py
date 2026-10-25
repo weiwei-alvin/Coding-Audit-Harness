@@ -213,6 +213,11 @@ class Workflow:
         if verdict!='PASS': self.check_evidence_tiers(s,review,criteria,definition,enforce_required=False)
         handoff=None
         if verdict=='PASS':
+            review_receipt = definition.review_receipt(s['pipeline_stage'])
+            if review_receipt is not None:
+                from gate_receipt import verify_gate_receipt
+                failures = verify_gate_receipt(self.root, review_receipt)
+                if failures: raise ValueError('Final review contract evidence rejected: ' + '; '.join(failures))
             if not handoff_path: raise ValueError('Missing handoff payload')
             handoff=json.loads(Path(handoff_path).read_text(encoding='utf-8'))
             valid,errors=pv.validate('handoff',handoff)

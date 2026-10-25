@@ -9,7 +9,7 @@ import unittest
 import test_support
 PACK = test_support.SOURCE / "packs" / "ui"
 sys.path.insert(0, str(PACK))
-from ui_design_harness.contract import validate_contract, contract_warnings
+from ui_design_harness.contract import validate_contract, contract_warnings, render_documents, inspect_contract
 from ui_design_harness.guidance import select_guidance
 from ui_design_harness.pipeline import run_pipeline
 
@@ -44,6 +44,42 @@ class ContractCompletionTests(unittest.TestCase):
                 workflow.review("T-001", "PASS", review_path, handoff_path)
             state = json.loads((root / ".harness/state.json").read_text(encoding="utf-8"))
             self.assertNotEqual(state["project_status"], "COMPLETE")
+
+
+    def test_kernel_final_review_accepts_fresh_basis_receipt(self):
+        import shutil
+        from test_evidence_tiers import prepare, receipt, mark_ready, payloads
+        from runner import HarnessRunner
+        from workflow import Workflow
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            prepare(root, ["deterministic", "captured", "declared"])
+            shutil.copytree(PACK, root / "packs/ui", ignore=shutil.ignore_patterns("__pycache__"))
+            source = root / "contract.json"
+            source.write_text(json.dumps(sample("service-panel"), ensure_ascii=False), encoding="utf-8")
+            docs = root / "docs"
+            docs.mkdir()
+            for name, content in render_documents(sample("service-panel"), "design").items():
+                (docs / name).write_bytes(content.encode("utf-8"))
+            final_receipt = inspect_contract(source, "final", docs)
+            self.assertEqual(final_receipt["status"], "PASS", final_receipt)
+            (root / "receipts").mkdir()
+            (root / "receipts/final-receipt.json").write_text(
+                json.dumps(final_receipt, ensure_ascii=False), encoding="utf-8")
+            definition_path = root / ".harness/pipeline.json"
+            definition = json.loads(definition_path.read_text(encoding="utf-8"))
+            definition["stages"][-1]["review_receipt"] = dict(
+                path="receipts/final-receipt.json", source="contract.json",
+                documents="docs", engine_root="packs/ui",
+                engine_patterns=["ui_design_harness/*.py", "schemas/contract.schema.json"], stage="final")
+            definition_path.write_text(json.dumps(definition), encoding="utf-8")
+            evidence = receipt(root)
+            mark_ready(root)
+            review_path, handoff_path = payloads(root, evidence)
+            workflow = Workflow(HarnessRunner(root), trusted=True)
+            workflow.review("T-001", "PASS", review_path, handoff_path)
+            state = json.loads((root / ".harness/state.json").read_text(encoding="utf-8"))
+            self.assertEqual(state["project_status"], "COMPLETE")
 
     def test_nine_embedded_placeholders_are_reported(self):
         for phrase in ("待補充", "之後再定", "N/A"):

@@ -11,11 +11,31 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = ROOT / "schemas/contract.schema.json"
 STATE_KINDS = {"default", "loading", "empty", "error", "success", "validation_error", "disabled"}
 REVIEW_CATEGORIES = {"art_direction", "design_system", "anti_generic", "responsive", "accessibility"}
-PLACEHOLDERS = {"unknown", "tbd", "todo", "待補", "未定", "待確認", "?", "待填"}
+PLACEHOLDERS = {"unknown", "tbd", "todo", "n/a", "na", "待補", "待補充", "未定", "待確認", "?", "待填", "略"}
+# Match unfinished markers inside otherwise plausible sentences, but avoid generic
+# words such as "待" (which also occur in legitimate Chinese descriptions).
+PLACEHOLDER_MARKERS = re.compile(
+    r"待補(?:充|寫|填|上)?|待確認|待定|未(?:填|定|確認)|之後再定|稍後(?:補|確認)|"
+    r"(?<![A-Za-z0-9])(?:N/A|TBD|TODO)(?![A-Za-z0-9])", re.IGNORECASE)
 STAGES = {"discovery", "design"}
 
-def unresolved(value):
-    return not value.strip() or value.strip().casefold() in PLACEHOLDERS or "{{" in value or "}}" in value
+def unresolved(value, custom_terms=()):
+    text = value.strip()
+    folded = text.casefold()
+    return (not text or folded in PLACEHOLDERS or bool(PLACEHOLDER_MARKERS.search(text))
+        or "{{" in text or "}}" in text
+        or any(term.strip() and term.casefold() in folded for term in custom_terms))
+
+
+def contrast_ratio(foreground, background):
+    """WCAG 2.x relative luminance / contrast for opaque six-digit sRGB tokens."""
+    def luminance(color):
+        channels = [int(color[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+        linear = [v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4
+                  for v in channels]
+        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+    a, b = sorted((luminance(foreground), luminance(background)), reverse=True)
+    return (a + 0.05) / (b + 0.05)
 
 def _unique_pairs(pairs):
     result = {}
@@ -61,6 +81,8 @@ def validate_contract(data, stage):
     def add(code, path, message):
         _add(findings, code, path, message)
 
+    custom_placeholders = data["brief"].get("placeholder_terms", [])
+
     def known(value, path=""):
         if isinstance(value, dict):
             for key, child in value.items():
@@ -73,9 +95,9 @@ def validate_contract(data, stage):
             if value and all(isinstance(x, str) for x in value) and len(value) != len(set(value)):
                 add("DUPLICATE_REFERENCE", path, "A list repeats a value")
         elif isinstance(value, str):
-            if re.fullmatch(r"/brief/unknowns/[0-9]+/resolution", path):
+            if re.fullmatch(r"/brief/unknowns/[0-9]+/resolution", path) or path.startswith("/brief/placeholder_terms/"):
                 return
-            if unresolved(value):
+            if unresolved(value, custom_placeholders):
                 add("UNRESOLVED_VALUE", path, "Required content has an unresolved value")
 
     known(data)
@@ -229,6 +251,19 @@ def validate_contract(data, stage):
     categories = {t["category"] for t in tokens.values()}
     if not {"color", "typography", "spacing", "layout"} <= categories:
         add("TOKEN_COVERAGE", "/design/tokens", "Define color, typography, spacing and layout tokens")
+    for pair in d.get("color_pairs", []):
+        fg, bg = pair["foreground_token_id"], pair["background_token_id"]
+        refs([fg, bg], tokens, "/design/color_pairs/" + pair["id"])
+        if fg not in tokens or bg not in tokens:
+            continue
+        if tokens[fg]["category"] != "color" or tokens[bg]["category"] != "color":
+            add("COLOR_PAIR_TYPE", pair["id"], "Both color pair references must be color tokens")
+            continue
+        ratio = contrast_ratio(tokens[fg]["value"], tokens[bg]["value"])
+        threshold = 4.5 if pair["usage"] == "text" else 3.0
+        if ratio + 1e-8 < threshold:
+            add("COLOR_CONTRAST", pair["id"],
+                f"{fg} against {bg}: {ratio:.2f}:1 is below {threshold:.1f}:1 for {pair['usage']}")
     for component in components.values():
         refs(component["screen_ids"], screens, component["id"])
         refs(component["token_ids"], tokens, component["id"])
@@ -250,6 +285,23 @@ def validate_contract(data, stage):
     for group in (responsive, accessibility):
         for item in group.values():
             refs(item["screen_ids"], screens, item["id"])
+    # A full contract may have one root per screen while a story-specific handoff
+    # cannot include that root. Catch this at the design gate, not after approval.
+    for story in stories.values():
+        selected = set(story["screen_ids"])
+        included = {cid: c for cid, c in components.items() if set(c["screen_ids"]) <= selected}
+        for cid, component in included.items():
+            parent = component["parent_id"]
+            if parent is not None and parent in components and parent not in included:
+                outside = sorted(set(components[parent]["screen_ids"]) - selected)
+                owners = sorted(st["id"] for st in stories.values() if set(st["screen_ids"]) & set(outside))
+                add("SCOPE_GAP", story["id"] + "/" + cid,
+                    f"Parent {parent} spans out-of-scope screens {outside} owned by {owners}; split the root per screen")
+        for sid in selected:
+            roots = [c for c in included.values() if sid in c["screen_ids"] and c["parent_id"] is None]
+            if len(roots) != 1:
+                add("SCOPE_GAP", story["id"] + "/" + sid,
+                    f"Story {story['id']} cannot hand off screen {sid} with exactly one in-scope root; split shared roots")
     for sid in screens:
         roots = [c for c in components.values() if sid in c["screen_ids"] and c["parent_id"] is None]
         if len(roots) != 1:

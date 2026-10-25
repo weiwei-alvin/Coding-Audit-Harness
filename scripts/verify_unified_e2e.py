@@ -403,6 +403,17 @@ def main():
     rules_v1 = stdout_of(receipt, "GP-002")
     design_check_v1 = stdout_of(receipt, "GP-001")
 
+    # Final contract basis gate: this content-bound receipt is mandatory for REVIEW PASS.
+    final_check = subprocess.run([VYPY, str(CLI), "check", "--contract", str(case / "contract.json"),
+        "--stage", "final", "--documents", str(case / "docs"),
+        "--receipt", str(case / "receipts/final-receipt.json")],
+        capture_output=True, text=True, encoding="utf-8", timeout=120)
+    final_check_payload = parse_json(final_check.stdout)
+    record("final-contract-basis-receipt", final_check.returncode == 0
+        and final_check_payload and final_check_payload.get("status") == "PASS",
+        dict(returncode=final_check.returncode, findings=(final_check_payload or {}).get("findings")),
+        None, final_check.stderr)
+
     # Resolve every blocking finding, then PASS review with the three tiers.
     for fid in blocking:
         run_cli("resolve-" + fid, ["resolve-finding", "--finding-id", fid])

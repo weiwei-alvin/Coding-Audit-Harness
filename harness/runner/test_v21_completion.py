@@ -82,6 +82,13 @@ class ContractCompletionTests(unittest.TestCase):
         shared.update(id="CMP-099", name="Shared step indicator", parent_id=None,
             screen_ids=["SCR-002", "SCR-003"], state_kinds=["default"], shared=True)
         data["design"]["components"].append(shared)
+        # The bundled US-003 intentionally leaves SCR-003/success to US-004.
+        # Add explicit coverage so this test isolates shared-component scoping.
+        extra = copy.deepcopy(next(a for a in data["spec"]["acceptance_criteria"]
+            if a["story_id"] == "US-004" and a["state"] == "success"))
+        extra.update(id="UI-AC-099", story_id="US-003")
+        data["spec"]["acceptance_criteria"].append(extra)
+        next(st for st in data["spec"]["stories"] if st["id"] == "US-003")["ac_ids"].append("UI-AC-099")
         self.assertEqual(validate_contract(data, "design"), [])
         for story, screen, excluded in (("US-002", "SCR-002", "SCR-003"),
             ("US-003", "SCR-003", "SCR-002")):

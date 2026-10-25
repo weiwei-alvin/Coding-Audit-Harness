@@ -127,6 +127,16 @@ class ContractCompletionTests(unittest.TestCase):
             with self.assertRaises(FileExistsError):
                 run_pipeline(source, root / "outputs")
 
+    def test_readme_link_checker_flags_nonexistent_target(self):
+        sys.path.insert(0, str(test_support.SOURCE / "scripts"))
+        from check_readme_links import broken_links
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "README.md").write_text("[missing](docs/not-here.md)", encoding="utf-8")
+            errors = broken_links(root)
+            self.assertEqual(len(errors), 1)
+            self.assertIn("docs/not-here.md", errors[0])
+
 
 if __name__ == "__main__":
     unittest.main()

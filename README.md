@@ -433,6 +433,10 @@ python harness/runner/status.py --json
 
 ## UI 專案：使用 UI pack
 
+**V2.1 強化：** 契約新增未決問題 `deferred_to`、成功標準 `basis`、可驗證的 Token 引用、Story 範圍內的 shared 元件、表單資訊與狀態 variants。Design Gate 驗證文件與檢查器的新鮮收據；UI Pipeline 最後一張工單的 REVIEW PASS 另要求 `final` 契約收據以拒絕尚為 `proposal` 的成功門檻。若要一次產出版本化的兩份關卡收據與所有 Story 交接，可用 `python packs/ui/cli.py pipeline --contract contract.json --output outputs`。完整規格見 [UI pack](packs/ui/README.md)。
+
+
+
 UI pack 與 kernel 共用工單及證據機制。啟用前先完成 UI 需求與設計契約，再把 UI 驗證接到各張垂直工單的 Golden Path。詳細宣告格式見 [`packs/ui/README.md`](packs/ui/README.md)。
 
 1. 將 `harness/` 與 `packs/ui/` 保留原目錄結構放入目標專案，安裝 kernel 依賴；需要 `collect` 時另外準備 Playwright／Chromium。

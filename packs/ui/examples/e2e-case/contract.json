@@ -648,8 +648,11 @@
     "layout_rules": [
       {
         "id": "RULE-004",
-        "statement": "單欄垂直流程，內容欄上限 560px 並置中。",
-        "verification": "T-004/T-005 於 wide 與 narrow 視寬檢查沒有橫向溢出。"
+        "statement": "單欄垂直流程，內容欄上限 @TOK-011 並置中。",
+        "verification": "T-004/T-005 於 wide 與 narrow 視寬檢查沒有橫向溢出。",
+        "token_ids": [
+          "TOK-011"
+        ]
       },
       {
         "id": "RULE-005",

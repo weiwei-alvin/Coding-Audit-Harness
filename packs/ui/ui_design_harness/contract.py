@@ -106,8 +106,10 @@ def validate_contract(data, stage):
             elif isinstance(obj, list):
                 for index, value in enumerate(obj):
                     walk(value, path + "/" + str(index))
-            elif isinstance(obj, str) and not re.fullmatch(r"/brief/unknowns/[0-9]+/resolution", path) \\
-                    and not path.startswith("/brief/placeholder_terms/") and unresolved(obj, custom):
+            elif (isinstance(obj, str)
+                    and not re.fullmatch(r"/brief/unknowns/[0-9]+/resolution", path)
+                    and not path.startswith("/brief/placeholder_terms/")
+                    and unresolved(obj, custom)):
                 _add(findings, "UNRESOLVED_VALUE", path, "Required content has an unresolved value")
         walk(data)
         return findings

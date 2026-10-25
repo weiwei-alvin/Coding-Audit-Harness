@@ -58,9 +58,9 @@ def verify_gate_receipt(project_root, config):
                 if not path.is_file() or path.is_symlink() or not path.resolve().is_relative_to(engine_root.resolve()):
                     raise ValueError("Gate engine source is not a contained ordinary file")
                 h.update(path.relative_to(engine_root).as_posix().encode())
-                h.update(b"\\0")
+                h.update(b"\0")
                 h.update(path.read_bytes())
-                h.update(b"\\0")
+                h.update(b"\0")
                 count += 1
         if not count or not _hex_digest(receipt.get("engine_hash")) or receipt["engine_hash"] != h.hexdigest():
             errors.append("Gate receipt engine_hash is missing or stale")

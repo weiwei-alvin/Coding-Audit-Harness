@@ -20,6 +20,31 @@ def sample(which="e2e-case"):
 
 class ContractCompletionTests(unittest.TestCase):
 
+
+    def test_kernel_review_requires_declared_final_receipt(self):
+        from test_evidence_tiers import prepare, receipt, mark_ready, payloads
+        from runner import HarnessRunner
+        from workflow import Workflow
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            prepare(root, ["deterministic", "captured", "declared"])
+            definition_path = root / ".harness/pipeline.json"
+            definition = json.loads(definition_path.read_text(encoding="utf-8"))
+            definition["stages"][-1]["review_receipt"] = dict(
+                path="receipts/final-receipt.json", source="contract.json",
+                documents="docs", engine_root="packs/ui",
+                engine_patterns=["ui_design_harness/*.py", "schemas/contract.schema.json"],
+                stage="final")
+            definition_path.write_text(json.dumps(definition), encoding="utf-8")
+            evidence = receipt(root)
+            mark_ready(root)
+            review_path, handoff_path = payloads(root, evidence)
+            workflow = Workflow(HarnessRunner(root), trusted=True)
+            with self.assertRaisesRegex(ValueError, "Final review contract evidence rejected"):
+                workflow.review("T-001", "PASS", review_path, handoff_path)
+            state = json.loads((root / ".harness/state.json").read_text(encoding="utf-8"))
+            self.assertNotEqual(state["project_status"], "COMPLETE")
+
     def test_nine_embedded_placeholders_are_reported(self):
         for phrase in ("待補充", "之後再定", "N/A"):
             for slot in ("problem", "then", "token"):

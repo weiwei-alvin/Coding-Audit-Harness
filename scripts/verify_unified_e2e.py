@@ -130,6 +130,8 @@ def build_case_project(case):
     case.mkdir(parents=True)
     shutil.copytree(REPO / "harness", case / "harness",
         ignore=shutil.ignore_patterns("__pycache__"))
+    shutil.copytree(PACK, case / "packs/ui",
+        ignore=shutil.ignore_patterns("__pycache__"))
     shutil.copyfile(CASE_CONTRACT, case / "contract.json")
     (case / "game").mkdir(parents=True, exist_ok=True)
     shutil.copyfile(CASE_BUILD, case / "game" / "telling-time.html")
@@ -240,6 +242,15 @@ def main():
         and render_payload and render_payload.get("status") == "RENDERED",
         dict(returncode=render.returncode, documents=(render_payload or {}).get("documents")),
         None, render.stderr)
+    design_check = subprocess.run([VYPY, str(CLI), "check", "--contract", str(case / "contract.json"),
+        "--stage", "design", "--documents", str(case / "docs"),
+        "--receipt", str(case / "design-receipt.json")],
+        capture_output=True, text=True, encoding="utf-8", timeout=120)
+    design_payload = parse_json(design_check.stdout)
+    record("design-receipt-before-gate", design_check.returncode == 0
+        and design_payload and design_payload.get("status") == "PASS",
+        dict(returncode=design_check.returncode, status=(design_payload or {}).get("status")),
+        None, design_check.stderr)
 
     # ------------------------------------------------------------------
     # 1. Walk every planning gate; DESIGN PASS lands in stage_gates.

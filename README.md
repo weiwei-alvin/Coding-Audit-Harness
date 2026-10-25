@@ -47,7 +47,7 @@ Coding Audit Harness 存在的理由就一句：**讓「驗收過」從一句話
 | 使用情境 | 選用定義 | Runner 起點與要求 |
 |---|---|---|
 | CLI、API、library 等純 code 專案 | [`harness/pipeline.default.json`](harness/pipeline.default.json) | 從 `TICKETS` 開始；先由操作者與 Agent 完成 Discovery／Spec |
-| 包含使用者介面的專案 | [`packs/ui/pipeline.json`](packs/ui/pipeline.json) | 從 `DISCOVERY` 開始，依序經過 `SPEC → DESIGN → TICKETS`；Review PASS 要求三層證據 |
+| 包含使用者介面的專案 | [`packs/ui/pipeline.json`](packs/ui/pipeline.json) | 從 `DISCOVERY` 開始，依序經過 `SPEC → DESIGN → TICKETS`；DESIGN PASS 要求新鮮設計收據，Review PASS 要求三層證據 |
 
 **V2 主線是 UI Design Integration**，方向見 [`milestone.md`](milestone.md)。目前實作使用的 stage ID 是 `DESIGN`；指令文件中的概念名稱 `UI_DESIGN` 不應直接代入設定。Audit Console（本機 Web UI）仍為延後的獨立里程碑，見 [`PLAN.md`](PLAN.md)／[`SPEC.md`](SPEC.md)，尚未提供操作介面。
 
@@ -175,7 +175,7 @@ Runner 額外把所有驗收指令從頭再跑一遍。任何一條不過，整�
 | **Operator（你）** | — | 人 | `gate-verdict` / `decide` 是**人做的核准**。工具不會自己宣告 PASS |
 
 > [!IMPORTANT]
-> **Runner 從所選 pipeline 的 entry stage 開始接管。** 純 code 預設從 `TICKETS` 開始，不會走前面的 Discovery／Spec Gate；UI pack 則從 `DISCOVERY` 開始，會留下各 planning Gate 的決策紀錄。Planning Gate 的內容仍由操作者審閱，kernel 不會自動判斷需求或設計品質。TICKETS Gate 會另外檢查依賴、Golden Path 與 `SPEC.md` User Stories 的涵蓋關係。
+> **Runner 從所選 pipeline 的 entry stage 開始接管。** 純 code 預設從 `TICKETS` 開始，不會走前面的 Discovery／Spec Gate；UI pack 則從 `DISCOVERY` 開始，會留下各 planning Gate 的決策紀錄。Planning Gate 的實質品質仍由操作者審閱；UI DESIGN Gate 另強制核對契約、引擎及渲染文件的收據新鮮度。Kernel 不會自動判斷需求或設計品質。TICKETS Gate 會另外檢查依賴、Golden Path 與 `SPEC.md` User Stories 的涵蓋關係。
 
 ---
 
@@ -437,10 +437,10 @@ UI pack 與 kernel 共用工單及證據機制。啟用前先完成 UI 需求與
 
 1. 將 `harness/` 與 `packs/ui/` 保留原目錄結構放入目標專案，安裝 kernel 依賴；需要 `collect` 時另外準備 Playwright／Chromium。
 2. 將 `packs/ui/pipeline.json` 複製成目標專案的 `.harness/pipeline.json`，再執行 `init`。使用新的專案狀態，不覆蓋既有 `.harness/`。
-3. 操作者依序審閱並記錄 `DISCOVERY`、`SPEC`、`DESIGN` Gate；在 TICKETS Gate 核對工單、User Stories 與 Golden Path。
+3. 操作者審閱 `DISCOVERY`、`SPEC`；在 `DESIGN` PASS 前執行 `render` 與 `check`，產生 `design-receipt.json`。Runner 核對契約、引擎與文件的 hash；TICKETS Gate 再核對工單、User Stories 與 Golden Path。
 4. 將契約檢查／rules 宣告為 assertion，瀏覽器 `collect` 宣告為 collector 並列出 `expected_artifacts`；Review PASS 需要 `deterministic`、`captured`、`declared` 三層證據。
 
-**條件式 DESIGN 目前是 Gate 守衛。** 只要 Golden Path 宣告任一 collector，TICKETS Gate 就要求 DESIGN 已記錄 PASS；它不會自動判定 collector 是否用於 UI。管線仍是固定順序，沒有自動跳過 DESIGN 的分支；純 code 專案請選 `code-default`。
+**條件式 DESIGN 目前是 Gate 守衛。** DESIGN PASS 必須有新鮮的設計收據。只要 Golden Path 宣告任一 collector，TICKETS Gate 就要求 DESIGN 已記錄 PASS 且收據仍有效；它不會自動判定 collector 是否用於 UI。管線仍是固定順序，沒有自動跳過 DESIGN 的分支；純 code 專案請選 `code-default`。
 
 | UI 指令 | 用途 |
 |---|---|
@@ -468,7 +468,7 @@ python packs/ui/cli.py check --contract packs/ui/examples/e2e-case/contract.json
 
 ### Pipeline 定義檔
 
-`.harness/pipeline.json` 決定有哪些 stage、順序、planning／execution 類型、每個 planning stage 接受的 gate verdict、通過後前往哪個 stage、進入 execution stage 時要執行的 hook，以及該 stage 對 review 要求的 `required_evidence_tiers`。`status` 會依這份定義印出序列，條件 stage 加 `*`（例如 `DESIGN*`）。`init` 只接受專案檔案或明示的 `--pipeline <path>`，讀不到就拒絕，不會自動套用 bundled 預設；沒有記錄來源的舊 state 才會在執行期回退到 `harness/pipeline.default.json`，讓舊專案仍可讀。
+`.harness/pipeline.json` 決定有哪些 stage、順序、planning／execution 類型、每個 planning stage 接受的 gate verdict、通過後前往哪個 stage、進入 execution stage 時要執行的 hook，以及該 stage 對 review 要求的 `required_evidence_tiers`、可選的 planning `gate_receipt`。`status` 會依這份定義印出序列，條件 stage 加 `*`（例如 `DESIGN*`）。`init` 只接受專案檔案或明示的 `--pipeline <path>`，讀不到就拒絕，不會自動套用 bundled 預設；沒有記錄來源的舊 state 才會在執行期回退到 `harness/pipeline.default.json`，讓舊專案仍可讀。
 
 ### 規劃階段的 Gate
 
@@ -480,7 +480,7 @@ python packs/ui/cli.py check --contract packs/ui/examples/e2e-case/contract.json
 | `FIX_REQUIRED` | 留在原階段，stage_status 回到 `IN_PROGRESS` |
 | `USER_DECISION_REQUIRED` | 專案 pause，需 `--decision-ref DEC-NNN` |
 
-純 code 預設從 `TICKETS` 開始；UI pack 從 `DISCOVERY` 開始。Gate 決策可被記錄，不代表 kernel 已自動審核 planning 文件的內容。
+純 code 預設從 `TICKETS` 開始；UI pack 從 `DISCOVERY` 開始。Gate 決策會記錄在 state；UI DESIGN PASS 另需新鮮內容雜湊證據，但這不等於 kernel 已判定 planning 文件的實質品質。
 
 ### 最後一張工單
 

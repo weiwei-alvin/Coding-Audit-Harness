@@ -56,6 +56,9 @@ def main():
     if not args.legacy_only:
         import test_pack_gates
         suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(test_pack_gates))
+    if not args.legacy_only:
+        import test_v21_assurance
+        suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(test_v21_assurance))
     log=io.StringIO()
     with contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
         result=unittest.TextTestRunner(stream=log,verbosity=2,resultclass=Result).run(suite)

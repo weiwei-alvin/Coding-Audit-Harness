@@ -155,6 +155,12 @@ class StateTransitionEngine:
             return TransitionResult(False, error=f"Invalid verdict {gate_verdict.value} for stage {stage_id}")
 
         if gate_verdict == GateVerdict.PASS:
+            config = definition.gate_receipt(stage_id)
+            if config is not None:
+                from gate_receipt import verify_gate_receipt
+                evidence_errors = verify_gate_receipt(self.project_root, config)
+                if evidence_errors:
+                    return TransitionResult(False, error="Gate evidence rejected: " + "; ".join(evidence_errors))
             next_stage = definition.next_stage(stage_id)
             if next_stage is None:
                 return TransitionResult(False, error=f"No next stage after {stage_id}")
@@ -253,6 +259,11 @@ class StateTransitionEngine:
                     f"Conditional stage {other_id} is active (condition {condition}) "
                     f"but has no recorded gate PASS; the {stage_id} gate refuses "
                     f"until {other_id} passes its own gate")
+            elif definition.gate_receipt(other_id) is not None:
+                from gate_receipt import verify_gate_receipt
+                problems = verify_gate_receipt(self.project_root, definition.gate_receipt(other_id))
+                if problems:
+                    errors.append(f"Conditional stage {other_id} evidence is stale or invalid: " + "; ".join(problems))
         return errors
 
     def _condition_active(self, condition):

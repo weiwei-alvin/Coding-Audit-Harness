@@ -98,7 +98,9 @@ class ContractCompletionTests(unittest.TestCase):
 
     def test_undeclared_token_reference_is_rejected(self):
         data = sample()
-        data["design"]["layout_rules"][0]["statement"] += " @TOK-011"
+        rule = data["design"]["layout_rules"][0]
+        rule["statement"] += " @TOK-011"
+        rule["token_ids"] = []
         self.assertIn("RULE_TOKEN_BINDING", [x["code"] for x in validate_contract(data, "design")])
 
     def test_shared_component_scoped_read_only(self):

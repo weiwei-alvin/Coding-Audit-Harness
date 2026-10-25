@@ -1,7 +1,7 @@
 {
   "schema_version": "0.1",
   "pipeline": "ui-pack",
-  "description": "Bundled reference pipeline for projects that enable the ui-pack (T-009). One conditional DESIGN stage is inserted between SPEC and TICKETS: it is active when the project's declared golden path contains any collector verification step (golden_path_declares_collector), and the TICKETS gate refuses PASS until DESIGN's own gate has PASSed. Pure-code projects keep the code-default pipeline, which has no UI stage. Entry is DISCOVERY so a real UI case walks every gate and records gate history.",
+  "description": "UI pack pipeline: planning DESIGN PASS requires a current, content-bound contract receipt; TICKETS rechecks its freshness if the collector condition is active. Place contract.json, docs/, design-receipt.json and packs/ui/ in the project root (or customize the DESIGN gate_receipt paths).",
   "stages": [
     {
       "id": "DISCOVERY",
@@ -34,7 +34,18 @@
       ],
       "next": "TICKETS",
       "conditional": true,
-      "condition": "golden_path_declares_collector"
+      "condition": "golden_path_declares_collector",
+      "gate_receipt": {
+        "path": "design-receipt.json",
+        "source": "contract.json",
+        "documents": "docs",
+        "engine_root": "packs/ui",
+        "engine_patterns": [
+          "ui_design_harness/*.py",
+          "schemas/contract.schema.json"
+        ],
+        "stage": "design"
+      }
     },
     {
       "id": "TICKETS",

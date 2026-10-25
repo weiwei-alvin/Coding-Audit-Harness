@@ -352,8 +352,17 @@ def validate_contract(data, stage):
         for sid in selected:
             roots = [c for c in included.values() if sid in c["screen_ids"] and c["parent_id"] is None]
             if len(roots) != 1:
+                offenders = [c for c in components.values() if not c.get("shared") and c["parent_id"] is None
+                    and sid in c["screen_ids"] and not set(c["screen_ids"]) <= selected]
+                culprit = offenders[0] if offenders else None
+                outside = sorted(set(culprit["screen_ids"]) - selected) if culprit else []
+                owners = sorted(st["id"] for st in stories.values() if set(st["screen_ids"]) & set(outside))
                 add("SCOPE_GAP", story["id"] + "/" + sid,
-                    f"Story {story['id']} cannot hand off screen {sid} with exactly one in-scope root; split shared roots")
+                    f"Story {story['id']} cannot hand off screen {sid}; root {culprit['id'] if culprit else 'missing'} "
+                    f"spans screens {outside} owned by {owners}; split roots or declare shared component")
+                findings[-1]["cause"] = dict(component_id=culprit["id"] if culprit else None,
+                    extra_screen_ids=outside, story_ids=owners,
+                    action="Split root per screen or declare an independent shared component")
     for sid in screens:
         roots = [c for c in components.values() if not c.get("shared") and sid in c["screen_ids"] and c["parent_id"] is None]
         if len(roots) != 1:

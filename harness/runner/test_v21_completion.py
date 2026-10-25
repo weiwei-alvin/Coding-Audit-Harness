@@ -65,7 +65,7 @@ class ContractCompletionTests(unittest.TestCase):
         data = sample()
         shared = copy.deepcopy(data["design"]["components"][0])
         shared.update(id="CMP-099", name="Shared step indicator", parent_id=None,
-            screen_ids=["SCR-002", "SCR-003"], shared=True)
+            screen_ids=["SCR-002", "SCR-003"], state_kinds=["default"], shared=True)
         data["design"]["components"].append(shared)
         self.assertEqual(validate_contract(data, "design"), [])
         for story, screen, excluded in (("US-002", "SCR-002", "SCR-003"),
@@ -79,7 +79,7 @@ class ContractCompletionTests(unittest.TestCase):
                 self.assertNotIn(excluded, json.dumps(ref))
 
     def test_missing_variant_coverage_blocks_design(self):
-        data = sample()
+        data = sample("service-panel")
         screen = next(s for s in data["spec"]["screens"] if any(x["kind"] == "loading" for x in s["states"]))
         state = next(x for x in screen["states"] if x["kind"] == "loading")
         state["variant"] = "save"

@@ -265,6 +265,13 @@
           "type": "string",
           "minLength": 1,
           "pattern": "\\S"
+        },
+        "deferred_to": {
+          "enum": [
+            "design",
+            "implementation",
+            "review"
+          ]
         }
       },
       "required": [
@@ -297,6 +304,13 @@
           "type": "string",
           "minLength": 1,
           "pattern": "\\S"
+        },
+        "basis": {
+          "enum": [
+            "data",
+            "stakeholder",
+            "proposal"
+          ]
         }
       },
       "required": [
@@ -367,6 +381,33 @@
               "type": "string",
               "minLength": 1,
               "pattern": "\\S"
+            },
+            "form": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "field_count",
+                "required_count",
+                "conditional_groups"
+              ],
+              "properties": {
+                "field_count": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "required_count": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "conditional_groups": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                }
+              }
             }
           },
           "required": [
@@ -506,6 +547,11 @@
                 "type": "string",
                 "minLength": 1,
                 "pattern": "\\S"
+              },
+              "variant": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$",
+                "minLength": 1
               }
             },
             "required": [
@@ -704,6 +750,11 @@
             "procedure"
           ],
           "additionalProperties": false
+        },
+        "variant": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "minLength": 1
         }
       },
       "required": [
@@ -956,6 +1007,9 @@
               "type": "null"
             }
           ]
+        },
+        "shared": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -1303,6 +1357,14 @@
           "type": "string",
           "minLength": 1,
           "pattern": "\\S"
+        },
+        "token_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^TOK-[0-9]{3}$"
+          }
         }
       },
       "required": [

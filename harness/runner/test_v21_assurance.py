@@ -99,7 +99,7 @@ class GateEvidenceTests(unittest.TestCase):
         self.documents = self.root / "docs"
         self.documents.mkdir()
         for name, content in render_documents(example(), "design").items():
-            (self.documents / name).write_text(content, encoding="utf-8")
+            (self.documents / name).write_bytes(content.encode("utf-8"))
         self.receipt = self.root / "design-receipt.json"
         self.receipt.write_text(json.dumps(inspect_contract(self.source, "design", self.documents)),
             encoding="utf-8")

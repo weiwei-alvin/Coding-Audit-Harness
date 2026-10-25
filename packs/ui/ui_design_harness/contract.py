@@ -17,7 +17,8 @@ PLACEHOLDERS = {"unknown", "tbd", "todo", "n/a", "na", "待補", "待補充", "�
 PLACEHOLDER_MARKERS = re.compile(
     r"待補(?:充|寫|填|上)?|待確認|待定|未(?:填|定|確認)|之後再定|稍後(?:補|確認)|"
     r"(?<![A-Za-z0-9])(?:N/A|TBD|TODO)(?![A-Za-z0-9])", re.IGNORECASE)
-STAGES = {"discovery", "design"}
+STAGES = {"discovery", "design", "final"}
+TOKEN_REF = re.compile(r"@TOK-[0-9]{3}\b")
 
 def unresolved(value, custom_terms=()):
     text = value.strip()
@@ -62,12 +63,12 @@ def _schema_errors(data, stage):
     schema = load_json(SCHEMA.read_text(encoding="utf-8"))
     Draft202012Validator.check_schema(schema)
     # A partly drafted later stage cannot prevent checking completed discovery.
-    active = {k: v for k, v in data.items() if stage == "design" or k not in {"spec", "design"}} if isinstance(data, dict) else data
+    active = {k: v for k, v in data.items() if stage != "discovery" or k not in {"spec", "design"}} if isinstance(data, dict) else data
     findings = [
         dict(code="SCHEMA", path="/" + "/".join(map(str, e.absolute_path)), message=e.message)
         for e in sorted(Draft202012Validator(schema).iter_errors(active), key=lambda e: str(list(e.absolute_path)))
     ]
-    if isinstance(data, dict) and stage == "design":
+    if isinstance(data, dict) and stage != "discovery":
         for name in ("spec", "design"):
             if name not in data:
                 _add(findings, "SECTION_REQUIRED", "/" + name, f"{name} is required at the design gate")
@@ -145,10 +146,24 @@ def validate_contract(data, stage):
             add("TRACEABILITY", f["id"], "Flow and task disagree")
     if b["data_density"]["maximum_records"] < b["data_density"]["typical_records"]:
         add("DATA_DENSITY", "/brief/data_density", "Maximum records must cover typical records")
+    form = b["data_density"].get("form")
+    if form and form["required_count"] > form["field_count"]:
+        add("FORM_DENSITY", "/brief/data_density/form", "required_count exceeds field_count")
+    for success in b["success_criteria"]:
+        if "basis" not in success:
+            add("SUCCESS_BASIS_MISSING", success["id"], "Declare data, stakeholder, or proposal as the threshold basis")
+        elif stage == "final" and success["basis"] == "proposal":
+            add("PROPOSAL_NOT_ACCEPTED", success["id"], "Proposed threshold must be supported by data or stakeholder approval before final acceptance")
     for q in b["unknowns"]:
         resolved = q["resolution"].strip()
         if q["blocking"] and unresolved(resolved):
             add("BLOCKING_UNKNOWN", q["id"], "Resolve the blocking discovery question before proceeding")
+        if not q["blocking"] and "deferred_to" not in q:
+            add("DEFER_DESTINATION_REQUIRED", q["id"], "Nonblocking unknown must name deferred_to")
+        if not q["blocking"] and unresolved(resolved) and q.get("deferred_to") == "design" and stage != "discovery":
+            add("DEFERRED_UNKNOWN_DUE", q["id"], "Unknown deferred to design must be resolved at the design gate")
+        if not q["blocking"] and unresolved(resolved) and q.get("deferred_to") == "review" and stage == "final":
+            add("DEFERRED_UNKNOWN_DUE", q["id"], "Unknown deferred to review must be resolved before final acceptance")
     if stage == "discovery":
         return findings
 
@@ -185,19 +200,27 @@ def validate_contract(data, stage):
         refs(screen["flow_ids"], flows, screen["id"])
         refs(screen["object_ids"], objects, screen["id"])
         kinds = [x["kind"] for x in screen["states"]]
+        variants = {(x["kind"], x.get("variant")) for x in screen["states"]}
         excluded = [x["kind"] for x in screen["state_exclusions"]]
         states_by_screen[screen["id"]] = set(kinds)
-        if len(kinds) != len(set(kinds)) or len(excluded) != len(set(excluded)):
-            add("DUPLICATE_STATE", screen["id"], "A screen state or exclusion is repeated")
+        if len(variants) != len(screen["states"]) or len(excluded) != len(set(excluded)):
+            add("DUPLICATE_STATE", screen["id"], "A screen state variant or exclusion is repeated")
+        for kind in set(kinds):
+            entries = [x for x in screen["states"] if x["kind"] == kind]
+            if len(entries) > 1 and any("variant" not in x for x in entries):
+                add("STATE_VARIANT", screen["id"] + "/" + kind, "Multiple states of one kind require explicit variants")
         if set(kinds) & set(excluded):
             add("STATE_CONFLICT", screen["id"], "An applicable state is also excluded")
         if (set(kinds) | set(excluded)) != STATE_KINDS or "default" not in kinds:
             add("STATE_COVERAGE", screen["id"], "Define default and explicitly cover or exclude every remaining state")
         if not any(screen["id"] in st["screen_ids"] for st in stories.values()):
             add("SCREEN_COVERAGE", screen["id"], "No user story owns this screen")
-        for kind in kinds:
-            if not any(a["screen_id"] == screen["id"] and a["state"] == kind and a["required"] for a in acs.values()):
-                add("AC_COVERAGE", screen["id"] + "/" + kind, "No required UI-AC covers this state")
+        for state in screen["states"]:
+            kind, variant = state["kind"], state.get("variant")
+            if not any(a["screen_id"] == screen["id"] and a["state"] == kind
+                    and a.get("variant") == variant and a["required"] for a in acs.values()):
+                add("AC_COVERAGE", screen["id"] + "/" + kind + (":" + variant if variant else ""),
+                    "No required UI-AC covers this state variant")
     for st in stories.values():
         refs(st["success_criteria_ids"], successes, st["id"])
         refs([st["user_id"]], users, st["id"])
@@ -217,8 +240,9 @@ def validate_contract(data, stage):
     for a in acs.values():
         refs([a["story_id"]], stories, a["id"])
         refs([a["screen_id"]], screens, a["id"])
-        if a["screen_id"] in screens and a["state"] not in states_by_screen[a["screen_id"]]:
-            add("AC_STATE", a["id"], "UI-AC references an inapplicable screen state")
+        if a["screen_id"] in screens and not any(x["kind"] == a["state"] and x.get("variant") == a.get("variant")
+                for x in screens[a["screen_id"]]["states"]):
+            add("AC_STATE", a["id"], "UI-AC references an inapplicable screen state variant")
         if a["story_id"] in stories and a["screen_id"] not in stories[a["story_id"]]["screen_ids"]:
             add("TRACEABILITY", a["id"], "UI-AC screen is not owned by its story")
     for tid in tasks:
@@ -243,6 +267,13 @@ def validate_contract(data, stage):
     for section in ("layout_rules", "typography_rules", "spacing_rules", "color_rules"):
         rule_items.extend(d[section])
     rules = index(rule_items, "/design/rules")
+    for rule in rules.values():
+        references = {match[1:] for text in (rule["statement"], rule["verification"])
+            for match in TOKEN_REF.findall(text)}
+        declared = set(rule.get("token_ids", []))
+        refs(references | declared, tokens, rule["id"])
+        if references != declared:
+            add("RULE_TOKEN_BINDING", rule["id"], "Token references in rule text must exactly match token_ids; use @TOK-NNN")
     for criterion in review.values():
         refs(criterion["rule_ids"], rules, criterion["id"])
     covered_rules = {rid for criterion in review.values() if criterion["required"] for rid in criterion["rule_ids"]}
@@ -268,6 +299,8 @@ def validate_contract(data, stage):
         refs(component["screen_ids"], screens, component["id"])
         refs(component["token_ids"], tokens, component["id"])
         parent = component["parent_id"]
+        if component.get("shared") and parent is not None:
+            add("SHARED_PARENT", component["id"], "Shared component must be a standalone read-only reference")
         if parent is not None:
             refs([parent], components, component["id"])
             if parent in components and not set(component["screen_ids"]) <= set(components[parent]["screen_ids"]):
@@ -289,21 +322,23 @@ def validate_contract(data, stage):
     # cannot include that root. Catch this at the design gate, not after approval.
     for story in stories.values():
         selected = set(story["screen_ids"])
-        included = {cid: c for cid, c in components.items() if set(c["screen_ids"]) <= selected}
+        included = {cid: c for cid, c in components.items() if not c.get("shared") and set(c["screen_ids"]) <= selected}
         for cid, component in included.items():
             parent = component["parent_id"]
             if parent is not None and parent in components and parent not in included:
                 outside = sorted(set(components[parent]["screen_ids"]) - selected)
                 owners = sorted(st["id"] for st in stories.values() if set(st["screen_ids"]) & set(outside))
-                add("SCOPE_GAP", story["id"] + "/" + cid,
+                _add(findings, "SCOPE_GAP", story["id"] + "/" + cid,
                     f"Parent {parent} spans out-of-scope screens {outside} owned by {owners}; split the root per screen")
+                findings[-1]["cause"] = dict(component_id=parent, extra_screen_ids=outside, story_ids=owners,
+                    action="Split root per screen or declare an independent shared component")
         for sid in selected:
             roots = [c for c in included.values() if sid in c["screen_ids"] and c["parent_id"] is None]
             if len(roots) != 1:
                 add("SCOPE_GAP", story["id"] + "/" + sid,
                     f"Story {story['id']} cannot hand off screen {sid} with exactly one in-scope root; split shared roots")
     for sid in screens:
-        roots = [c for c in components.values() if sid in c["screen_ids"] and c["parent_id"] is None]
+        roots = [c for c in components.values() if not c.get("shared") and sid in c["screen_ids"] and c["parent_id"] is None]
         if len(roots) != 1:
             add("COMPONENT_ROOT", sid, "Each screen must have exactly one component tree root")
         if not any(sid in c["screen_ids"] for c in components.values()):
@@ -346,7 +381,7 @@ def render_documents(data, stage):
         raise ValueError("Cannot render structurally invalid contract")
     digest = sha(json.dumps(data, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
     docs = [("UI-BRIEF.md", "UI Brief", "UI 需求簡報", "brief")]
-    if stage == "design":
+    if stage != "discovery":
         docs += [("UI-SPEC.md", "UI Specification", "UI 功能與狀態規格", "spec"),
                  ("DESIGN.md", "UI Design Contract", "UI 設計契約", "design")]
     result = {}

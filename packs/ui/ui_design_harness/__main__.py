@@ -13,6 +13,7 @@ from .contract import inspect_contract, load_json, render_documents, validate_co
 from .guidance import build_guidance
 from .review import run_fix, run_review
 from .rules import exit_code, scan_target
+from .pipeline import run_pipeline
 
 def write_new(path, content):
     path = Path(path)
@@ -26,12 +27,15 @@ def main(argv=None):
     for name in ("check", "render"):
         cmd = sub.add_parser(name)
         cmd.add_argument("--contract", type=Path, required=True)
-        cmd.add_argument("--stage", choices=("discovery", "design"), required=True)
+        cmd.add_argument("--stage", choices=("discovery", "design", "final"), required=True)
         if name == "check":
             cmd.add_argument("--documents", type=Path)
             cmd.add_argument("--receipt", type=Path)
         else:
             cmd.add_argument("--output", type=Path, required=True)
+    pipeline_cmd = sub.add_parser("pipeline")
+    pipeline_cmd.add_argument("--contract", type=Path, required=True)
+    pipeline_cmd.add_argument("--output", type=Path, default=Path("outputs"))
     guidance = sub.add_parser("guidance")
     guidance.add_argument("--contract", type=Path, required=True)
     guidance.add_argument("--documents", type=Path, required=True)
@@ -60,7 +64,11 @@ def main(argv=None):
     fix_cmd.add_argument("--output", type=Path)
     args = parser.parse_args(argv)
     try:
-        if args.command == "check":
+        if args.command == "pipeline":
+            result = run_pipeline(args.contract, args.output)
+            code = 0 if result["status"] == "PASS" else 1
+            text = json.dumps(result, ensure_ascii=False, indent=2)
+        elif args.command == "check":
             result = inspect_contract(args.contract, args.stage, args.documents)
             code = 0 if result["status"] == "PASS" else 1
             text = json.dumps(result, ensure_ascii=False, indent=2)

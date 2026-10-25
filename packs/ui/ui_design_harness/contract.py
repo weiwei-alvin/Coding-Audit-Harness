@@ -57,6 +57,23 @@ def sha(data):
 def _add(findings, code, path, message):
     findings.append(dict(code=code, path=path, message=message))
 
+def contract_warnings(data):
+    """Heuristic warnings; warnings never turn a contract gate into FAIL."""
+    warnings = []
+    if not isinstance(data, dict) or not isinstance(data.get("spec"), dict):
+        return warnings
+    for ac in data["spec"].get("acceptance_criteria", []):
+        if not isinstance(ac, dict):
+            continue
+        given = ac.get("given", "")
+        when = ac.get("when", "")
+        if re.search(r"處於\\s*(?:default|loading|empty|error|success|validation_error|disabled)\\s*條件", given, re.I) or re.search(r"進入此狀態並操作|進入.*狀態並操作", when):
+            warnings.append(dict(code="VAGUE_AC", path=ac.get("id", ""),
+                message="Given/When describes only a state or generic operation; specify a measurable precondition and user action",
+                severity="warning"))
+    return warnings
+
+
 def _schema_errors(data, stage):
     if stage not in STAGES:
         raise ValueError(f"Unsupported stage: {stage}")
@@ -441,6 +458,7 @@ def inspect_contract(path, stage, documents=None):
         evidence_scope="contract_validation", ui_acceptance="UNVERIFIED",
         checked_at=datetime.now(timezone.utc).isoformat(), source_hash=sha(raw),
         engine_hash=engine_before, document_hashes=document_hashes, findings=findings,
+        warnings=contract_warnings(data),
         limitations=["Structural, traceability and generated-document freshness checks only.",
                      "No implementation, browser, visual, accessibility or usability acceptance executed.",
                      "Local hashes detect stale content; they are not signatures or a security sandbox."])

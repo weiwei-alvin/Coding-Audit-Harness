@@ -213,11 +213,6 @@ class Workflow:
         if verdict!='PASS': self.check_evidence_tiers(s,review,criteria,definition,enforce_required=False)
         handoff=None
         if verdict=='PASS':
-            review_receipt = definition.review_receipt(s['pipeline_stage'])
-            if review_receipt is not None:
-                from gate_receipt import verify_gate_receipt
-                failures = verify_gate_receipt(self.root, review_receipt)
-                if failures: raise ValueError('Final review contract evidence rejected: ' + '; '.join(failures))
             if not handoff_path: raise ValueError('Missing handoff payload')
             handoff=json.loads(Path(handoff_path).read_text(encoding='utf-8'))
             valid,errors=pv.validate('handoff',handoff)
@@ -243,6 +238,14 @@ class Workflow:
             if unresolved: raise ValueError('Unresolved blocking findings remain; resolve after fixing and re-review')
             last=all(k==tid or x['status']=='COMPLETE' for k,x in s['tickets'].items())
             if last:
+                # Review receipts belong to the terminal stage and are enforced
+                # only before the LAST ticket becomes COMPLETE.
+                review_receipt = definition.review_receipt(definition.terminal_stage)
+                if review_receipt is not None:
+                    from gate_receipt import verify_gate_receipt
+                    failures = verify_gate_receipt(self.root, review_receipt)
+                    if failures:
+                        raise ValueError('Final review contract evidence rejected: ' + '; '.join(failures))
                 final=GoldenPathVerifier(self.root,trusted=self.trusted,timeout=self.timeout).verify_final_integrated()
                 if final.get('status')!='PASSED': raise ValueError('Final integrated verification failed: '+json.dumps(final))
                 s['final_verification']=self.artifact('verifications',dict(source_hash=current,**final))

@@ -87,10 +87,10 @@ python packs/ui/cli.py pipeline --contract contract.json --output outputs
 在最終驗收前另執行：
 
 ```powershell
-python packs/ui/cli.py check --contract contract.json --stage final --documents outputs/<version>/design
+python packs/ui/cli.py check --contract contract.json --stage final --documents outputs/<version>/design --receipt receipts/final-receipt.json
 ```
 
-`status: PASS` 僅確認契約的 final basis／未決事項與設計結構；不宣稱完成實作或 UI 實機驗收。應將此檢查納入專案自己的 Golden Path 最終驗收步驟，而不是只看管線摘要的 `final_gate_eligible`。
+`status: PASS` 僅確認契約的 final basis／未決事項與設計結構；不宣稱完成實作或 UI 實機驗收。預設 UI Pipeline 的 `REVIEW.review_receipt` 指向 `receipts/final-receipt.json` 並會在 Review PASS 前重新核對契約、檢查器與文件 SHA-256；請把 `documents` 配置同步改為 `outputs/<version>/design`，否則預設值 `docs` 仍會造成拒收。正式的 Golden Path 也應列出相應的 final 契約檢查與實機驗收，不能只依摘要的 `final_gate_eligible`。
 
 ## 其他可用指令
 

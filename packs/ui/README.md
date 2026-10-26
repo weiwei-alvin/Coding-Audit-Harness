@@ -9,7 +9,7 @@ updated_date: 2026-10-25
 
 # UI pack
 
-UI pack 是 Coding Audit Harness 的選用元件。它提供 UI 設計契約、規則檢查、瀏覽器證據收集、Review/Fix 與故事交接。Runtime kernel 本身不判斷 UI 視覺品質。
+UI pack 是 Software Development Assurance Harness 的選用元件。它提供 UI 設計契約、規則檢查、瀏覽器證據收集、Review/Fix 與故事交接。Runtime kernel 本身不判斷 UI 視覺品質。
 
 此目錄 `packs/ui/` 是目前整合版本的來源。歷史 UI-Design-Harness 不能視為同步的最新版本。
 

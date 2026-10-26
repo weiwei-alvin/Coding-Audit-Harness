@@ -1,5 +1,13 @@
 # 變更紀錄
 
+## 2026-10-26 — V2.1 assurance milestone／Software Development Assurance Harness
+
+- 專案正式更名為 `Software Development Assurance Harness`（原 `Coding Audit Harness`），GitHub Repository 名稱與定位描述同步更新；五份 README 及後續 Audit Console 規劃文件已統一品牌。
+- 整合 PR [#1](https://github.com/weiwei-alvin/software-development-assurance-harness/pull/1) 和 [#2](https://github.com/weiwei-alvin/software-development-assurance-harness/pull/2)，新增可追溯的 UI 契約驗證：Token 與色彩配對檢查、DESIGN/final 收據新鮮度、成功標準依據與未決問題延後規則、Story-scoped shared components、表單與 state variants、結構化 scope findings、AC 品質警告、一鍵產生版本化設計交接。
+- CI 新增 README 連結檢查及 Ubuntu Chromium 實際單案例統一 E2E。合併後 Windows、Ubuntu 皆通過 201/201 Python 回歸測試；Chromium 流程檢查 37/37 通過。歷史 T-005 SHA 基準比對為 `NOT_RUN`，未提供跨瀏覽器或真人／輔助科技驗收。
+- 詳見 [V2.1 里程碑與驗證證據](releases/2026-10-26-v2-1-assurance.md)；本次紀錄**不表示正式 GitHub Release 或 Git tag 已發布**。
+
+
 ## 2026-10-20 — P2 審查後修復（agy round 1）
 
 - **F-01（major）**：`required_evidence_tiers` 只在 `PASS` 驗收時強制；`FIX_REQUIRED`／`USER_DECISION_REQUIRED` 仍可提交並記錄，避免設有 tier 要求的 stage 無法進入「失敗→修正→PASS」流程。`declared` 的 `source`／`limitations` 仍在所有 verdict 檢查。新增兩個回歸測試。

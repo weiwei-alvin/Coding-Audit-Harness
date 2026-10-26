@@ -53,7 +53,7 @@ Software Development Assurance Harness 存在的理由就一句：**讓「驗收
 
 **V2 主線是 UI Design Integration**，方向見 [`milestone.md`](milestone.md)。目前實作使用的 stage ID 是 `DESIGN`；指令文件中的概念名稱 `UI_DESIGN` 不應直接代入設定。Audit Console（本機 Web UI）仍為延後的獨立里程碑，見 [`PLAN.md`](PLAN.md)／[`SPEC.md`](SPEC.md)，尚未提供操作介面。
 
-2026-10-24 的 [P3 審查紀錄](docs/reviews/p3-review.md) 為 `P3_ACCEPTED`。本機既有紀錄包含 **174 項回歸通過**與報時遊戲案例 **35/35 統一驗收通過**；案例 final gate 為 `ui_acceptance=VERIFIED`。原始 JSON 位於本機 `test-results/`，未納入 Git；這些是既有執行紀錄，本次 README 更新未重新執行完整套件。
+2026-10-24 的 [P3 審查紀錄](docs/reviews/p3-review.md) 為 `P3_ACCEPTED`，所述本機 **174 項回歸與 35/35 案例檢查**是歷史紀錄。**2026-10-26 最新主分支 CI** 則在 Windows、Ubuntu 各通過 **201/201** 回歸測試；Ubuntu Chromium 報時遊戲單案例統一 E2E **37/37** 流程檢查通過，並保存收據與截圖。詳見 [V2.1 里程碑驗證報告](docs/releases/2026-10-26-v2-1-assurance.md)及 [GitHub Actions](https://github.com/weiwei-alvin/software-development-assurance-harness/actions/runs/40321649292)。
 
 此 UI 驗收僅涵蓋單一案例、Chromium 與已列名的人工判準。未涵蓋跨瀏覽器、真人／輔助科技測試或對比量測；固定次數 Tab 巡覽也不等於完整互動流程驗收。CI 狀態請查看 [GitHub Actions](https://github.com/weiwei-alvin/software-development-assurance-harness/actions/workflows/harness-validation.yml)，本機結果不能代替遠端 CI。
 

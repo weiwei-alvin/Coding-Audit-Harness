@@ -1,7 +1,7 @@
 <!--
-document_title: Coding Audit Harness
+document_title: Software Development Assurance Harness
 chinese_title: AI 寫的程式，驗過才算數
-aka: []
+aka: [Software Development Assurance Harness]
 established_date: 2026-09-29
 updated_date: 2026-10-01
 version: 3.1.0
@@ -9,9 +9,11 @@ version: 3.1.0
 
 <div align="center">
 
-# Coding Audit Harness
+# Software Development Assurance Harness
 
 **Codex ab IA scriptus nisi probatus non valet**
+
+An evidence-driven harness for AI-assisted software development, integrating structured workflows, stage-level audits, executable verification, and UI quality assurance.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB.svg?logo=python&logoColor=white)](#installatio)
@@ -32,7 +34,7 @@ Non quia agenti diffidis, sed quia tibi nihil nisi sententiam dedit. Nihil eam s
 
 Hic est error maxime proprius programmationis per intellegentiam artificialem (IA). **Non quod codex scribi non possit, sed quod scriptum nemo probare possit.**
 
-Coding Audit Harness una de causa exstat: **ut «probatum est» ex nuda affirmatione fiat testimonium quod investigari possit.**
+Software Development Assurance Harness una de causa exstat: **ut «probatum est» ex nuda affirmatione fiat testimonium quod investigari possit.**
 
 (Vox «harness» hic significat stratum quod processum evolutionis circumdat et coercet, non instrumentum probationum quod «test harness» dicitur.)
 

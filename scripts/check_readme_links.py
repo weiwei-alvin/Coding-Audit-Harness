@@ -11,7 +11,12 @@ SKIP = ("http:", "https:", "mailto:", "data:", "tel:", "#", "//")
 
 def broken_links(root=ROOT):
     errors = []
-    for readme in sorted(root.rglob("README*.md")):
+    # Keep the beginner README and the moved advanced guide link-consistent.
+    guides = sorted(root.rglob("README*.md"))
+    technical_guide = root / "docs" / "TECHNICAL_GUIDE.md"
+    if technical_guide.is_file():
+        guides.append(technical_guide)
+    for readme in guides:
         if any(part.startswith(".") and part != "." for part in readme.relative_to(root).parts):
             continue
         text = readme.read_text(encoding="utf-8")
@@ -34,5 +39,5 @@ if __name__ == "__main__":
     errors = broken_links()
     for error in errors:
         print(error, file=sys.stderr)
-    print(f"README relative links: {'FAIL' if errors else 'PASS'} ({len(errors)} missing)")
+    print(f"README and technical guide relative links: {'FAIL' if errors else 'PASS'} ({len(errors)} missing)")
     sys.exit(1 if errors else 0)

@@ -171,7 +171,7 @@ python -m pip install -r requirements.txt
 ### Repository layout
 
 ```text
-Coding-Audit-Harness/
+software-development-assurance-harness/
 ├── harness/              # CLI Runner, JSON Schemas, test suite
 │   ├── runner/           # 12 implementation modules + 8 test modules + shared fixture helper
 │   ├── *.schema.json    # 7 schemas (state / gate-result / review-result / handoff / finding / decision / change-impact)

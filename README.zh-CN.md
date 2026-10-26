@@ -1,7 +1,7 @@
 <!--
 document_title: Software Development Assurance Harness
 chinese_title: AI 写的代码，验过才算数
-aka: [Software Development Assurance Harness]
+aka: [Coding Audit Harness]
 established_date: 2026-09-29
 updated_date: 2026-10-01
 version: 3.1.0

@@ -238,6 +238,14 @@ class Workflow:
             if unresolved: raise ValueError('Unresolved blocking findings remain; resolve after fixing and re-review')
             last=all(k==tid or x['status']=='COMPLETE' for k,x in s['tickets'].items())
             if last:
+                # Review receipts belong to the terminal stage and are enforced
+                # only before the LAST ticket becomes COMPLETE.
+                review_receipt = definition.review_receipt(definition.terminal_stage)
+                if review_receipt is not None:
+                    from gate_receipt import verify_gate_receipt
+                    failures = verify_gate_receipt(self.root, review_receipt)
+                    if failures:
+                        raise ValueError('Final review contract evidence rejected: ' + '; '.join(failures))
                 final=GoldenPathVerifier(self.root,trusted=self.trusted,timeout=self.timeout).verify_final_integrated()
                 if final.get('status')!='PASSED': raise ValueError('Final integrated verification failed: '+json.dumps(final))
                 s['final_verification']=self.artifact('verifications',dict(source_hash=current,**final))

@@ -1,17 +1,19 @@
 <!--
-document_title: Coding Audit Harness
+document_title: Software Development Assurance Harness
 chinese_title: AI 寫的程式，驗過才算數
-aka: []
+aka: [Coding Audit Harness]
 established_date: 2026-09-29
-updated_date: 2026-10-01
+updated_date: 2026-10-26
 version: 3.1.0
 -->
 
 <div align="center">
 
-# Coding Audit Harness
+# Software Development Assurance Harness
 
 **AI-written code only counts once it's verified**
+
+*An evidence-driven harness for AI-assisted software development, integrating structured workflows, stage-level audits, executable verification, and UI quality assurance.*
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB.svg?logo=python&logoColor=white)](#installation)
@@ -32,7 +34,7 @@ Not because you distrust the agent, but because all it gave you is a sentence. N
 
 This is the classic failure mode of AI coding. **The problem isn't that the code can't be written. It's that nobody can verify it once it is.**
 
-Coding Audit Harness exists for one reason: **to turn "it passed" from a claim into evidence you can trace.**
+Software Development Assurance Harness exists for one reason: **to turn "it passed" from a claim into evidence you can trace.**
 
 ("Harness" here means the layer wrapped around the development process to constrain it, not a test harness.)
 
@@ -169,7 +171,7 @@ python -m pip install -r requirements.txt
 ### Repository layout
 
 ```text
-Coding-Audit-Harness/
+software-development-assurance-harness/
 ├── harness/              # CLI Runner, JSON Schemas, test suite
 │   ├── runner/           # 12 implementation modules + 8 test modules + shared fixture helper
 │   ├── *.schema.json    # 7 schemas (state / gate-result / review-result / handoff / finding / decision / change-impact)

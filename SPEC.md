@@ -1,4 +1,4 @@
-# Coding Audit Harness — Audit Console SPEC.md（後續獨立里程碑）
+# Software Development Assurance Harness — Audit Console SPEC.md（後續獨立里程碑）
 
 > **命名與範圍澄清（2026-10-24）**：本檔為「Audit Console」（後續獨立里程碑）的 SPEC。「V2」一名保留給 `milestone.md` 的 UI Design Integration；本方向不稱「2.0」。
 >
@@ -8,7 +8,7 @@
 
 ## Problem Statement
 
-A developer using Coding Audit Harness can only learn the project state, inspect
+A developer using Software Development Assurance Harness can only learn the project state, inspect
 verification receipts, and submit Gates or Review verdicts by reading JSON files
 and composing CLI commands. The Runner already refuses unsafe completions, but the
 operator has to reconstruct the current state, the approved plan, the evidence
@@ -166,6 +166,8 @@ the Tickets stage. Each line below maps a scenario to its User Stories and Ticke
 - **Final ticket.** When the reviewed ticket is the last one, the Console tells the
   operator that the Runner will also run Final Integrated Verification; success is
   reported only after the Runner's committed state says COMPLETE.
-- **Naming.** Repository name `Coding Audit Harness` is retained. The version is
-  `Coding Audit Harness 2.0`; the UI is `Audit Console`; the verification core is
-  `Harness Runner`; existing `Audit Skills` keep their names.
+- **Naming.** The project and repository are now named `Software Development
+  Assurance Harness` (formerly `Coding Audit Harness`). The proposed local UI is
+  `Audit Console`, a deferred milestone without a separate V2 release label;
+  the verification core remains `Harness Runner` and existing `Audit Skills`
+  retain their names.

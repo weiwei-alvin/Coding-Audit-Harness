@@ -256,6 +256,10 @@ def select_guidance(data, story_id):
         if question["blocking"] and unresolved(question["resolution"]):
             _add(findings, "BLOCKING_UNKNOWN", question["id"],
                 "Resolve the blocking discovery question before producing a handoff")
+        elif not question["blocking"] and unresolved(question["resolution"]):
+            if question.get("deferred_to") in ("design", "implementation"):
+                _add(findings, "DEFERRED_UNKNOWN_DUE", question["id"],
+                    f"{question['id']} is unresolved and deferred to {question['deferred_to']}; resolve it before implementation guidance")
 
     users = _index(brief["users"])
     tasks = _index(brief["tasks"])
@@ -272,26 +276,34 @@ def select_guidance(data, story_id):
 
     for screen in selected_screens:
         kinds = [state["kind"] for state in screen["states"]]
-        for kind in kinds:
-            if not any(ac["screen_id"] == screen["id"] and ac["state"] == kind and ac["required"]
-                    for ac in owned_acs.values()):
-                _add(findings, "MISSING_STATE_AC", screen["id"] + "/" + kind,
-                    "Selected story has no required UI-AC for this screen state")
+        for state in screen["states"]:
+            kind, variant = state["kind"], state.get("variant")
+            if not any(ac["screen_id"] == screen["id"] and ac["state"] == kind
+                    and ac.get("variant") == variant and ac["required"] for ac in owned_acs.values()):
+                _add(findings, "MISSING_STATE_AC", screen["id"] + "/" + kind + (":" + variant if variant else ""),
+                    "Selected story has no required UI-AC for this state variant")
 
     selected_ids = {screen["id"] for screen in selected_screens}
     components = _index(design["components"])
-    included_components = {cid: c for cid, c in components.items() if set(c["screen_ids"]) <= selected_ids}
+    included_components = {cid: c for cid, c in components.items()
+        if not c.get("shared") and set(c["screen_ids"]) <= selected_ids}
+    shared = [c for c in components.values() if c.get("shared") and set(c["screen_ids"]) & selected_ids]
     for cid, component in included_components.items():
         parent = component["parent_id"]
         if parent is not None and parent not in included_components:
-            _add(findings, "SCOPE_GAP", cid, "Component parent lies outside the selected story scope")
+            outside = sorted(set(components[parent]["screen_ids"]) - selected_ids) if parent in components else []
+            owners = sorted(st["id"] for st in stories.values() if set(st["screen_ids"]) & set(outside))
+            _add(findings, "SCOPE_GAP", cid,
+                f"Parent {parent} spans screens {outside}, owned by {owners}; split root per screen or use a shared component")
+            findings[-1]["cause"] = dict(component_id=parent, extra_screen_ids=outside, story_ids=owners,
+                action="Split root per screen or declare an independent shared component")
     for sid in selected_ids:
         roots = [c for c in included_components.values() if sid in c["screen_ids"] and c["parent_id"] is None]
         if len(roots) != 1:
             _add(findings, "SCOPE_GAP", sid, "Selected screen has no single component root inside the story scope")
 
     tokens = _index(design["tokens"])
-    token_ids = sorted({tid for c in included_components.values() for tid in c["token_ids"]})
+    token_ids = sorted({tid for c in list(included_components.values()) + shared for tid in c["token_ids"]})
     for tid in token_ids:
         if tid not in tokens:
             _add(findings, "SCOPE_GAP", tid, "Component references a token missing from the contract")
@@ -319,7 +331,12 @@ def select_guidance(data, story_id):
     rules_out = []
     for rid in sorted(rule_usage):
         rule = rules[rid]
+        from .contract import TOKEN_REF
+        def resolve(text):
+            return TOKEN_REF.sub(lambda match: tokens[match.group()[1:]]["value"], text)
         rules_out.append(dict(id=rule["id"], statement=rule["statement"], verification=rule["verification"],
+            resolved_statement=resolve(rule["statement"]), resolved_verification=resolve(rule["verification"]),
+            token_ids=rule.get("token_ids", []),
             section=rule["section"], criterion_ids=sorted(rule_usage[rid])))
 
     methods = {"automated": 0, "manual": 0, "hybrid": 0}
@@ -328,6 +345,8 @@ def select_guidance(data, story_id):
 
     selected_tokens = [tokens[tid] for tid in token_ids]
     selected_components = sorted(included_components.values(), key=lambda c: c["id"])
+    shared_refs = [dict(id=c["id"], name=c["name"], screen_ids=sorted(set(c["screen_ids"]) & selected_ids),
+        token_ids=c["token_ids"], read_only=True) for c in sorted(shared, key=lambda c: c["id"])]
     selection = dict(
         story=story,
         user=users[story["user_id"]],
@@ -336,6 +355,7 @@ def select_guidance(data, story_id):
         success_criteria=[successes[sid] for sid in story["success_criteria_ids"]],
         screens=screens_out,
         components=selected_components,
+        shared_components=shared_refs,
         tokens=selected_tokens,
         rules=rules_out,
         review_criteria=sorted(required_criteria, key=lambda c: c["id"]),
@@ -365,6 +385,7 @@ def _payload(data, fresh, receipt_bytes, story_id, selection, registry):
         success_criteria=selection["success_criteria"],
         screens=selection["screens"],
         components=selection["components"],
+        shared_components=selection["shared_components"],
         tokens=selection["tokens"],
         rules=selection["rules"],
         review_criteria=selection["review_criteria"],

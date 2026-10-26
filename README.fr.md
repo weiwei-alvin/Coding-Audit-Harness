@@ -1,17 +1,19 @@
 <!--
-document_title: Coding Audit Harness
+document_title: Software Development Assurance Harness
 chinese_title: AI 寫的程式，驗過才算數
-aka: []
+aka: [Coding Audit Harness]
 established_date: 2026-09-29
-updated_date: 2026-10-01
+updated_date: 2026-10-26
 version: 3.1.0
 -->
 
 <div align="center">
 
-# Coding Audit Harness
+# Software Development Assurance Harness
 
 **Le code écrit par l'IA ne vaut que s'il a été vérifié**
+
+*An evidence-driven harness for AI-assisted software development, integrating structured workflows, stage-level audits, executable verification, and UI quality assurance.*
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB.svg?logo=python&logoColor=white)](#installation)
@@ -32,7 +34,7 @@ Ce n'est pas une question de confiance envers l'agent : il vous a simplement don
 
 C'est l'échec typique du développement assisté par IA. **Le problème n'est pas d'écrire le code, c'est que personne ne peut le vérifier une fois écrit.**
 
-Coding Audit Harness n'existe que pour une raison : **faire de « c'est validé » une preuve traçable plutôt qu'une simple affirmation.**
+Software Development Assurance Harness n'existe que pour une raison : **faire de « c'est validé » une preuve traçable plutôt qu'une simple affirmation.**
 
 (Ici, « harness » désigne la couche qui enveloppe le processus de développement pour l'encadrer, et non un harnais de test.)
 
@@ -169,7 +171,7 @@ python -m pip install -r requirements.txt
 ### Arborescence du dépôt
 
 ```text
-Coding-Audit-Harness/
+software-development-assurance-harness/
 ├── harness/              # Runner CLI, schémas JSON, suite de tests
 │   ├── runner/           # 12 modules d'implémentation + 8 modules de test + helper de fixture partagé
 │   ├── *.schema.json    # 7 schémas (state / gate-result / review-result / handoff / finding / decision / change-impact)

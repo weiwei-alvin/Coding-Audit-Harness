@@ -17,11 +17,25 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
+      - name: README relative-link integrity
+        run: python scripts/check_readme_links.py
       - name: Isolated unit and CLI integration tests
         env:
           PYTHONUTF8: '1'
           PYTHONDONTWRITEBYTECODE: '1'
         run: python harness/runner/run_tests.py --output test-results/results.json
+      - name: Install Chromium browser for real UI E2E (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          python -m pip install "playwright>=1.49,<2"
+          python -m playwright install --with-deps chromium
+      - name: Unified end-to-end browser flow (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        timeout-minutes: 20
+        env:
+          PYTHONUTF8: '1'
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python scripts/verify_unified_e2e.py --output test-results/unified-e2e
       - uses: actions/upload-artifact@v4
         if: always()
         with:

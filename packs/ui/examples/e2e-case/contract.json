@@ -18,13 +18,19 @@
         "id": "USR-001",
         "role": "學生（國小高年級至國中）",
         "context": "在課堂或自習時間用手機或桌機瀏覽器練習，需要大字體與清楚回饋。",
-        "task_ids": ["TASK-001", "TASK-002", "TASK-003"]
+        "task_ids": [
+          "TASK-001",
+          "TASK-002",
+          "TASK-003"
+        ]
       },
       {
         "id": "USR-002",
         "role": "老師",
         "context": "在學生結束遊戲後檢視成績卡與錯題內容，判斷誰需要補救。",
-        "task_ids": ["TASK-004"]
+        "task_ids": [
+          "TASK-004"
+        ]
       }
     ],
     "tasks": [
@@ -83,44 +89,87 @@
         "id": "FLOW-001",
         "task_id": "TASK-001",
         "steps": [
-          { "action": "輸入暱稱或座號。", "result": "暱稱非空才允許開始。" },
-          { "action": "按下開始挑戰。", "result": "進入答題畫面並顯示第 1 題。" }
+          {
+            "action": "輸入暱稱或座號。",
+            "result": "暱稱非空才允許開始。"
+          },
+          {
+            "action": "按下開始挑戰。",
+            "result": "進入答題畫面並顯示第 1 題。"
+          }
         ],
-        "exceptions": ["暱稱為空白時在欄位下顯示錯誤訊息並把焦點留在輸入框。"]
+        "exceptions": [
+          "暱稱為空白時在欄位下顯示錯誤訊息並把焦點留在輸入框。"
+        ]
       },
       {
         "id": "FLOW-002",
         "task_id": "TASK-002",
         "steps": [
-          { "action": "閱讀題目（鐘面、說法、字卡、打字或情境）。", "result": "題型有對應的操作元件。" },
-          { "action": "作答（點選項、組字卡或輸入）。", "result": "鎖定全部控制項並顯示對錯回饋。" },
-          { "action": "按下一題。", "result": "前進至下一題或進入成績畫面。" }
+          {
+            "action": "閱讀題目（鐘面、說法、字卡、打字或情境）。",
+            "result": "題型有對應的操作元件。"
+          },
+          {
+            "action": "作答（點選項、組字卡或輸入）。",
+            "result": "鎖定全部控制項並顯示對錯回饋。"
+          },
+          {
+            "action": "按下一題。",
+            "result": "前進至下一題或進入成績畫面。"
+          }
         ],
-        "exceptions": ["30 秒未作答視為時間到，顯示正確答案與解析。", "字卡未組句或輸入空白時送出鈕為 disabled 並有原因。"]
+        "exceptions": [
+          "30 秒未作答視為時間到，顯示正確答案與解析。",
+          "字卡未組句或輸入空白時送出鈕為 disabled 並有原因。"
+        ]
       },
       {
         "id": "FLOW-003",
         "task_id": "TASK-003",
         "steps": [
-          { "action": "閱讀成績卡。", "result": "顯示分數、星等、正確率與最長連勝。" },
-          { "action": "閱讀錯題複習。", "result": "逐題顯示你的答案、正確答案與解析。" },
-          { "action": "按再玩一次或換人玩。", "result": "重新洗牌開始，或回到開始畫面。" }
+          {
+            "action": "閱讀成績卡。",
+            "result": "顯示分數、星等、正確率與最長連勝。"
+          },
+          {
+            "action": "閱讀錯題複習。",
+            "result": "逐題顯示你的答案、正確答案與解析。"
+          },
+          {
+            "action": "按再玩一次或換人玩。",
+            "result": "重新洗牌開始，或回到開始畫面。"
+          }
         ],
-        "exceptions": ["全部答對時錯題區顯示全部答對提示而非空清單。"]
+        "exceptions": [
+          "全部答對時錯題區顯示全部答對提示而非空清單。"
+        ]
       },
       {
         "id": "FLOW-004",
         "task_id": "TASK-004",
         "steps": [
-          { "action": "查看成績卡與錯題。", "result": "文字與數字可在不使用顏色的情況下讀懂。" }
+          {
+            "action": "查看成績卡與錯題。",
+            "result": "文字與數字可在不使用顏色的情況下讀懂。"
+          }
         ],
-        "exceptions": ["截圖或親自檢視皆可；成績只存在該裝置畫面。"]
+        "exceptions": [
+          "截圖或親自檢視皆可；成績只存在該裝置畫面。"
+        ]
       }
     ],
     "data_density": {
       "typical_records": 60,
       "maximum_records": 60,
-      "primary_fields": ["id", "type", "prompt", "options", "answer", "ex"],
+      "primary_fields": [
+        "id",
+        "type",
+        "prompt",
+        "options",
+        "answer",
+        "ex"
+      ],
       "rationale": "題庫固定 60 題、5 種題型；每次遊玩重新洗牌，沒有分頁或大量清單。"
     },
     "platform_constraints": [
@@ -133,31 +182,36 @@
         "id": "SUCCESS-001",
         "measure": "答題即時回饋。",
         "threshold": "每次作答立即顯示對錯、得分與解析，控制項一併鎖定。",
-        "verification": "T-005 以瀏覽器操作斷言回饋文字與控制項狀態。"
+        "verification": "T-005 以瀏覽器操作斷言回饋文字與控制項狀態。",
+        "basis": "stakeholder"
       },
       {
         "id": "SUCCESS-002",
         "measure": "錯題可複習。",
         "threshold": "結束畫面逐題顯示錯題、你的答案、正確答案與解析；全對時有明確提示。",
-        "verification": "T-005 以錯題清單內容斷言。"
+        "verification": "T-005 以錯題清單內容斷言。",
+        "basis": "stakeholder"
       },
       {
         "id": "SUCCESS-003",
         "measure": "成績卡可讀。",
         "threshold": "分數、正確率與錯題在螢幕截圖下不依賴顏色即可讀懂。",
-        "verification": "T-004/T-005 人工判讀截圖並記錄限制。"
+        "verification": "T-004/T-005 人工判讀截圖並記錄限制。",
+        "basis": "stakeholder"
       },
       {
         "id": "SUCCESS-004",
         "measure": "限時機制。",
         "threshold": "每題 30 秒，時間到自動結算並顯示正確答案。",
-        "verification": "T-005 以縮短計時或等待斷言時間到行為。"
+        "verification": "T-005 以縮短計時或等待斷言時間到行為。",
+        "basis": "stakeholder"
       },
       {
         "id": "SUCCESS-005",
         "measure": "身分可標示。",
         "threshold": "暱稱出現在成績卡；空白暱稱被阻擋並有錯誤訊息。",
-        "verification": "T-005 以正反例斷言。"
+        "verification": "T-005 以正反例斷言。",
+        "basis": "stakeholder"
       }
     ],
     "assumptions": [
@@ -176,7 +230,8 @@
         "question": "是否需要在裝置上保存歷史成績？",
         "resolution": "v1 不做：成績卡以截圖分享，開始畫面已明示名字只存在本機。",
         "reason": "保存成績需要儲存機制與隱私說明，超出本次介面契约範圍。",
-        "blocking": false
+        "blocking": false,
+        "deferred_to": "review"
       }
     ]
   },
@@ -187,36 +242,66 @@
         "user_id": "USR-001",
         "task_id": "TASK-001",
         "statement": "身為學生，我要輸入暱稱開始挑戰，以便讓成績卡標示我是誰。",
-        "screen_ids": ["SCR-001"],
-        "ac_ids": ["UI-AC-001", "UI-AC-002"],
-        "success_criteria_ids": ["SUCCESS-005"]
+        "screen_ids": [
+          "SCR-001"
+        ],
+        "ac_ids": [
+          "UI-AC-001",
+          "UI-AC-002"
+        ],
+        "success_criteria_ids": [
+          "SUCCESS-005"
+        ]
       },
       {
         "id": "US-002",
         "user_id": "USR-001",
         "task_id": "TASK-002",
         "statement": "身為學生，我要回答五種題型並得到即時回饋，以便學會報時說法。",
-        "screen_ids": ["SCR-002"],
-        "ac_ids": ["UI-AC-003", "UI-AC-004", "UI-AC-005", "UI-AC-006"],
-        "success_criteria_ids": ["SUCCESS-001", "SUCCESS-004"]
+        "screen_ids": [
+          "SCR-002"
+        ],
+        "ac_ids": [
+          "UI-AC-003",
+          "UI-AC-004",
+          "UI-AC-005",
+          "UI-AC-006"
+        ],
+        "success_criteria_ids": [
+          "SUCCESS-001",
+          "SUCCESS-004"
+        ]
       },
       {
         "id": "US-003",
         "user_id": "USR-001",
         "task_id": "TASK-003",
         "statement": "身為學生，我要在結束時看到成績與錯題，以便知道要複習什麼。",
-        "screen_ids": ["SCR-003"],
-        "ac_ids": ["UI-AC-007", "UI-AC-009"],
-        "success_criteria_ids": ["SUCCESS-002"]
+        "screen_ids": [
+          "SCR-003"
+        ],
+        "ac_ids": [
+          "UI-AC-007",
+          "UI-AC-009"
+        ],
+        "success_criteria_ids": [
+          "SUCCESS-002"
+        ]
       },
       {
         "id": "US-004",
         "user_id": "USR-002",
         "task_id": "TASK-004",
         "statement": "身為老師，我要讀懂成績卡與錯題，以便決定補救教學。",
-        "screen_ids": ["SCR-003"],
-        "ac_ids": ["UI-AC-008"],
-        "success_criteria_ids": ["SUCCESS-003"]
+        "screen_ids": [
+          "SCR-003"
+        ],
+        "ac_ids": [
+          "UI-AC-008"
+        ],
+        "success_criteria_ids": [
+          "SUCCESS-003"
+        ]
       }
     ],
     "screens": [
@@ -224,8 +309,12 @@
         "id": "SCR-001",
         "name": "開始與登入",
         "purpose": "收集暱稱、說明規則，並把學生送入答題。",
-        "flow_ids": ["FLOW-001"],
-        "object_ids": ["OBJ-003"],
+        "flow_ids": [
+          "FLOW-001"
+        ],
+        "object_ids": [
+          "OBJ-003"
+        ],
         "states": [
           {
             "kind": "default",
@@ -239,11 +328,26 @@
           }
         ],
         "state_exclusions": [
-          { "kind": "loading", "reason": "本機單頁無非同步載入。" },
-          { "kind": "empty", "reason": "開始畫面沒有清單或資料集合。" },
-          { "kind": "error", "reason": "無後端或外部依賴，沒有系統錯誤狀態。" },
-          { "kind": "success", "reason": "成功是進入答題畫面，屬 SCR-002 的狀態。" },
-          { "kind": "disabled", "reason": "開始按鈕沒有需要停用的前置條件。" }
+          {
+            "kind": "loading",
+            "reason": "本機單頁無非同步載入。"
+          },
+          {
+            "kind": "empty",
+            "reason": "開始畫面沒有清單或資料集合。"
+          },
+          {
+            "kind": "error",
+            "reason": "無後端或外部依賴，沒有系統錯誤狀態。"
+          },
+          {
+            "kind": "success",
+            "reason": "成功是進入答題畫面，屬 SCR-002 的狀態。"
+          },
+          {
+            "kind": "disabled",
+            "reason": "開始按鈕沒有需要停用的前置條件。"
+          }
         ],
         "wireframe": {
           "format": "text",
@@ -254,8 +358,12 @@
         "id": "SCR-002",
         "name": "答題",
         "purpose": "呈現五種題型之一，接受作答並給予即時回饋。",
-        "flow_ids": ["FLOW-002"],
-        "object_ids": ["OBJ-001"],
+        "flow_ids": [
+          "FLOW-002"
+        ],
+        "object_ids": [
+          "OBJ-001"
+        ],
         "states": [
           {
             "kind": "default",
@@ -279,9 +387,18 @@
           }
         ],
         "state_exclusions": [
-          { "kind": "loading", "reason": "題庫在記憶體內，無非同步載入。" },
-          { "kind": "empty", "reason": "題庫固定 60 題，不會沒有題目。" },
-          { "kind": "validation_error", "reason": "輸入以停用送出鈕表达，錯誤訊息屬 SCR-001。" }
+          {
+            "kind": "loading",
+            "reason": "題庫在記憶體內，無非同步載入。"
+          },
+          {
+            "kind": "empty",
+            "reason": "題庫固定 60 題，不會沒有題目。"
+          },
+          {
+            "kind": "validation_error",
+            "reason": "輸入以停用送出鈕表达，錯誤訊息屬 SCR-001。"
+          }
         ],
         "wireframe": {
           "format": "text",
@@ -292,8 +409,13 @@
         "id": "SCR-003",
         "name": "成績與錯題複習",
         "purpose": "總結本次遊玩並提供錯題與再次挑戰入口。",
-        "flow_ids": ["FLOW-003", "FLOW-004"],
-        "object_ids": ["OBJ-002"],
+        "flow_ids": [
+          "FLOW-003",
+          "FLOW-004"
+        ],
+        "object_ids": [
+          "OBJ-002"
+        ],
         "states": [
           {
             "kind": "default",
@@ -312,10 +434,22 @@
           }
         ],
         "state_exclusions": [
-          { "kind": "loading", "reason": "成績由本機狀態即時結算。" },
-          { "kind": "error", "reason": "結算流程沒有失敗路徑。" },
-          { "kind": "validation_error", "reason": "成績畫面不接受輸入。" },
-          { "kind": "disabled", "reason": "再玩一次與換人玩永遠可用。" }
+          {
+            "kind": "loading",
+            "reason": "成績由本機狀態即時結算。"
+          },
+          {
+            "kind": "error",
+            "reason": "結算流程沒有失敗路徑。"
+          },
+          {
+            "kind": "validation_error",
+            "reason": "成績畫面不接受輸入。"
+          },
+          {
+            "kind": "disabled",
+            "reason": "再玩一次與換人玩永遠可用。"
+          }
         ],
         "wireframe": {
           "format": "text",
@@ -329,7 +463,7 @@
         "story_id": "US-001",
         "screen_id": "SCR-001",
         "state": "default",
-        "given": "開始畫面處於 default 條件。",
+        "given": "學生已輸入非空白暱稱，開始畫面尚未提交。",
         "when": "學生輸入暱稱並按開始挑戰。",
         "then": "進入答題畫面，暱稱被記住並於成績卡顯示。",
         "method": "automated",
@@ -463,9 +597,21 @@
     "information_architecture": {
       "entry_screen_id": "SCR-001",
       "navigation": [
-        { "screen_id": "SCR-001", "parent_screen_id": null, "label": "開始與登入" },
-        { "screen_id": "SCR-002", "parent_screen_id": "SCR-001", "label": "答題" },
-        { "screen_id": "SCR-003", "parent_screen_id": "SCR-002", "label": "成績與錯題複習" }
+        {
+          "screen_id": "SCR-001",
+          "parent_screen_id": null,
+          "label": "開始與登入"
+        },
+        {
+          "screen_id": "SCR-002",
+          "parent_screen_id": "SCR-001",
+          "label": "答題"
+        },
+        {
+          "screen_id": "SCR-003",
+          "parent_screen_id": "SCR-002",
+          "label": "成績與錯題複習"
+        }
       ]
     }
   },
@@ -502,8 +648,11 @@
     "layout_rules": [
       {
         "id": "RULE-004",
-        "statement": "單欄垂直流程，內容欄上限 560px 並置中。",
-        "verification": "T-004/T-005 於 wide 與 narrow 視寬檢查沒有橫向溢出。"
+        "statement": "單欄垂直流程，內容欄上限 @TOK-011 並置中。",
+        "verification": "T-004/T-005 於 wide 與 narrow 視寬檢查沒有橫向溢出。",
+        "token_ids": [
+          "TOK-011"
+        ]
       },
       {
         "id": "RULE-005",
@@ -548,26 +697,110 @@
       }
     ],
     "tokens": [
-      { "id": "TOK-001", "category": "color", "name": "surface/page", "value": "#f3f6ff", "rationale": "現行頁面背景，帶藍色調的淺中性色。" },
-      { "id": "TOK-002", "category": "color", "name": "surface/card", "value": "#fbfcff", "rationale": "著色卡片表面；取代未著色的 #fff。" },
-      { "id": "TOK-003", "category": "color", "name": "ink/primary", "value": "#1f2a44", "rationale": "主要文字與鐘面描邊，深藍灰。" },
-      { "id": "TOK-004", "category": "color", "name": "accent/primary", "value": "#4f7cff", "rationale": "主要動作與進度的主色。" },
-      { "id": "TOK-005", "category": "color", "name": "status/ok", "value": "#1fa971", "rationale": "答對與進度安全狀態。" },
-      { "id": "TOK-006", "category": "color", "name": "status/bad", "value": "#e5484d", "rationale": "答錯、錯題與倒數警示。" },
-      { "id": "TOK-007", "category": "color", "name": "status/warn", "value": "#ffb020", "rationale": "倒數剩餘時間不多的警示。" },
-      { "id": "TOK-008", "category": "typography", "name": "font/body", "value": "-apple-system, PingFang TC, Noto Sans TC, 18px", "rationale": "系統字型堆疊，課堂裝置不安裝字型。" },
-      { "id": "TOK-009", "category": "typography", "name": "font/time", "value": "SF Mono, Menlo, Consolas, monospace", "rationale": "數位時間與時間選項用等寬。" },
-      { "id": "TOK-010", "category": "spacing", "name": "space/unit", "value": "8px", "rationale": "間距階梯 8/12/16/20 的基礎單位。" },
-      { "id": "TOK-011", "category": "layout", "name": "content/width", "value": "560px", "rationale": "單欄內容上限，窄螢幕流式。" },
-      { "id": "TOK-012", "category": "motion", "name": "motion/feedback", "value": "pop .25s ease；prefers-reduced-motion 時停用", "rationale": "回饋出現的短動畫，必須有 reduced-motion 變體。" }
+      {
+        "id": "TOK-001",
+        "category": "color",
+        "name": "surface/page",
+        "value": "#f3f6ff",
+        "rationale": "現行頁面背景，帶藍色調的淺中性色。"
+      },
+      {
+        "id": "TOK-002",
+        "category": "color",
+        "name": "surface/card",
+        "value": "#fbfcff",
+        "rationale": "著色卡片表面；取代未著色的 #fff。"
+      },
+      {
+        "id": "TOK-003",
+        "category": "color",
+        "name": "ink/primary",
+        "value": "#1f2a44",
+        "rationale": "主要文字與鐘面描邊，深藍灰。"
+      },
+      {
+        "id": "TOK-004",
+        "category": "color",
+        "name": "accent/primary",
+        "value": "#4f7cff",
+        "rationale": "主要動作與進度的主色。"
+      },
+      {
+        "id": "TOK-005",
+        "category": "color",
+        "name": "status/ok",
+        "value": "#1fa971",
+        "rationale": "答對與進度安全狀態。"
+      },
+      {
+        "id": "TOK-006",
+        "category": "color",
+        "name": "status/bad",
+        "value": "#e5484d",
+        "rationale": "答錯、錯題與倒數警示。"
+      },
+      {
+        "id": "TOK-007",
+        "category": "color",
+        "name": "status/warn",
+        "value": "#ffb020",
+        "rationale": "倒數剩餘時間不多的警示。"
+      },
+      {
+        "id": "TOK-008",
+        "category": "typography",
+        "name": "font/body",
+        "value": "-apple-system, PingFang TC, Noto Sans TC, 18px",
+        "rationale": "系統字型堆疊，課堂裝置不安裝字型。"
+      },
+      {
+        "id": "TOK-009",
+        "category": "typography",
+        "name": "font/time",
+        "value": "SF Mono, Menlo, Consolas, monospace",
+        "rationale": "數位時間與時間選項用等寬。"
+      },
+      {
+        "id": "TOK-010",
+        "category": "spacing",
+        "name": "space/unit",
+        "value": "8px",
+        "rationale": "間距階梯 8/12/16/20 的基礎單位。"
+      },
+      {
+        "id": "TOK-011",
+        "category": "layout",
+        "name": "content/width",
+        "value": "560px",
+        "rationale": "單欄內容上限，窄螢幕流式。"
+      },
+      {
+        "id": "TOK-012",
+        "category": "motion",
+        "name": "motion/feedback",
+        "value": "pop .25s ease；prefers-reduced-motion 時停用",
+        "rationale": "回饋出現的短動畫，必須有 reduced-motion 變體。"
+      }
     ],
     "components": [
       {
         "id": "CMP-001",
         "name": "StartForm",
-        "screen_ids": ["SCR-001"],
-        "state_kinds": ["default", "validation_error"],
-        "token_ids": ["TOK-001", "TOK-002", "TOK-003", "TOK-004", "TOK-008", "TOK-010"],
+        "screen_ids": [
+          "SCR-001"
+        ],
+        "state_kinds": [
+          "default",
+          "validation_error"
+        ],
+        "token_ids": [
+          "TOK-001",
+          "TOK-002",
+          "TOK-003",
+          "TOK-004",
+          "TOK-008",
+          "TOK-010"
+        ],
         "behavior": "收集暱稱、顯示規則與錯誤訊息，送出後進入答題。",
         "keyboard": "暱稱欄位可用 Tab 抵達，Enter 等同按開始；錯誤時焦點留在欄位。",
         "accessible_name": "暱稱或座號、開始挑戰。",
@@ -576,9 +809,25 @@
       {
         "id": "CMP-002",
         "name": "QuizCard",
-        "screen_ids": ["SCR-002"],
-        "state_kinds": ["default", "success", "error", "disabled"],
-        "token_ids": ["TOK-001", "TOK-002", "TOK-003", "TOK-004", "TOK-008", "TOK-010", "TOK-011", "TOK-012"],
+        "screen_ids": [
+          "SCR-002"
+        ],
+        "state_kinds": [
+          "default",
+          "success",
+          "error",
+          "disabled"
+        ],
+        "token_ids": [
+          "TOK-001",
+          "TOK-002",
+          "TOK-003",
+          "TOK-004",
+          "TOK-008",
+          "TOK-010",
+          "TOK-011",
+          "TOK-012"
+        ],
         "behavior": "呈現題號、進度、倒數與題目本體，並在作答後鎖定控制項。",
         "keyboard": "Tab 依序抵達選項／字卡／清除／送出，Enter 可送出。",
         "accessible_name": "第幾題、題型標籤、題目。",
@@ -587,9 +836,23 @@
       {
         "id": "CMP-003",
         "name": "OptionButton",
-        "screen_ids": ["SCR-002"],
-        "state_kinds": ["default", "success", "error", "disabled"],
-        "token_ids": ["TOK-002", "TOK-003", "TOK-005", "TOK-006", "TOK-008", "TOK-010"],
+        "screen_ids": [
+          "SCR-002"
+        ],
+        "state_kinds": [
+          "default",
+          "success",
+          "error",
+          "disabled"
+        ],
+        "token_ids": [
+          "TOK-002",
+          "TOK-003",
+          "TOK-005",
+          "TOK-006",
+          "TOK-008",
+          "TOK-010"
+        ],
         "behavior": "單一選項按鈕；正確選項與學生錯選在回饋時分別標示。",
         "keyboard": "Tab 抵達，Enter 或空白鍵選取。",
         "accessible_name": "選項文字本身。",
@@ -598,9 +861,18 @@
       {
         "id": "CMP-004",
         "name": "TileChip",
-        "screen_ids": ["SCR-002"],
-        "state_kinds": ["default", "disabled"],
-        "token_ids": ["TOK-002", "TOK-004", "TOK-010"],
+        "screen_ids": [
+          "SCR-002"
+        ],
+        "state_kinds": [
+          "default",
+          "disabled"
+        ],
+        "token_ids": [
+          "TOK-002",
+          "TOK-004",
+          "TOK-010"
+        ],
         "behavior": "字卡題的字卡；點擊放入答案列，再點一次可取回。",
         "keyboard": "Tab 抵達每張字卡，Enter 選取。",
         "accessible_name": "字卡文字。",
@@ -609,9 +881,18 @@
       {
         "id": "CMP-005",
         "name": "FeedbackPanel",
-        "screen_ids": ["SCR-002"],
-        "state_kinds": ["success", "error"],
-        "token_ids": ["TOK-005", "TOK-006", "TOK-008"],
+        "screen_ids": [
+          "SCR-002"
+        ],
+        "state_kinds": [
+          "success",
+          "error"
+        ],
+        "token_ids": [
+          "TOK-005",
+          "TOK-006",
+          "TOK-008"
+        ],
         "behavior": "顯示對錯、得分、連勝加分、正確答案與解析。",
         "keyboard": "內容為文字，不需操作；下一題按鈕在其後。",
         "accessible_name": "回饋標題與解析。",
@@ -620,9 +901,22 @@
       {
         "id": "CMP-006",
         "name": "ResultCard",
-        "screen_ids": ["SCR-003"],
-        "state_kinds": ["default", "success", "empty"],
-        "token_ids": ["TOK-001", "TOK-003", "TOK-005", "TOK-006", "TOK-008", "TOK-009"],
+        "screen_ids": [
+          "SCR-003"
+        ],
+        "state_kinds": [
+          "default",
+          "success",
+          "empty"
+        ],
+        "token_ids": [
+          "TOK-001",
+          "TOK-003",
+          "TOK-005",
+          "TOK-006",
+          "TOK-008",
+          "TOK-009"
+        ],
         "behavior": "顯示暱稱、星等、分數、答對數、正確率、最長連勝與時間戳。",
         "keyboard": "不需操作；其後的再玩一次與換人玩可按 Tab 抵達。",
         "accessible_name": "成績卡、分數、正確率。",
@@ -631,9 +925,19 @@
       {
         "id": "CMP-007",
         "name": "MissedList",
-        "screen_ids": ["SCR-003"],
-        "state_kinds": ["default", "empty"],
-        "token_ids": ["TOK-002", "TOK-003", "TOK-006", "TOK-008"],
+        "screen_ids": [
+          "SCR-003"
+        ],
+        "state_kinds": [
+          "default",
+          "empty"
+        ],
+        "token_ids": [
+          "TOK-002",
+          "TOK-003",
+          "TOK-006",
+          "TOK-008"
+        ],
         "behavior": "逐題顯示錯題、你的答案、正確答案與解析；無錯題時顯示全部答對提示。",
         "keyboard": "內容為文字，不需操作。",
         "accessible_name": "錯題複習、正確答案。",
@@ -643,15 +947,39 @@
     "responsive": [
       {
         "id": "RESP-001",
-        "viewport": { "label": "wide", "width": 1280, "height": 800, "input": ["mouse", "keyboard"] },
-        "screen_ids": ["SCR-001", "SCR-002", "SCR-003"],
+        "viewport": {
+          "label": "wide",
+          "width": 1280,
+          "height": 800,
+          "input": [
+            "mouse",
+            "keyboard"
+          ]
+        },
+        "screen_ids": [
+          "SCR-001",
+          "SCR-002",
+          "SCR-003"
+        ],
         "behavior": "單欄內容置中，鐘面與數位時間維持可讀大小。",
         "verification": "T-005 於 1280x800 截圖確認沒有橫向溢出與遮擋。"
       },
       {
         "id": "RESP-002",
-        "viewport": { "label": "narrow", "width": 390, "height": 844, "input": ["touch", "keyboard"] },
-        "screen_ids": ["SCR-001", "SCR-002", "SCR-003"],
+        "viewport": {
+          "label": "narrow",
+          "width": 390,
+          "height": 844,
+          "input": [
+            "touch",
+            "keyboard"
+          ]
+        },
+        "screen_ids": [
+          "SCR-001",
+          "SCR-002",
+          "SCR-003"
+        ],
         "behavior": "內容流式換行，選項維持單欄或雙欄大字，按鈕仍全寬。",
         "verification": "T-005 於 390x844 截圖確認換行、焦點與可點尺寸。"
       }
@@ -659,21 +987,27 @@
     "accessibility": [
       {
         "id": "AX-001",
-        "screen_ids": ["SCR-002"],
+        "screen_ids": [
+          "SCR-002"
+        ],
         "rule": "答題流程可完全以鍵盤完成，選項與字卡具備可及名稱。",
         "method": "hybrid",
         "verification": "T-005 收集器鍵盤走查加上人工確認 Enter 可送出。"
       },
       {
         "id": "AX-002",
-        "screen_ids": ["SCR-001"],
+        "screen_ids": [
+          "SCR-001"
+        ],
         "rule": "暱稱欄位有可見標籤，錯誤訊息以文字呈現。",
         "method": "automated",
         "verification": "T-005 收集器可及名稱與 aria snapshot。"
       },
       {
         "id": "AX-003",
-        "screen_ids": ["SCR-003"],
+        "screen_ids": [
+          "SCR-003"
+        ],
         "rule": "成績卡與錯題在強制色彩模擬下仍可讀，鐘面 SVG 有 aria-label。",
         "method": "hybrid",
         "verification": "T-005 forced-colors 截圖加上人工判讀。"
@@ -686,7 +1020,9 @@
         "required": true,
         "procedure": "在 T-004 對照 art direction 規則與三視寬截圖，記錄觀察來源、限制與問題。",
         "evidence": "T-005 收集器截圖與 T-004 review 記錄。",
-        "rule_ids": ["RULE-011"]
+        "rule_ids": [
+          "RULE-011"
+        ]
       },
       {
         "id": "RV-002",
@@ -694,7 +1030,12 @@
         "required": true,
         "procedure": "在 T-004 對照字型、間距、動作與回饋規則，記錄違反區域與處置。",
         "evidence": "T-005 收集器截圖與 T-004 review 記錄。",
-        "rule_ids": ["RULE-002", "RULE-005", "RULE-006", "RULE-007"]
+        "rule_ids": [
+          "RULE-002",
+          "RULE-005",
+          "RULE-006",
+          "RULE-007"
+        ]
       },
       {
         "id": "RV-003",
@@ -702,7 +1043,10 @@
         "required": true,
         "procedure": "在 T-004 對照 anti-generic 規則與規則掃描結果，記錄違規與修復。",
         "evidence": "T-001 規則收據與 T-004 review 記錄。",
-        "rule_ids": ["RULE-001", "RULE-003"]
+        "rule_ids": [
+          "RULE-001",
+          "RULE-003"
+        ]
       },
       {
         "id": "RV-004",
@@ -710,7 +1054,10 @@
         "required": true,
         "procedure": "在 T-004 對照 wide 與 narrow 截圖，記錄破版、重疊或溢出。",
         "evidence": "T-005 收集器三視寬截圖與 T-004 review 記錄。",
-        "rule_ids": ["RULE-004", "RULE-008"]
+        "rule_ids": [
+          "RULE-004",
+          "RULE-008"
+        ]
       },
       {
         "id": "RV-005",
@@ -718,7 +1065,10 @@
         "required": true,
         "procedure": "在 T-004 對照鍵盤走查、可及名稱與對比規則，記錄未覆蓋範圍。",
         "evidence": "T-002 收集器走查記錄與 T-004 review 記錄。",
-        "rule_ids": ["RULE-009", "RULE-010"]
+        "rule_ids": [
+          "RULE-009",
+          "RULE-010"
+        ]
       }
     ]
   }

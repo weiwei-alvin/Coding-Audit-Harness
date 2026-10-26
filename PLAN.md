@@ -1,6 +1,6 @@
-# Coding Audit Harness — Audit Console PLAN.md（後續獨立里程碑）
+# Software Development Assurance Harness — Audit Console PLAN.md（後續獨立里程碑）
 
-> **命名與範圍澄清（2026-10-24）**：本檔描述的「Audit Console」（本機 Web UI）保留為**後續獨立里程碑**，不與 `milestone.md` 的「UI Design Integration」主線並行。「V2」一名保留給 `milestone.md`；本方向不再稱「Coding Audit Harness 2.0」。
+> **命名與範圍澄清（2026-10-24）**：本檔描述的「Audit Console」（本機 Web UI）保留為**後續獨立里程碑**，不與 `milestone.md` 的「UI Design Integration」主線並行。「V2」一名保留給 `milestone.md`；本方向不再沿用歷史稱呼「Coding Audit Harness 2.0」。
 >
 > Status: PROPOSED（deferred）· 2026-10-19
 > Product: Audit Console（本機 Web UI，後續里程碑）
@@ -9,9 +9,9 @@
 
 ## 1. 目標與定位
 
-Coding Audit Harness 2.0 要讓使用者能從單一操作介面了解專案狀態、檢視工單與驗證證據、執行允許的工作流程，以及做出有依據的人工審查決策。原有 Runner 仍是狀態轉換與證據驗證的唯一權威。
+Audit Console 的目標是讓使用者能從單一操作介面了解專案狀態、檢視工單與驗證證據、執行允許的工作流程，以及做出有依據的人工審查決策。原有 Runner 仍是狀態轉換與證據驗證的唯一權威。
 
-2.0 的成功標準不是「有 Dashboard」，而是新使用者能完成一個示範工單的 Gate、驗證、handoff、Review 流程，並在發生錯誤時知道原因及正確的恢復方式，且 UI 無法繞過 Runner 的任何完成條件。
+Audit Console 的成功標準不是「有 Dashboard」，而是新使用者能完成一個示範工單的 Gate、驗證、handoff、Review 流程，並在發生錯誤時知道原因及正確的恢復方式，且 UI 無法繞過 Runner 的任何完成條件。
 
 ### 設計原則
 
@@ -161,15 +161,15 @@ Coding Audit Harness 2.0 要讓使用者能從單一操作介面了解專案狀�
 
 ## 9. 命名與版本策略
 
-**保留專案及 Repository 名稱：`Coding Audit Harness`。** 它代表驗收框架，不限定 CLI 或 GUI。版本名稱為 `Coding Audit Harness 2.0`；新增的圖形操作介面稱為 `Audit Console`，驗證核心沿用 `Harness Runner`，既有 `Audit Skills` 不更名。
+**現行專案及 Repository 名稱：`Software Development Assurance Harness`（原名 `Coding Audit Harness`）。** 此名稱涵蓋開發流程、證據及驗收，不限定 CLI 或 GUI。規劃中的圖形介面仍稱 `Audit Console`，並保留為後續獨立里程碑，不另占用目前的 V2 命名；驗證核心沿用 `Harness Runner`，既有 `Audit Skills` 不更名。
 
 README 標題可採：
 
-> **Coding Audit Harness**  
-> Evidence-backed verification and review for AI-generated code.  
-> **2.0: Audit Console + Runner + Audit Skills**
+> **Software Development Assurance Harness**  
+> An evidence-driven harness for AI-assisted software development, integrating structured workflows, stage-level audits, executable verification, and UI quality assurance.  
+> **Planned Audit Console + Runner + Audit Skills**
 
-不因加入可視化介面就重命名 repository，以免破壞既有連結、使用者辨識與外部引用。若未來產品功能超出程式碼驗收範圍，再獨立評估品牌更名。
+2026-10-26 已正式更名 Repository。先前保留舊名稱的建議已被此決策取代；舊名稱僅作為歷史別名。請持續檢查本機 Git remote、外部連結與 Actions references。
 
 ## 10. 實作約束與來源
 
@@ -185,4 +185,4 @@ README 標題可採：
 - `harness/gate-result.schema.json`
 - `docs/DEFERRED_ITEMS.md`
 
-Repository: https://github.com/weiwei-alvin/Coding-Audit-Harness
+Repository: https://github.com/weiwei-alvin/software-development-assurance-harness

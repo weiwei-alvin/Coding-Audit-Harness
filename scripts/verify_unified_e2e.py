@@ -30,7 +30,7 @@ import uuid
 REPO = Path(__file__).resolve().parents[1]
 PACK = REPO / "packs" / "ui"
 CLI = PACK / "cli.py"
-VYPY = str(REPO / ".venv" / "Scripts" / "python.exe")
+VYPY = sys.executable  # Use the active interpreter on both Ubuntu and Windows
 
 CASE_CONTRACT = PACK / "examples/e2e-case/contract.json"
 CASE_BUILD = PACK / "examples/e2e-case/telling-time.html"
@@ -183,21 +183,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True, help="New evidence directory; existing paths rejected")
     parser.add_argument("--old-evidence", type=Path, default=None,
-        help="T-005 evidence directory used for the new/old hash cross-check "
-             "(default: UI-Design-Harness outputs/validation/t005-e2e-fix1, "
-             "from 01_Projects or the readme-only archive in 04_Archives)")
+        help="Optional historical T-005 evidence directory for legacy baseline cross-checks. "
+             "When omitted, baseline checks are explicitly NOT_RUN; live E2E checks still execute.")
     args = parser.parse_args()
     output = args.output.resolve()
     if output.exists():
         parser.error("Use a new output directory")
-    if args.old_evidence is not None:
-        old_evidence = args.old_evidence
-    else:
-        candidates = [
-            Path(r"D:\Workplace\01_Projects\UI-Design-Harness\outputs\validation\t005-e2e-fix1"),
-            Path(r"D:\Workplace\04_Archives\UI-Design-Harness\outputs\validation\t005-e2e-fix1"),
-        ]
-        old_evidence = next((p for p in candidates if p.is_dir()), candidates[0])
+    old_evidence = args.old_evidence.resolve() if args.old_evidence is not None else None
+    if old_evidence is not None and not old_evidence.is_dir():
+        parser.error("--old-evidence must point to an existing directory")
     steps_dir = output / "steps"
     steps_dir.mkdir(parents=True)
     case = output / "case"
@@ -403,6 +397,17 @@ def main():
     rules_v1 = stdout_of(receipt, "GP-002")
     design_check_v1 = stdout_of(receipt, "GP-001")
 
+    # Final contract basis gate: this content-bound receipt is mandatory for REVIEW PASS.
+    final_check = subprocess.run([VYPY, str(CLI), "check", "--contract", str(case / "contract.json"),
+        "--stage", "final", "--documents", str(case / "docs"),
+        "--receipt", str(case / "receipts/final-receipt.json")],
+        capture_output=True, text=True, encoding="utf-8", timeout=120)
+    final_check_payload = parse_json(final_check.stdout)
+    record("final-contract-basis-receipt", final_check.returncode == 0
+        and final_check_payload and final_check_payload.get("status") == "PASS",
+        dict(returncode=final_check.returncode, findings=(final_check_payload or {}).get("findings")),
+        None, final_check.stderr)
+
     # Resolve every blocking finding, then PASS review with the three tiers.
     for fid in blocking:
         run_cli("resolve-" + fid, ["resolve-finding", "--finding-id", fid])
@@ -438,13 +443,13 @@ def main():
     rules_final = stdout_of(final_artifact, "GP-002")
     check_final = stdout_of(final_artifact, "GP-001")
     collector_final = parse_json((case / "evidence" / "report.json").read_text(encoding="utf-8"))
-    old_design = parse_json((old_evidence / "design-receipt.json").read_text(encoding="utf-8"))
-    old_gate = parse_json((old_evidence / "final-gate.json").read_text(encoding="utf-8"))
+    old_design = parse_json((old_evidence / "design-receipt.json").read_text(encoding="utf-8")) if old_evidence else None
+    old_gate = parse_json((old_evidence / "final-gate.json").read_text(encoding="utf-8")) if old_evidence else None
     new_build_sha = sha_of(case / "game" / "telling-time.html")
     cross = dict(
-        engine_hash_match=bool(check_final) and check_final.get("engine_hash") == (old_design or {}).get("engine_hash"),
-        document_hashes_match=bool(check_final) and check_final.get("document_hashes") == (old_design or {}).get("document_hashes"),
-        build_sha256_match=bool(old_gate) and new_build_sha == old_gate.get("build_sha256"))
+        engine_hash_match=(bool(check_final) and check_final.get("engine_hash") == (old_design or {}).get("engine_hash")) if old_evidence else None,
+        document_hashes_match=(bool(check_final) and check_final.get("document_hashes") == (old_design or {}).get("document_hashes")) if old_evidence else None,
+        build_sha256_match=(bool(old_gate) and new_build_sha == old_gate.get("build_sha256")) if old_evidence else None)
 
     def has(record_payload, *keys):
         return all(record_payload is not None and record_payload.get(k) is not None for k in keys)
@@ -452,6 +457,7 @@ def main():
     unresolved = state["findings"] and any(
         f["status"] in ("OPEN", "REOPENED") and f.get("blocking", True) for f in state["findings"].values())
     gate = dict(kind="ui_final_gate", passed=False, ui_acceptance="UNVERIFIED",
+        historical_baseline="CHECKED" if old_evidence else "NOT_RUN",
         checks=[
             dict(id="stage-gates-walked", passed=state.get("stage_gates", {}).get("DESIGN") == "PASS"),
             dict(id="kernel-final-integrated", passed=(final_artifact or {}).get("status") == "PASSED"),
@@ -467,10 +473,11 @@ def main():
             dict(id="declared-judgment", passed=bool(round2["criteria"][-1].get("source"))
                 and bool(round2["criteria"][-1].get("limitations"))),
             dict(id="no-unresolved-blocking-findings", passed=not unresolved),
+        ] + ([
             dict(id="engine-hash-cross-check", passed=cross["engine_hash_match"]),
             dict(id="document-hash-cross-check", passed=cross["document_hashes_match"]),
             dict(id="build-sha-cross-check", passed=cross["build_sha256_match"]),
-        ],
+        ] if old_evidence else []),
         build_sha256=new_build_sha,
         cross_check=cross,
         limitations=FINAL_LIMITATIONS)
@@ -491,6 +498,7 @@ def main():
         final_gate=dict(ui_acceptance=gate["ui_acceptance"], passed=gate["passed"],
             unresolved_blocking_major=bool(unresolved)),
         new_old_cross_check=cross,
+        historical_baseline=gate["historical_baseline"],
         review_attempts=dict(fix_round_attempts=attempts),
         cli_cases=len(results), cli_passed=sum(r["passed"] for r in results),
         ui_e2e=gate["ui_acceptance"],

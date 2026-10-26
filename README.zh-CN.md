@@ -171,7 +171,7 @@ python -m pip install -r requirements.txt
 ### 目录结构
 
 ```text
-Coding-Audit-Harness/
+software-development-assurance-harness/
 ├── harness/              # CLI Runner、JSON Schema、正式测试
 │   ├── runner/           # 12 个实现模块 + 8 个测试模块 + 共用 fixture helper
 │   ├── *.schema.json    # 7 份 schema（state / gate-result / review-result / handoff / finding / decision / change-impact）

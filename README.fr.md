@@ -171,7 +171,7 @@ python -m pip install -r requirements.txt
 ### Arborescence du dépôt
 
 ```text
-Coding-Audit-Harness/
+software-development-assurance-harness/
 ├── harness/              # Runner CLI, schémas JSON, suite de tests
 │   ├── runner/           # 12 modules d'implémentation + 8 modules de test + helper de fixture partagé
 │   ├── *.schema.json    # 7 schémas (state / gate-result / review-result / handoff / finding / decision / change-impact)

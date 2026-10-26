@@ -161,15 +161,15 @@ Coding Audit Harness 2.0 要讓使用者能從單一操作介面了解專案狀�
 
 ## 9. 命名與版本策略
 
-**保留專案及 Repository 名稱：`Coding Audit Harness`。** 它代表驗收框架，不限定 CLI 或 GUI。版本名稱為 `Coding Audit Harness 2.0`；新增的圖形操作介面稱為 `Audit Console`，驗證核心沿用 `Harness Runner`，既有 `Audit Skills` 不更名。
+**專案名稱更新為 `Software Development Assurance Harness`（原名 `Coding Audit Harness`）。** 它代表驗收框架，不限定 CLI 或 GUI。版本名稱為 `Software Development Assurance Harness 2.0`；新增的圖形操作介面稱為 `Audit Console`，驗證核心沿用 `Harness Runner`，既有 `Audit Skills` 不更名。
 
 README 標題可採：
 
-> **Coding Audit Harness**  
-> Evidence-backed verification and review for AI-generated code.  
+> **Software Development Assurance Harness**  
+> An evidence-driven harness for AI-assisted software development, integrating structured workflows, stage-level audits, executable verification, and UI quality assurance.  
 > **2.0: Audit Console + Runner + Audit Skills**
 
-不因加入可視化介面就重命名 repository，以免破壞既有連結、使用者辨識與外部引用。若未來產品功能超出程式碼驗收範圍，再獨立評估品牌更名。
+新名稱反映範圍已從程式碼稽核擴展至軟體開發全流程的證據式品質保證。GitHub 儲存庫正式更名後，需同步更新本機 Git remote 與外部引用。
 
 ## 10. 實作約束與來源
 

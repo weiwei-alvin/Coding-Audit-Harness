@@ -1,7 +1,7 @@
 <!--
-document_title: Coding Audit Harness
+document_title: Software Development Assurance Harness
 chinese_title: AI 写的代码，验过才算数
-aka: []
+aka: [Software Development Assurance Harness]
 established_date: 2026-09-29
 updated_date: 2026-10-01
 version: 3.1.0
@@ -9,9 +9,11 @@ version: 3.1.0
 
 <div align="center">
 
-# Coding Audit Harness
+# Software Development Assurance Harness
 
 **AI 写的代码，验过才算数**
+
+An evidence-driven harness for AI-assisted software development, integrating structured workflows, stage-level audits, executable verification, and UI quality assurance.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB.svg?logo=python&logoColor=white)](#安装)
@@ -32,7 +34,7 @@ version: 3.1.0
 
 这是 AI 编程最典型的失败模式。**不是写不出来，而是写完没人验得了。**
 
-Coding Audit Harness 存在的理由只有一句：**让“验收过”从一句话变成一份可追溯的证据。**
+Software Development Assurance Harness 存在的理由只有一句：**让“验收过”从一句话变成一份可追溯的证据。**
 
 （这里的 `harness` 指“套在开发流程外面、负责约束它的那一层框架”，不是测试用的 test harness。）
 

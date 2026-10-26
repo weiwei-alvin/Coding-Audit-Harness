@@ -171,7 +171,7 @@ python -m pip install -r requirements.txt
 ### Structura repositorii
 
 ```text
-Coding-Audit-Harness/
+software-development-assurance-harness/
 ├── harness/              # Runner CLI, schemata JSON, probationes
 │   ├── runner/           # 12 moduli effectionis + 8 moduli probationum + adiutor fixturae communis
 │   ├── *.schema.json    # 7 schemata (state / gate-result / review-result / handoff / finding / decision / change-impact)

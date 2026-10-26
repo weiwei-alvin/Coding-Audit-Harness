@@ -166,6 +166,7 @@ the Tickets stage. Each line below maps a scenario to its User Stories and Ticke
 - **Final ticket.** When the reviewed ticket is the last one, the Console tells the
   operator that the Runner will also run Final Integrated Verification; success is
   reported only after the Runner's committed state says COMPLETE.
-- **Naming.** Repository name `Coding Audit Harness` is retained. The version is
-  `Coding Audit Harness 2.0`; the UI is `Audit Console`; the verification core is
-  `Harness Runner`; existing `Audit Skills` keep their names.
+- **Naming.** The project name is `Software Development Assurance Harness`
+  (formerly `Coding Audit Harness`). The planned version may be called
+  `Software Development Assurance Harness 2.0`; the UI is `Audit Console`;
+  the verification core is `Harness Runner`; existing `Audit Skills` keep their names.

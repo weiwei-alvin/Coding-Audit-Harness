@@ -447,9 +447,9 @@ def main():
     old_gate = parse_json((old_evidence / "final-gate.json").read_text(encoding="utf-8")) if old_evidence else None
     new_build_sha = sha_of(case / "game" / "telling-time.html")
     cross = dict(
-        engine_hash_match=bool(check_final) and check_final.get("engine_hash") == (old_design or {}).get("engine_hash"),
-        document_hashes_match=bool(check_final) and check_final.get("document_hashes") == (old_design or {}).get("document_hashes"),
-        build_sha256_match=bool(old_gate) and new_build_sha == old_gate.get("build_sha256"))
+        engine_hash_match=(bool(check_final) and check_final.get("engine_hash") == (old_design or {}).get("engine_hash")) if old_evidence else None,
+        document_hashes_match=(bool(check_final) and check_final.get("document_hashes") == (old_design or {}).get("document_hashes")) if old_evidence else None,
+        build_sha256_match=(bool(old_gate) and new_build_sha == old_gate.get("build_sha256")) if old_evidence else None)
 
     def has(record_payload, *keys):
         return all(record_payload is not None and record_payload.get(k) is not None for k in keys)

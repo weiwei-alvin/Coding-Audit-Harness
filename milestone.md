@@ -1,10 +1,10 @@
-# Coding-Audit-Harness V2 — UI Design Integration Implementation Directive
+# software-development-assurance-harness V2 — UI Design Integration Implementation Directive
 
-> **V2 主線決策（2026-10-24）**：本檔「UI Design Integration」是 Coding-Audit-Harness V2 的**唯一主線**。「Audit Console」（見 `PLAN.md`／`SPEC.md`）保留為**後續獨立里程碑**，不與本檔並行實作，亦不共用「V2」命名。
+> **V2 主線決策（2026-10-24）**：本檔「UI Design Integration」是 software-development-assurance-harness V2 的**唯一主線**。「Audit Console」（見 `PLAN.md`／`SPEC.md`）保留為**後續獨立里程碑**，不與本檔並行實作，亦不共用「V2」命名。
 
 你正在修改專案：
 
-`Coding-Audit-Harness`
+`software-development-assurance-harness`
 
 ## Objective
 
@@ -1068,7 +1068,7 @@ DISCOVERY
 
 # Definition of Done
 
-Coding-Audit-Harness V2 完成，不代表：
+software-development-assurance-harness V2 完成，不代表：
 
 - 有漂亮 Demo
 - 有 UI screenshots

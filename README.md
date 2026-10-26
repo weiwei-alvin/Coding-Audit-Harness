@@ -1,17 +1,19 @@
 <!--
-document_title: Coding Audit Harness
+document_title: Software Development Assurance Harness
 chinese_title: AI 寫的程式，驗過才算數
-aka: []
+aka: [Coding Audit Harness]
 established_date: 2026-09-29
-updated_date: 2026-10-24
+updated_date: 2026-10-26
 version: 3.2.0
 -->
 
 <div align="center">
 
-# Coding Audit Harness
+# Software Development Assurance Harness
 
 **AI 寫的程式，驗過才算數**
+
+*An evidence-driven harness for AI-assisted software development, integrating structured workflows, stage-level audits, executable verification, and UI quality assurance.*
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB.svg?logo=python&logoColor=white)](#安裝)
@@ -32,7 +34,7 @@ version: 3.2.0
 
 這是 AI coding 最典型的失敗模式。**不是寫不出來，是寫完沒人驗得了。**
 
-Coding Audit Harness 存在的理由就一句：**讓「驗收過」從一句話變成一份有據可查的證據。**
+Software Development Assurance Harness 存在的理由就一句：**讓「驗收過」從一句話變成一份有據可查的證據。**
 
 （`harness` 這個詞在這裡的意思是「套在開發流程外面、負責約束它的那一層框架」，不是測試用的 test harness。）
 
@@ -53,7 +55,7 @@ Coding Audit Harness 存在的理由就一句：**讓「驗收過」從一句話
 
 2026-10-24 的 [P3 審查紀錄](docs/reviews/p3-review.md) 為 `P3_ACCEPTED`。本機既有紀錄包含 **174 項回歸通過**與報時遊戲案例 **35/35 統一驗收通過**；案例 final gate 為 `ui_acceptance=VERIFIED`。原始 JSON 位於本機 `test-results/`，未納入 Git；這些是既有執行紀錄，本次 README 更新未重新執行完整套件。
 
-此 UI 驗收僅涵蓋單一案例、Chromium 與已列名的人工判準。未涵蓋跨瀏覽器、真人／輔助科技測試或對比量測；固定次數 Tab 巡覽也不等於完整互動流程驗收。CI 狀態請查看 [GitHub Actions](https://github.com/weiwei-alvin/Coding-Audit-Harness/actions/workflows/harness-validation.yml)，本機結果不能代替遠端 CI。
+此 UI 驗收僅涵蓋單一案例、Chromium 與已列名的人工判準。未涵蓋跨瀏覽器、真人／輔助科技測試或對比量測；固定次數 Tab 巡覽也不等於完整互動流程驗收。CI 狀態請查看 [GitHub Actions](https://github.com/weiwei-alvin/software-development-assurance-harness/actions/workflows/harness-validation.yml)，本機結果不能代替遠端 CI。
 
 以下快速上手先示範純 code 專案；UI 專案另見 [UI pack 入口](#ui-pack)。其他語言 README 尚未同步本次 V2 說明，最新範圍以本頁為準。
 
@@ -190,7 +192,7 @@ python -m pip install -r requirements.txt
 ### 目錄結構
 
 ```text
-Coding-Audit-Harness/
+software-development-assurance-harness/
 ├── harness/              # CLI Runner、JSON Schema、正式測試
 │   ├── runner/           # 實作模組、測試模組與共用 fixture helper
 │   ├── *.schema.json     # state / pipeline / gate-result / review-result / verification-receipt / handoff / finding / decision / change-impact

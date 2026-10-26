@@ -3,7 +3,7 @@ document_title: Software Development Assurance Harness
 chinese_title: AI 寫的程式，驗過才算數
 aka: [Coding Audit Harness]
 established_date: 2026-09-29
-updated_date: 2026-10-01
+updated_date: 2026-10-26
 version: 3.1.0
 -->
 
@@ -13,7 +13,7 @@ version: 3.1.0
 
 **Le code écrit par l'IA ne vaut que s'il a été vérifié**
 
-An evidence-driven harness for AI-assisted software development, integrating structured workflows, stage-level audits, executable verification, and UI quality assurance.
+*An evidence-driven harness for AI-assisted software development, integrating structured workflows, stage-level audits, executable verification, and UI quality assurance.*
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB.svg?logo=python&logoColor=white)](#installation)

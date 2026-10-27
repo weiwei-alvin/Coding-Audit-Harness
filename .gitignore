@@ -27,3 +27,10 @@ htmlcov/
 Thumbs.db
 .vscode/
 .idea/
+
+# Private/local agent tooling and session state (do not ship auto-executing hooks)
+/.claude/settings.json
+/.trail/
+/.opencode/
+/opencode.json
+/.gemini/settings.json

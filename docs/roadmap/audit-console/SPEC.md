@@ -1,6 +1,10 @@
 # Software Development Assurance Harness — Audit Console SPEC.md（後續獨立里程碑）
 
-> **命名與範圍澄清（2026-10-24）**：本檔為「Audit Console」（後續獨立里程碑）的 SPEC。「V2」一名保留給 `milestone.md` 的 UI Design Integration；本方向不稱「2.0」。
+> **狀態：規劃中，尚不可執行。** 本規格「V1 Golden Path」列出的 `harness/runner/test_console.py`、`harness/runner/test_cli_errors.py` 與 `examples/calculator/`（含 `demo.py`）**尚未建立**。這些測試指令是預計實作的驗收條件，不是現有可執行測試或已完成的驗收證據。
+>
+> **範圍區分：** 本文件屬於 SDAH 儲存庫的延後規劃文件；Runner 要求的**目標專案根目錄 `SPEC.md`** 是各個使用者專案自己的需求來源，並非本文件。
+
+> **命名與範圍澄清（2026-10-24）**：本檔為「Audit Console」（後續獨立里程碑）的 SPEC。「V2」一名保留給 [`v2-ui-design-integration.md`](../v2-ui-design-integration.md) 的 UI Design Integration；本方向不稱「2.0」。
 >
 > Source of truth: `PLAN.md` (Status: PROPOSED（deferred）· 2026-10-19)
 > Stage output of `to-spec` / `to-spec-audit`

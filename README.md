@@ -127,6 +127,7 @@ flowchart LR
 - [五階段與稽核流程相關 Skills](skills/)：可供 Coding Agent 使用的規則與上游開發技能。
 - [版本變更紀錄](docs/CHANGELOG.md) 與 [V2.1 發版說明](docs/releases/2026-10-26-v2-1-assurance.md)。
 - [尚未推出的功能](docs/DEFERRED_ITEMS.md)：包含圖形化操作介面與部分協作功能。
+- [V2 UI Design Integration 規劃](docs/roadmap/v2-ui-design-integration.md)、[延後的 Audit Console 計畫](docs/roadmap/audit-console/PLAN.md)與[規格](docs/roadmap/audit-console/SPEC.md)。此規格並非目標專案根目錄的 `SPEC.md`，也不代表 Audit Console 已實作。
 
 其他語言的 README 仍保留技術導向內容；**繁體中文首頁是這次面向一般讀者的改寫版本**。
 

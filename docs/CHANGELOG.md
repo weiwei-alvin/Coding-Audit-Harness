@@ -1,5 +1,11 @@
 # 變更紀錄
 
+## 2026-10-28 — 區分目標專案 SPEC 與後續規劃
+
+- 將 SDAH 儲存庫根目錄原有的 Audit Console 規劃文件移至 [Audit Console PLAN](roadmap/audit-console/PLAN.md) 與 [Audit Console SPEC](roadmap/audit-console/SPEC.md)；V2 UI 設計整合指令移至 [V2 UI Design Integration](roadmap/v2-ui-design-integration.md)。
+- Audit Console SPEC 註明 `harness/runner/test_console.py`、`harness/runner/test_cli_errors.py` 及 `examples/calculator/` 尚未實作；不應將預定 Golden Path 視為現有測試證據。Runner 所需的根目錄 `SPEC.md` 專指**目標專案**的需求文件。
+- 更新 README、技術指南與發版說明的路徑；純文件搬移，不修改 Runtime 的 `SPEC.md` 解析規則。
+
 ## 2026-10-26 — V2.1 assurance milestone／Software Development Assurance Harness
 
 - 專案正式更名為 `Software Development Assurance Harness`（原 `Coding Audit Harness`），GitHub Repository 名稱與定位描述同步更新；五份 README 及後續 Audit Console 規劃文件已統一品牌。

@@ -53,7 +53,7 @@ Software Development Assurance Harness 存在的理由就一句：**讓「驗收
 | CLI、API、library 等純 code 專案 | [`harness/pipeline.default.json`](../harness/pipeline.default.json) | 從 `TICKETS` 開始；先由操作者與 Agent 完成 Discovery／Spec |
 | 包含使用者介面的專案 | [`packs/ui/pipeline.json`](../packs/ui/pipeline.json) | 從 `DISCOVERY` 開始，依序經過 `SPEC → DESIGN → TICKETS`；DESIGN PASS 要求新鮮設計收據，Review PASS 要求三層證據 |
 
-**V2 主線是 UI Design Integration**，方向見 [`milestone.md`](../milestone.md)。目前實作使用的 stage ID 是 `DESIGN`；指令文件中的概念名稱 `UI_DESIGN` 不應直接代入設定。Audit Console（本機 Web UI）仍為延後的獨立里程碑，見 [`PLAN.md`](../PLAN.md)／[`SPEC.md`](../SPEC.md)，尚未提供操作介面。
+**V2 主線是 UI Design Integration**，方向見 [`V2 UI Design Integration`](roadmap/v2-ui-design-integration.md)。目前實作使用的 stage ID 是 `DESIGN`；指令文件中的概念名稱 `UI_DESIGN` 不應直接代入設定。Audit Console（本機 Web UI）仍為延後的獨立里程碑，見 [`Audit Console PLAN`](roadmap/audit-console/PLAN.md)／[`SPEC`](roadmap/audit-console/SPEC.md)，尚未提供操作介面。
 
 2026-10-24 的 [P3 審查紀錄](../docs/reviews/p3-review.md) 為 `P3_ACCEPTED`，所述本機 **174 項回歸與 35/35 案例檢查**是歷史紀錄。**2026-10-26 最新主分支 CI** 則在 Windows、Ubuntu 各通過 **201/201** 回歸測試；Ubuntu Chromium 報時遊戲單案例統一 E2E **37/37** 流程檢查通過，並保存收據與截圖。詳見 [V2.1 里程碑驗證報告](../docs/releases/2026-10-26-v2-1-assurance.md)及 [GitHub Actions](https://github.com/weiwei-alvin/software-development-assurance-harness/actions/runs/40321649292)。
 
@@ -206,10 +206,13 @@ software-development-assurance-harness/
 ├── packs/ui/             # UI 契約、rules / collect / review / fix 與 pipeline
 ├── scripts/              # 統一 UI E2E 驗證入口
 ├── docs/                 # CHANGELOG / 審查紀錄 / Deferred Items
-├── milestone.md          # V2 UI Design Integration 主線
-├── PLAN.md / SPEC.md     # 延後的 Audit Console 獨立里程碑
+│   └── roadmap/
+│       ├── v2-ui-design-integration.md  # V2 UI 設計整合方向
+│       └── audit-console/              # 延後的 Audit Console PLAN.md / SPEC.md
 └── .github/workflows/    # Windows + Ubuntu CI
 ```
+
+**請勿混淆：** 這個 Repo 的 Audit Console `docs/roadmap/audit-console/SPEC.md` 是尚未實作的規劃；下方要求的 `SPEC.md` 必須由**目標專案自己**在根目錄提供，作為其 User Stories 的權威來源。
 
 執行時資料（`state.json`、工單、收據）建在**目標專案**裡，不在這個 repo：
 
@@ -683,9 +686,9 @@ python harness/runner/run_tests.py
 ## 相關文件
 
 - [UI pack](../packs/ui/README.md) — 註冊、啟用與 typed command 宣告
-- [V2 主線](../milestone.md) — UI Design Integration 方向與驗收要求
+- [V2 主線](roadmap/v2-ui-design-integration.md) — UI Design Integration 方向與驗收要求
 - [P3 審查](../docs/reviews/p3-review.md) — 已合併範圍、驗證結果與限制
-- [Audit Console 計畫](../PLAN.md)／[規格](../SPEC.md) — 延後的獨立里程碑
+- [Audit Console 計畫](roadmap/audit-console/PLAN.md)／[規格](roadmap/audit-console/SPEC.md) — 延後的獨立里程碑
 - [CHANGELOG](../docs/CHANGELOG.md) — 可靠性修復與目錄整理紀錄
 - [Symbol-first Context](../docs/SYMBOL_FIRST_CONTEXT.md) — 讀碼時先看符號再看實作的展開原則
 - [Deferred Items](../docs/DEFERRED_ITEMS.md) — 明確**未實作**的項目，含 reconsideration trigger

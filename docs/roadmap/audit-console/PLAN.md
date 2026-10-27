@@ -1,6 +1,6 @@
 # Software Development Assurance Harness — Audit Console PLAN.md（後續獨立里程碑）
 
-> **命名與範圍澄清（2026-10-24）**：本檔描述的「Audit Console」（本機 Web UI）保留為**後續獨立里程碑**，不與 `milestone.md` 的「UI Design Integration」主線並行。「V2」一名保留給 `milestone.md`；本方向不再沿用歷史稱呼「Coding Audit Harness 2.0」。
+> **命名與範圍澄清（2026-10-24）**：本檔描述的「Audit Console」（本機 Web UI）保留為**後續獨立里程碑**，不與 [`v2-ui-design-integration.md`](../v2-ui-design-integration.md) 的「UI Design Integration」主線並行。「V2」一名保留給 [`v2-ui-design-integration.md`](../v2-ui-design-integration.md)；本方向不再沿用歷史稱呼「Coding Audit Harness 2.0」。
 >
 > Status: PROPOSED（deferred）· 2026-10-19
 > Product: Audit Console（本機 Web UI，後續里程碑）

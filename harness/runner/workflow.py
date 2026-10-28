@@ -52,6 +52,13 @@ class Workflow:
         # Ordinary CLI uses tty_pass_confirmation. Never expose an argparse bypass.
         self.confirm_pass=confirm_pass if confirm_pass is not None else tty_pass_confirmation
 
+    def preflight_tty(self):
+        """Refuse noninteractive critical PASS before even a plan-drift pause can mutate state."""
+        if self.confirm_pass is tty_pass_confirmation and not sys.stdin.isatty():
+            raise InteractiveApprovalError(
+                "TTY_CONFIRMATION_REQUIRED: PASS requires an interactive terminal (stdin TTY)"
+            )
+
     def require_approval(self, stage, fingerprint):
         if self.confirm_pass(stage, fingerprint) is not True:
             raise InteractiveApprovalError("TTY_CONFIRMATION_REJECTED: confirmation refused")
@@ -228,7 +235,11 @@ class Workflow:
                 raise ValueError(f"Stage {s['pipeline_stage']} requires evidence tiers {required}; missing {missing}")
 
     def review(self,tid,verdict,review_path,handoff_path):
-        s=self.state(); self.check_plan(s); t=self.active(s,tid,ready=True)
+        s=self.state()
+        if verdict=='PASS' and tid in s['tickets'] and all(
+                k==tid or x['status']=='COMPLETE' for k,x in s['tickets'].items()):
+            self.preflight_tty()
+        self.check_plan(s); t=self.active(s,tid,ready=True)
         definition=definition_for_state(self.root,s)
         files=self.graph(s)
         if not review_path: raise ValueError('Missing review payload; PASS string is not evidence')
@@ -394,6 +405,8 @@ class Workflow:
         if s['project_status']!='IN_PROGRESS': raise ValueError('Project not in progress')
         definition=definition_for_state(self.root,s)
         stage=s['pipeline_stage']
+        if stage=='TICKETS' and verdict=='PASS':
+            self.preflight_tty()
         hooks=definition.gate_hooks(stage) if definition.is_planning(stage) else []
         tickets_pass='validate_ticket_dependencies' in hooks and verdict=='PASS'
         if 'validate_ticket_dependencies' in hooks: files=self.graph(s)

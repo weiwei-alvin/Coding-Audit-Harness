@@ -8,7 +8,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
-from test_support import fixture
+from test_support import fixture, injected_cli
 import test_reliability
 
 PLAN_PAUSE='PLAN_CHANGE_REQUIRES_DECISION'
@@ -24,7 +24,13 @@ class ReviewFixes(unittest.TestCase):
         test_reliability.FIXTURES.append(dict(test=self.id(),files={str(p.relative_to(self.root)):p.read_text(encoding='utf-8') for p in (self.root/'.harness').rglob('*.json')}))
 
     def cli(self,*args,module='runner.py',ok=None):
-        p=subprocess.run([sys.executable,str(self.root/'harness/runner'/module),*args],cwd=self.root,capture_output=True,text=True,encoding='utf-8',timeout=60)
+        critical_pass = module == 'runner.py' and len(args) >= 3 and (
+            (args[0] == 'gate-verdict' and args[1:3] == ('--verdict', 'PASS'))
+            or (args[0] == 'review-verdict' and '--verdict' in args
+                and args[args.index('--verdict') + 1] == 'PASS'))
+        command = injected_cli(self.root, *args) if critical_pass else [
+            sys.executable, str(self.root/'harness/runner'/module), *args]
+        p=subprocess.run(command,cwd=self.root,capture_output=True,text=True,encoding='utf-8',timeout=60)
         test_reliability.EVENTS.append(dict(test=self.id(),args=list(args),module=module,returncode=p.returncode,stdout=p.stdout,stderr=p.stderr,state=self.state()))
         if ok is not None: self.assertEqual(p.returncode==0,ok,p.stdout+p.stderr)
         return p

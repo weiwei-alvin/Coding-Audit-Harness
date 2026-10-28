@@ -168,7 +168,7 @@ class TerminalApprovalTests(unittest.TestCase):
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                 os.close(slave)
                 slave = -1
-                os.write(master, (prefix + "\\n").encode("ascii"))
+                os.write(master, (prefix + "\n").encode("ascii"))
                 stdout, stderr = proc.communicate(timeout=60)
                 self.assertEqual(proc.returncode, 0, stderr)
                 self.assertIn(plan_hash(root), stdout)

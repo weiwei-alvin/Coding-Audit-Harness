@@ -6,7 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from test_support import fixture
+from test_support import fixture, injected_cli
 from unittest.mock import patch
 
 EVENTS=[]
@@ -23,7 +23,13 @@ class Reliability(unittest.TestCase):
         FIXTURES.append(dict(test=self.id(),files={str(p.relative_to(self.root)):p.read_text(encoding='utf-8') for p in (self.root/'.harness').rglob('*.json')}))
 
     def cli(self, *args, module='runner.py', ok=None):
-        p = subprocess.run([sys.executable, str(self.root/'harness/runner'/module), *args], cwd=self.root, capture_output=True, text=True, encoding='utf-8', timeout=30)
+        critical_pass = module == 'runner.py' and len(args) >= 3 and (
+            (args[0] == 'gate-verdict' and args[1:3] == ('--verdict', 'PASS'))
+            or (args[0] == 'review-verdict' and '--verdict' in args
+                and args[args.index('--verdict') + 1] == 'PASS'))
+        command = injected_cli(self.root, *args) if critical_pass else [
+            sys.executable, str(self.root/'harness/runner'/module), *args]
+        p = subprocess.run(command, cwd=self.root, capture_output=True, text=True, encoding='utf-8', timeout=30)
         EVENTS.append(dict(test=self.id(),args=list(args),module=module,returncode=p.returncode,stdout=p.stdout,stderr=p.stderr,state=self.state()))
         if ok is not None:
             self.assertEqual(p.returncode == 0, ok, p.stdout + p.stderr)
@@ -220,7 +226,7 @@ class Reliability(unittest.TestCase):
         self.application(); self.ready(); r,h=self.evidence(); before=self.state()
         for target in ('workflow.atomic_json','storage.os.replace'):
             with self.subTest(target=target),patch(target,side_effect=OSError('injected disk failure')):
-                with self.assertRaises((OSError,RuntimeError)): Workflow(HarnessRunner(self.root),trusted=True).review('T-001','PASS',r,h)
+                with self.assertRaises((OSError,RuntimeError)): Workflow(HarnessRunner(self.root),trusted=True,confirm_pass=lambda *_: True).review('T-001','PASS',r,h)
             self.assertEqual(before,self.state())
 
     def test_final_acceptance_failure_no_complete(self):
@@ -318,7 +324,8 @@ class Reliability(unittest.TestCase):
         s=self.state(); result=StateTransitionEngine(self.root).process_gate_verdict(s,GateVerdict.PASS)
         self.assertTrue(result.success,result.error)
         self.assertEqual(result.new_state['active_ticket_id'],'T-001')
-        p=subprocess.run([sys.executable,str(self.root/'harness/runner/runner.py'),'gate-verdict','--verdict','PASS','--project-root',str(self.root)],cwd=self.root.parent,capture_output=True,text=True)
+        p=subprocess.run(injected_cli(self.root,'gate-verdict','--verdict','PASS',
+            '--project-root',str(self.root)),cwd=self.root.parent,capture_output=True,text=True)
         self.assertEqual(p.returncode,0,p.stderr)
         self.assertTrue(HarnessRunner(self.root).validate_state(self.state())[0])
 

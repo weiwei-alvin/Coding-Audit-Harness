@@ -39,7 +39,7 @@ class ContractCompletionTests(unittest.TestCase):
             evidence = receipt(root)
             mark_ready(root)
             review_path, handoff_path = payloads(root, evidence)
-            workflow = Workflow(HarnessRunner(root), trusted=True)
+            workflow = Workflow(HarnessRunner(root), trusted=True, confirm_pass=lambda *_: True)
             with self.assertRaisesRegex(ValueError, "Final review contract evidence rejected"):
                 workflow.review("T-001", "PASS", review_path, handoff_path)
             state = json.loads((root / ".harness/state.json").read_text(encoding="utf-8"))
@@ -76,7 +76,7 @@ class ContractCompletionTests(unittest.TestCase):
             evidence = receipt(root)
             mark_ready(root)
             review_path, handoff_path = payloads(root, evidence)
-            workflow = Workflow(HarnessRunner(root), trusted=True)
+            workflow = Workflow(HarnessRunner(root), trusted=True, confirm_pass=lambda *_: True)
             workflow.review("T-001", "PASS", review_path, handoff_path)
             state = json.loads((root / ".harness/state.json").read_text(encoding="utf-8"))
             self.assertEqual(state["project_status"], "COMPLETE")

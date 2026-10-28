@@ -183,6 +183,22 @@ class TerminalApprovalTests(unittest.TestCase):
                     os.close(slave)
                 os.close(master)
 
+    def test_gate_plan_changed_during_prompt_never_commits_pass(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            workflow = self.gate_fixture(root)
+            state_file = root / ".harness/state.json"
+            before = state_file.read_bytes()
+
+            def mutate_plan(_stage, _fingerprint):
+                (root / "SPEC.md").write_text("changed during confirmation", encoding="utf-8")
+                return True
+
+            workflow.confirm_pass = mutate_plan
+            with self.assertRaisesRegex(InteractiveApprovalError, "TTY_CONFIRMATION_STALE"):
+                workflow.gate("PASS")
+            self.assertEqual(before, state_file.read_bytes())
+
     def test_python_fixture_injection_is_explicit(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

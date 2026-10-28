@@ -64,7 +64,7 @@ def prepare(root, required_tiers):
 
 
 def receipt(root):
-    return Workflow(HarnessRunner(root), trusted=True).verify("T-001")
+    return Workflow(HarnessRunner(root), trusted=True, confirm_pass=lambda *_: True).verify("T-001")
 
 
 def mark_ready(root):
@@ -127,7 +127,7 @@ class ThreeTierReviewTests(unittest.TestCase):
             self.assertEqual(evidence["evidence_tiers"], ["captured", "deterministic"])
             mark_ready(root)
             review_path, handoff_path = payloads(root, evidence)
-            workflow = Workflow(HarnessRunner(root), trusted=True)
+            workflow = Workflow(HarnessRunner(root), trusted=True, confirm_pass=lambda *_: True)
             workflow.review("T-001", "PASS", review_path, handoff_path)
             state = json.loads((root / ".harness/state.json").read_text(encoding="utf-8"))
             review_ref = state["tickets"]["T-001"]["review_history"][0]
@@ -144,7 +144,7 @@ class ThreeTierReviewTests(unittest.TestCase):
             prepare(root, ["deterministic", "captured", "declared"])
             evidence = receipt(root)
             mark_ready(root)
-            workflow = Workflow(HarnessRunner(root), trusted=True)
+            workflow = Workflow(HarnessRunner(root), trusted=True, confirm_pass=lambda *_: True)
             for field in ("source", "limitations"):
                 with self.subTest(field=field):
                     review_path, handoff_path = payloads(root, evidence,
@@ -165,7 +165,7 @@ class ThreeTierReviewTests(unittest.TestCase):
             review_path, handoff_path = payloads(root, evidence, include_declared=False)
             before = json.loads((root / ".harness/state.json").read_text(encoding="utf-8"))
             with self.assertRaisesRegex(ValueError, r"requires evidence tiers.*missing \['declared'\]"):
-                Workflow(HarnessRunner(root), trusted=True).review("T-001", "PASS", review_path, handoff_path)
+                Workflow(HarnessRunner(root), trusted=True, confirm_pass=lambda *_: True).review("T-001", "PASS", review_path, handoff_path)
             after = json.loads((root / ".harness/state.json").read_text(encoding="utf-8"))
         self.assertEqual(after, before)
 
@@ -181,7 +181,7 @@ class ThreeTierReviewTests(unittest.TestCase):
                 tier="deterministic"))
             review_path.write_text(json.dumps(data), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "no matching verification step"):
-                Workflow(HarnessRunner(root), trusted=True).review("T-001", "PASS", review_path, handoff_path)
+                Workflow(HarnessRunner(root), trusted=True, confirm_pass=lambda *_: True).review("T-001", "PASS", review_path, handoff_path)
 
     def test_tiered_stage_still_accepts_fix_required_without_receipt(self):
         with tempfile.TemporaryDirectory(prefix="harness-tiers-") as tmp:
@@ -190,7 +190,7 @@ class ThreeTierReviewTests(unittest.TestCase):
             mark_ready(root)
             before = json.loads((root / ".harness/state.json").read_text(encoding="utf-8"))
             review_path = failing_review(root, "FIX_REQUIRED")
-            Workflow(HarnessRunner(root), trusted=True).review(
+            Workflow(HarnessRunner(root), trusted=True, confirm_pass=lambda *_: True).review(
                 "T-001", "FIX_REQUIRED", review_path, None)
             after = json.loads((root / ".harness/state.json").read_text(encoding="utf-8"))
         self.assertEqual(after["project_status"], "IN_PROGRESS")
@@ -209,7 +209,7 @@ class ThreeTierReviewTests(unittest.TestCase):
                 "options": [{"label": "FIX_REQUIRED",
                     "impact": "Return to the ticket and clarify the intended behavior."}],
             })
-            Workflow(HarnessRunner(root), trusted=True).review(
+            Workflow(HarnessRunner(root), trusted=True, confirm_pass=lambda *_: True).review(
                 "T-001", "USER_DECISION_REQUIRED", review_path, None)
             state = json.loads((root / ".harness/state.json").read_text(encoding="utf-8"))
         self.assertEqual(state["project_status"], "PAUSED")

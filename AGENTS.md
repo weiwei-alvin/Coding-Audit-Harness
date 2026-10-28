@@ -27,7 +27,7 @@ python harness/runner/run_tests.py
 1. **禁止手動修改或重建** `.harness/state.json`；只能由 Runner 的受控 CLI 轉移狀態。也不可手動改成 `PASS`、`COMPLETE` 或清除阻擋狀態。
 2. **禁止手動產生、篡改或刪除 Runner 的受控驗證收據與審查紀錄**：例如 `.harness/verifications/`、`.harness/reviews/`、`.harness/decisions/`。不得偽造 `verification_id`、`source_hash`、測試輸出、Review PASS 或 SHA-256。`.harness/inbox/review.json` 和 `handoff.json` 是**可正常準備的送審輸入**，不是已核准的審查紀錄；內容必須真實，並經 Runner 核對。
 3. **工單的執行驗收只認** `python harness/runner/runner.py verify-ticket --ticket T-001 --trust-commands` **產生、存入受控位置且 `all_passed: true` 的收據**。自行跑 `pytest`、貼終端機輸出、在文字報告宣稱 PASS，都不能替代這份收據；UI 設計 Gate 收據是另一種階段性證據，也不能替代工單收據。
-4. `gate-verdict --verdict PASS` 是**操作者核准的決策**。Agent 不得自行假裝已取得核准。`--trust-commands` 僅在確認 Golden Path 指令可信且獲准執行後使用；不要以此繞過安全審查。
+4. **TICKETS Gate PASS 與最後一張工單的 REVIEW PASS 必須由操作者在自己的互動式終端機確認。** Runner 顯示當前計畫 SHA-256，要求輸入前 8 碼。stdin 不是 TTY、輸錯或取消會以 exit code `23` 拒絕且不變更 state。Agent 不得偽造終端機輸入、修改驗證器或使用測試注入點繞過。其他 Gate/Review PASS 沒有這項終端機門檻。`--trust-commands` 僅在確認 Golden Path 指令可信且獲准執行後使用；不要以此繞過安全審查。
 5. 不得使用已停用的 `complete-ticket`、`ready-for-review`、`increment-review` 來冒充正常流程。計畫（`SPEC.md`、`.harness/tickets/`、`golden_path.json`、Pipeline）核准後若有變更，按 Runner 的 `PLAN_CHANGE_REQUIRES_DECISION` 與 `decide`／`resume` 流程處理，不可直接修改 state 或收據解除暫停。原始碼在驗證後再改動，必須重新執行 `verify-ticket` 並更新送審 payload。
 
 ## 一張工單：TICKETS Gate → REVIEW PASS
@@ -45,6 +45,8 @@ python harness/runner/runner.py set-ready-for-gate
 python harness/runner/runner.py gate-verdict --verdict PASS
 python harness/runner/runner.py read
 ```
+
+執行上面的 TICKETS Gate PASS 時，請在你自己的終端機核對畫面上的計畫指紋並輸入前 8 碼；非互動式 Agent shell 無法直接完成。
 
 TICKETS Gate PASS 會檢查工單依賴、Golden Path／User Story 覆蓋並記錄計畫指紋，然後**自動啟動第一張可執行工單**（通常 T-001）。不要對已自動開工的 T-001 重複呼叫 `start-ticket`。僅在有可開工的 TODO、且沒有別張 active ticket 時，才使用 `python harness/runner/runner.py start-ticket --ticket T-002` 等指令。
 
@@ -68,6 +70,8 @@ python harness/runner/runner.py review-verdict --ticket T-001 --verdict PASS --r
 python harness/runner/runner.py validate
 python harness/runner/status.py --json
 ```
+
+若 T-001 是**最後一張工單**，這個 REVIEW PASS 同樣要求操作者在互動式終端機輸入計畫指紋前 8 碼；缺 TTY 則不會完成工單。
 
 `review-verdict PASS` 會核對來源指紋、收據 ID、判準、未解阻斷問題；**最後一張工單**還會跑整合驗證（UI Pipeline 另要求新鮮 final contract receipt）。只有 Runner 接受 PASS，工單才會變成 COMPLETE；非最後一張完成後，Runner 可自動啟動下一張。
 

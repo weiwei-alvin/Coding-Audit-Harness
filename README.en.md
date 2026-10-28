@@ -38,7 +38,7 @@ Software Development Assurance Harness exists for one reason: **to turn "it pass
 
 ("Harness" here means the layer wrapped around the development process to constrain it, not a test harness.)
 
-It cannot tell you whether your architecture is good or your tests are well written. It checks that required ticket-verification receipts and structural links match the current code; it **does not judge whether agent-written assertions meaningfully test your requirements**. The CLI also **does not enforce human-only Gate or Review approval**: an agent with command access can submit either PASS.
+It cannot tell you whether your architecture is good or your tests are well written. It checks that required ticket-verification receipts and structural links match the current code; it **does not judge whether agent-written assertions meaningfully test your requirements**. For **TICKETS Gate PASS and final-ticket Review PASS**, ordinary CLI execution requires an interactive stdin TTY and a manually typed match for the first eight characters of the displayed plan fingerprint (exit code `23` on refusal, without state change). This is **not identity authentication** and does not guarantee a human approved the result.
 
 ---
 
@@ -58,7 +58,7 @@ The division of labor looks like this:
 
 - **The agent writes the code, writes the tests and reports the result.** All three roles are the same model. Tests written by the same model only cover what that model thought of. It can't see what it missed, so nobody knows what was missed.
 - **The Runner ignores the agent's report and trusts only receipts.** It re-runs the acceptance commands itself, computes the code fingerprint itself and compares them itself. To the Runner, "tests pass" from the agent means nothing.
-- **Independent human review is recommended but not enforced.** An agent with command access can submit Gate PASS or Review PASS. The Runner checks applicable evidence and structure, not the caller's identity.
+- **A terminal confirmation now guards two critical PASS operations.** An ordinary non-TTY agent shell cannot approve the TICKETS Gate or the last ticket's Review PASS. Early-stage Gates and intermediate ticket reviews are not subject to this check. The Runner validates a fingerprint prefix, **not a human identity**; an authorized process may deliberately create a pseudo-terminal or modify Python.
 
 Keep the responsibilities separate in practice: the agent proposes and may run CLI commands; the Runner checks formal evidence conditions; an operator **should independently** judge requirements and test quality. The last responsibility is **not enforced** by the current CLI.
 
@@ -145,7 +145,7 @@ The Runner additionally re-runs every acceptance command from scratch. If any on
 - **Not a sandbox.** The same OS user can edit the state, the tests and the evidence. Hashes are freshness checks, not digital signatures. The tool guards against mistakes, not against an attacker with the same privileges.
 - **No agent runtime.** It doesn't call an LLM, connect to MCP, or have a web UI or scheduler. Skills are rule files for a coding agent to read, not an execution engine.
 - **No assertion-quality guarantee.** Golden Path tests may be written by the same agent as the product. The Runner executes them and checks the receipts, but does not determine whether assertions really cover the requirements; weak tests can pass.
-- **No mandatory human approval.** Agents with command access can submit both `gate-verdict PASS` and `review-verdict PASS`. Neither checkpoint authenticates a human. Independent approval needs a separately enforced process.
+- **TTY confirmation is not human authorization.** TICKETS Gate PASS and final-ticket Review PASS require interactive input of the displayed plan fingerprint's first eight hex characters, and reject missing TTY or mismatch with exit code `23`. Other PASS actions are not protected this way; a malicious same-privilege caller could emulate a terminal or change the code. An independent human sign-off policy remains necessary.
 - **No independent quality judgment.** The Runner does not assess architecture, UI usability or the completeness of the acceptance criteria. A populated review criterion is not proof a human checked it.
 - **No multi-user collaboration.** One state, one writer (locked). Concurrent handoffs are not implemented.
 
@@ -155,7 +155,7 @@ The Runner additionally re-runs every acceptance command from scratch. If any on
 |---|---|---|---|
 | **Audit skills** | `skills/*-audit/SKILL.md` | Agent (reads the rules) | Defining what each stage's output must satisfy; rejecting invalid output |
 | **Runner** | `harness/runner/` | CLI (enforces) | Checking evidence exists, hashes match and the process wasn't bypassed; exits non-zero otherwise |
-| **Decision submitter** | CLI caller | Human or agent | May submit Gate/Review PASS when conditions allow; the Runner does **not require human identity or sign-off** |
+| **Decision submitter** | CLI caller | Human or agent | Can submit unguarded PASS; critical PASS requires stdin TTY and plan-prefix confirmation, but not authenticated human identity |
 
 > [!IMPORTANT]
 > **The Runner takes over at TICKETS.** `init` sets the stage straight to `TICKETS` (see `initialize()` in `harness/runner/workflow.py`), so **no CLI path reaches** `DISCOVERY` or `SPEC`. The acceptance conditions of `grill-me-audit` and `to-spec-audit` are currently followed by the agent on its own; the Runner does not enforce them at the stage level. The one exception is that the TICKETS Gate reads the User Stories list in `SPEC.md` and checks how it maps to the Golden Path. Runner enforcement for those two stages is not implemented; see [Deferred Items](docs/DEFERRED_ITEMS.md) (Traditional Chinese).

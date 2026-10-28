@@ -209,14 +209,25 @@ def main():
         write_json(steps_dir / (label + "-DEBUG.json"), dict(payload=payload, stderr=stderr))
 
     cli = [VYPY, str(REPO / "harness/runner/runner.py"), "--project-root", str(case)]
+    # Deliberately visible Python-only test injection, not a public CLI bypass.
+    approval_entry = (
+        "import sys; sys.path.insert(0,sys.argv[1]); from runner import main; "
+        "sys.argv=['runner.py']+sys.argv[2:]; "
+        "main(confirm_pass=lambda stage, fingerprint: True)"
+    )
 
-    def run_cli(label, arguments, expect_zero=True, must_contain=None):
-        cp = subprocess.run([*cli, *arguments], capture_output=True, text=True,
+    def approved_cli(project):
+        return [VYPY, "-c", approval_entry, str(REPO / "harness/runner"),
+            "--project-root", str(project)]
+
+    def run_cli(label, arguments, expect_zero=True, must_contain=None, python_approval=False):
+        command = [*(approved_cli(case) if python_approval else cli), *arguments]
+        cp = subprocess.run(command, capture_output=True, text=True,
             encoding="utf-8", timeout=900, cwd=str(case))
         passed = ((cp.returncode == 0) == expect_zero
             and (must_contain is None or must_contain in (cp.stderr + cp.stdout)))
         record(label, passed, dict(returncode=cp.returncode,
-            stdout_tail=cp.stdout[-3000:]), [*cli, *arguments], cp.stderr[-2000:])
+            stdout_tail=cp.stdout[-3000:]), command, cp.stderr[-2000:])
         return cp
 
     state_path = case / ".harness/state.json"
@@ -272,7 +283,7 @@ def main():
     jump_cli = [VYPY, str(REPO / "harness/runner/runner.py"), "--project-root", str(jump)]
     subprocess.run([*jump_cli, "set-ready-for-gate"], capture_output=True, text=True,
         encoding="utf-8", timeout=120, cwd=str(jump))
-    cp = subprocess.run([*jump_cli, "gate-verdict", "--verdict", "PASS"], capture_output=True,
+    cp = subprocess.run([*approved_cli(jump), "gate-verdict", "--verdict", "PASS"], capture_output=True,
         text=True, encoding="utf-8", timeout=120, cwd=str(jump))
     refused = cp.returncode != 0 and "Conditional stage DESIGN" in cp.stderr \
         and "golden_path_declares_collector" in cp.stderr
@@ -282,7 +293,14 @@ def main():
 
     # Ticket gate: dependency hook + conditional hook both pass; plan approved.
     run_cli("gate-tickets-ready", ["set-ready-for-gate"])
-    run_cli("gate-tickets-pass", ["gate-verdict", "--verdict", "PASS"])
+    before_tty = state_path.read_bytes()
+    rejected_tty = run_cli("gate-tickets-non-tty-refused",
+        ["gate-verdict", "--verdict", "PASS"], expect_zero=False,
+        must_contain="TTY_CONFIRMATION_REQUIRED")
+    record("gate-tickets-non-tty-no-state-change", rejected_tty.returncode == 23
+        and state_path.read_bytes() == before_tty,
+        dict(exit_code=rejected_tty.returncode, state_unchanged=state_path.read_bytes() == before_tty))
+    run_cli("gate-tickets-pass", ["gate-verdict", "--verdict", "PASS"], python_approval=True)
     state = read_state()
     record("approved-plan-recorded", state.get("approved_plan", {}).get("sha256") is not None
         and state["pipeline_stage"] == "IMPLEMENTATION"
@@ -427,9 +445,19 @@ def main():
         verification=[dict(step="GP-001", expected="design gate PASS", actual="PASS", status="PASS"),
                       dict(step="GP-002", expected="rules PASS", actual="PASS", status="PASS"),
                       dict(step="GP-003", expected="collector PASS", actual="PASS", status="PASS")]))
+    before_final_tty = state_path.read_bytes()
+    rejected_final = run_cli("final-review-non-tty-refused",
+        ["review-verdict", "--ticket", "T-001", "--verdict", "PASS",
+         "--trust-commands", "--timeout", "600",
+         "--review", str(review2_path), "--handoff", str(handoff2_path)],
+        expect_zero=False, must_contain="TTY_CONFIRMATION_REQUIRED")
+    record("final-review-non-tty-no-state-change", rejected_final.returncode == 23
+        and state_path.read_bytes() == before_final_tty,
+        dict(exit_code=rejected_final.returncode,
+             state_unchanged=state_path.read_bytes() == before_final_tty))
     run_cli("review-pass", ["review-verdict", "--ticket", "T-001", "--verdict", "PASS",
         "--trust-commands", "--timeout", "600",
-        "--review", str(review2_path), "--handoff", str(handoff2_path)])
+        "--review", str(review2_path), "--handoff", str(handoff2_path)], python_approval=True)
     state = read_state()
     record("project-complete-at-review", state["project_status"] == "COMPLETE"
         and state["pipeline_stage"] == "REVIEW", dict(

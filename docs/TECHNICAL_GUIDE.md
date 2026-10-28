@@ -80,7 +80,7 @@ Software Development Assurance Harness 存在的理由就一句：**讓「驗收
 
 - **Agent 寫程式，也寫測試，也報告結果。** 三個角色是同一個模型。同一個模型寫出來的測試，只會蓋到它自己想得到的狀況。漏了什麼它自己看不到，於是沒有人知道它漏了什麼。
 - **Runner 不相信 Agent 的報告，只相信收據。** 它自己重跑一次驗收指令，自己算一次程式碼指紋，再自己比對。Agent 說「測試通過」對它來說等於沒說。
-- **Gate 由操作者負責核准。** 它代表「我看過了，我批准」。這是操作規範；CLI 沒有身分驗證或人類在場偵測，無法阻止同權限 Agent 呼叫指令。
+- **關鍵 PASS 現在有終端機確認。** `TICKETS` Gate PASS 與最後一張工單的 `review-verdict PASS` 要求 stdin 為互動式 TTY，顯示計畫 SHA-256 並核對輸入的前 8 碼；非 TTY、錯誤或取消以固定 exit code `23` 拒絕，state 不變。其他 Gate/Review PASS 不受這項確認限制。這是降低 Agent 誤放行風險的操作障礙，**不是身份驗證或無法繞過的人工核准機制**；同權限程式仍可能啟用 pseudo-TTY 或修改 Python 程式。
 
 三者不能互相代替：Agent 提出，Runner 強制，Operator 核准，少一環流程就走不動。
 
@@ -344,7 +344,9 @@ python harness/runner/runner.py set-ready-for-gate
 python harness/runner/runner.py gate-verdict --verdict PASS
 ```
 
-`init` 建立全 TODO state，**拒絕覆寫既有 state**。TICKETS Gate PASS 時會：驗證依賴圖與工單集合、檢查每張工單與每個 User Story 的驗收涵蓋、記錄核准計畫的指紋（`pipeline.json` + 工單檔 + `golden_path.json` + `SPEC.md`）、啟動第一張可執行工單。核准後修改其中任一檔案都會觸發 `PLAN_CHANGE_REQUIRES_DECISION`，不會靜默採用新定義。
+`init` 建立全 TODO state，**拒絕覆寫既有 state**。TICKETS Gate PASS 必須在互動式終端機確認顯示的計畫指紋前 8 碼；非 TTY 或輸錯時 exit code `23`，不寫入 state。
+
+TICKETS Gate PASS 時會：驗證依賴圖與工單集合、檢查每張工單與每個 User Story 的驗收涵蓋、記錄核准計畫的指紋（`pipeline.json` + 工單檔 + `golden_path.json` + `SPEC.md`）、啟動第一張可執行工單。核准後修改其中任一檔案都會觸發 `PLAN_CHANGE_REQUIRES_DECISION`，不會靜默採用新定義。
 
 不要求所有前置工單在開工前已完成。
 
@@ -494,6 +496,8 @@ python packs/ui/cli.py check --contract packs/ui/examples/e2e-case/contract.json
 純 code 預設從 `TICKETS` 開始；UI pack 從 `DISCOVERY` 開始。Gate 決策會記錄在 state；UI DESIGN PASS 另需新鮮內容雜湊證據，但這不等於 kernel 已判定 planning 文件的實質品質。
 
 ### 最後一張工單
+
+**最後一張工單的 REVIEW PASS** 會先顯示目前計畫 SHA-256，要求 TTY 輸入前 8 碼；失敗不執行最終驗證，也不修改 state 或最終收據。前面工單不需這項確認。
 
 提交前 Runner 會**自己重跑全部 Golden Path steps**（Final Integrated Verification）。任何 step FAIL／UNVERIFIED、artifact 寫入失敗、state 衝突，都不提交 COMPLETE。
 

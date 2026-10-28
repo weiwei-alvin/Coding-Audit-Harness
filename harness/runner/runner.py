@@ -244,7 +244,8 @@ class HarnessRunner:
         }
 
 
-def main():
+def main(*, confirm_pass=None):
+    """CLI entry point; confirm_pass is injectable by Python tests, never CLI args."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Harness Runner")
@@ -276,7 +277,8 @@ def main():
     args = parser.parse_args()
     runner = HarnessRunner(args.project_root)
     from workflow import Workflow
-    workflow = Workflow(runner, trusted=args.trust_commands, timeout=args.timeout)
+    workflow = Workflow(runner, trusted=args.trust_commands, timeout=args.timeout,
+                        confirm_pass=confirm_pass)
     if args.command in ("complete-ticket", "ready-for-review", "increment-review"):
         parser.error("Unsupported command; use mark-ticket-ready-for-review and review-verdict --review --handoff")
     if args.command in ("init", "verify-ticket", "snapshot", "decide"):
@@ -519,5 +521,9 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as exc:
+        from workflow import InteractiveApprovalError, APPROVAL_EXIT_CODE
+        if isinstance(exc, InteractiveApprovalError):
+            print(f"Harness approval refused: {exc}", file=sys.stderr)
+            sys.exit(APPROVAL_EXIT_CODE)
         print(f"Harness error: {exc}", file=sys.stderr)
         sys.exit(1)

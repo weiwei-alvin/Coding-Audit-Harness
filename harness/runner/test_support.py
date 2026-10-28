@@ -5,8 +5,25 @@ import os
 from pathlib import Path
 import shutil
 import tempfile
+import sys
 
 SOURCE = Path(__file__).resolve().parents[2]
+
+# Explicit Python-level test injection. Never expose this as an end-user CLI flag.
+_TEST_APPROVAL_ENTRY = (
+    "import sys; "
+    "sys.path.insert(0,sys.argv[1]); "
+    "from runner import main; "
+    "sys.argv=['runner.py']+sys.argv[2:]; "
+    "main(confirm_pass=lambda stage, fingerprint: True)"
+)
+
+
+def injected_cli(root, *args):
+    """Invoke the ordinary argparse command with an injected CI-only approval callback."""
+    return [sys.executable, "-c", _TEST_APPROVAL_ENTRY,
+            str(Path(root) / "harness" / "runner"), *args]
+
 
 def fixture(root, count=1):
     shutil.copytree(SOURCE / 'harness', root / 'harness', ignore=shutil.ignore_patterns('__pycache__'))

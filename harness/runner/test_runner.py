@@ -3,7 +3,7 @@
 Test Suite for Harness Runner
 """
 
-from test_support import isolated, review_files
+from test_support import isolated, review_files, injected_cli
 
 import subprocess
 import json
@@ -18,7 +18,10 @@ STATE_FILE = PROJECT_ROOT / ".harness" / "state.json"
 
 def run_cmd(*args, input_data=None):
     """Run runner command and return (success, stdout, stderr)."""
-    cmd = [sys.executable, str(RUNNER)] + list(args)
+    is_pass = args and args[0] == 'review-verdict' and '--verdict' in args \
+        and args[args.index('--verdict') + 1] == 'PASS'
+    cmd = injected_cli(PROJECT_ROOT, *args) if is_pass else [
+        sys.executable, str(RUNNER), *args]
     result = subprocess.run(cmd, capture_output=True, text=True, cwd=PROJECT_ROOT, input=input_data)
     return result.returncode == 0, result.stdout, result.stderr
 

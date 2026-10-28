@@ -8,6 +8,7 @@ import copy
 import json
 from pathlib import Path
 import re
+import sys
 import uuid
 from dependency_scheduler import DependencyScheduler
 from golden_path_verifier import GoldenPathVerifier
@@ -17,13 +18,66 @@ from state_transition import create_initial_state, GateVerdict, PauseReason
 from storage import atomic_json, digest, plan_hash, source_hash
 from schema_validation import validator
 
+APPROVAL_EXIT_CODE = 23  # Fixed, distinguishable refusal for required terminal confirmation.
+
+
+class InteractiveApprovalError(RuntimeError):
+    """A critical PASS cannot proceed without successful terminal confirmation."""
+
+
+def stdin_is_interactive():
+    """Check a real terminal, not Windows NUL (which may report isatty=True)."""
+    if not sys.stdin.isatty():
+        return False
+    if sys.platform == "win32":
+        import ctypes
+        import msvcrt
+        try:
+            mode = ctypes.c_uint()
+            handle = msvcrt.get_osfhandle(sys.stdin.fileno())
+            return bool(ctypes.windll.kernel32.GetConsoleMode(handle, ctypes.byref(mode)))
+        except (OSError, ValueError, AttributeError):
+            return False
+    return True
+
+
+def tty_pass_confirmation(stage, fingerprint):
+    """Production confirmation. No CLI flag can bypass this callback."""
+    if not stdin_is_interactive():
+        raise InteractiveApprovalError(
+            "TTY_CONFIRMATION_REQUIRED: PASS requires an interactive terminal (stdin TTY)"
+        )
+    print(f"\n{stage} PASS — current plan fingerprint: {fingerprint}", flush=True)
+    try:
+        answer = input("Enter the FIRST 8 hex characters of the fingerprint to confirm: ")
+    except (EOFError, KeyboardInterrupt) as exc:
+        raise InteractiveApprovalError("TTY_CONFIRMATION_CANCELLED: no confirmation entered") from exc
+    if answer.strip() != fingerprint[:8]:
+        raise InteractiveApprovalError("TTY_CONFIRMATION_MISMATCH: incorrect fingerprint prefix")
+    return True
+
+
 class Workflow:
-    def __init__(self, runner, *, trusted=False, timeout=60):
+    def __init__(self, runner, *, trusted=False, timeout=60, confirm_pass=None):
         self.runner=runner
         self.root=runner.project_root
         self.directory=runner.harness_dir
         self.trusted=trusted
         self.timeout=timeout
+        # Python-only injection point for deterministic fixture tests / CI E2E.
+        # Ordinary CLI uses tty_pass_confirmation. Never expose an argparse bypass.
+        self.confirm_pass=confirm_pass if confirm_pass is not None else tty_pass_confirmation
+
+    def preflight_tty(self):
+        """Refuse noninteractive critical PASS before even a plan-drift pause can mutate state."""
+        if self.confirm_pass is tty_pass_confirmation and not stdin_is_interactive():
+            raise InteractiveApprovalError(
+                "TTY_CONFIRMATION_REQUIRED: PASS requires an interactive terminal (stdin TTY)"
+            )
+
+    def require_approval(self, stage, fingerprint):
+        if self.confirm_pass(stage, fingerprint) is not True:
+            raise InteractiveApprovalError("TTY_CONFIRMATION_REJECTED: confirmation refused")
 
     def state(self):
         s=self.runner.read_state()
@@ -197,7 +251,11 @@ class Workflow:
                 raise ValueError(f"Stage {s['pipeline_stage']} requires evidence tiers {required}; missing {missing}")
 
     def review(self,tid,verdict,review_path,handoff_path):
-        s=self.state(); self.check_plan(s); t=self.active(s,tid,ready=True)
+        s=self.state()
+        if verdict=='PASS' and tid in s['tickets'] and all(
+                k==tid or x['status']=='COMPLETE' for k,x in s['tickets'].items()):
+            self.preflight_tty()
+        self.check_plan(s); t=self.active(s,tid,ready=True)
         definition=definition_for_state(self.root,s)
         files=self.graph(s)
         if not review_path: raise ValueError('Missing review payload; PASS string is not evidence')
@@ -246,6 +304,9 @@ class Workflow:
                     failures = verify_gate_receipt(self.root, review_receipt)
                     if failures:
                         raise ValueError('Final review contract evidence rejected: ' + '; '.join(failures))
+                # Before final verification writes any artifact or the state changes.
+                # Earlier tickets' REVIEW PASS does not require a terminal prompt.
+                self.require_approval("FINAL REVIEW", (s.get('approved_plan') or {}).get('sha256') or plan_hash(self.root))
                 final=GoldenPathVerifier(self.root,trusted=self.trusted,timeout=self.timeout).verify_final_integrated()
                 if final.get('status')!='PASSED': raise ValueError('Final integrated verification failed: '+json.dumps(final))
                 s['final_verification']=self.artifact('verifications',dict(source_hash=current,**final))
@@ -360,6 +421,8 @@ class Workflow:
         if s['project_status']!='IN_PROGRESS': raise ValueError('Project not in progress')
         definition=definition_for_state(self.root,s)
         stage=s['pipeline_stage']
+        if stage=='TICKETS' and verdict=='PASS':
+            self.preflight_tty()
         hooks=definition.gate_hooks(stage) if definition.is_planning(stage) else []
         tickets_pass='validate_ticket_dependencies' in hooks and verdict=='PASS'
         if 'validate_ticket_dependencies' in hooks: files=self.graph(s)
@@ -368,6 +431,17 @@ class Workflow:
             if errors: raise ValueError(f'{stage} gate refused: '+'; '.join(errors))
         result=self.runner.transition_engine.process_gate_verdict(s,GateVerdict(verdict),decision_ref)
         if not result.success: raise ValueError(result.error)
-        if tickets_pass: result.new_state['approved_plan']=dict(sha256=plan_hash(self.root))
+        if tickets_pass:
+            fingerprint=plan_hash(self.root)
+            # TICKETS Gate must be confirmed before approved_plan/state is committed.
+            if stage=='TICKETS':
+                self.require_approval("TICKETS GATE", fingerprint)
+                if plan_hash(self.root) != fingerprint:
+                    raise InteractiveApprovalError(
+                        "TTY_CONFIRMATION_STALE: plan changed during terminal confirmation"
+                    )
+            result.new_state['approved_plan']=dict(sha256=fingerprint)
+        elif stage=='TICKETS' and verdict=='PASS':
+            self.require_approval("TICKETS GATE", plan_hash(self.root))
         if verdict=='USER_DECISION_REQUIRED': self.prepare_pause(result.new_state,'GATE_USER_DECISION_REQUIRED',decision_ref)
         self.commit(result.new_state)

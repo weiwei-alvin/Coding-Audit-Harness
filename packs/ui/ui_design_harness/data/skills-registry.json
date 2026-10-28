@@ -1,8 +1,8 @@
 {
   "schema_version": "0.1",
   "kind": "skills_registry",
-  "updated_date": "2026-10-19",
-  "note": "v1 只登錄 docs/replan/SPEC.md 30 repo 盤點中可解析出 owner/repo 的平台層參考；desktop/mobile 與三個 need 層刻意留空（未知平台或未推導 need 即空路由，合法）。三筆皆為 unverified：pin 只是 2026-10-19 由 GitHub API 讀到的 default branch HEAD，本機未 clone、未讀內容、未執行。",
+  "updated_date": "2026-10-28",
+  "note": "本 registry 只保留三筆歷史上游候選（unverified）。先前引用的 30-repo 盤點文件並未收錄在此儲存庫，已移除無法解析的內部文件路徑。歷史 version_pin 不代表已 clone、讀取、執行或安全審核上游套件；此 registry 不保證來源資料可在本 Repo 重現。",
   "platforms": {
     "web": {
       "skills": [
@@ -14,7 +14,6 @@
           "pin_kind": "commit",
           "status": "unverified",
           "why": "交接 rules 欄位的條目蒸餾自這份 Web 介面指南；實作者需要完整規範時查閱它。",
-          "source": "docs/replan/SPEC.md 30 repo 盤點（2026-10-17）",
           "pinned_at": "2026-10-19"
         },
         {
@@ -25,7 +24,6 @@
           "pin_kind": "commit",
           "status": "unverified",
           "why": "設計語言與品味判斷的參考來源；品味屬人工判定，本階段不執行任何判定。",
-          "source": "docs/replan/SPEC.md 30 repo 盤點（2026-10-17）",
           "pinned_at": "2026-10-19"
         },
         {
@@ -36,7 +34,6 @@
           "pin_kind": "commit",
           "status": "unverified",
           "why": "禁用 AI-slop 模式的來源；決定性規則庫由其蒸餾，此處提供上游原文。",
-          "source": "docs/replan/SPEC.md 30 repo 盤點（2026-10-17）",
           "pinned_at": "2026-10-19"
         }
       ],

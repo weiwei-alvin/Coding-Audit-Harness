@@ -3,8 +3,8 @@ document_title: Software Development Assurance Harness
 chinese_title: AI 寫的程式，驗過才算數
 aka: [Coding Audit Harness]
 established_date: 2026-09-29
-updated_date: 2026-10-26
-version: 3.1.0
+updated_date: 2026-10-28
+version: 3.1.1
 -->
 
 <div align="center">
@@ -38,7 +38,7 @@ Software Development Assurance Harness exists for one reason: **to turn "it pass
 
 ("Harness" here means the layer wrapped around the development process to constrain it, not a test harness.)
 
-It cannot tell you whether your architecture is good or your tests are well written. It does two things: it blocks any "pass" that has no evidence behind it, and it blocks acceptance checks that don't map to any user requirement.
+It cannot tell you whether your architecture is good or your tests are well written. It checks that required ticket-verification receipts and structural links match the current code; it **does not judge whether agent-written assertions meaningfully test your requirements**. The CLI also **does not enforce human-only Gate or Review approval**: an agent with command access can submit either PASS.
 
 ---
 
@@ -50,7 +50,7 @@ It cannot tell you whether your architecture is good or your tests are well writ
 | **Runner** | Referee | A CLI program (`harness/runner/runner.py`). It takes no part in development and does one thing: check whether a PASS has matching evidence. If not, it exits non-zero. |
 | **state.json** | Process log | A JSON file in your project recording the current stage, each ticket's status and any unresolved findings. It is the single source of truth; every decision is read from it. |
 | **Verification evidence**<br>`evidence` | Receipt | Each time an acceptance command runs, the Runner saves a receipt: which command ran, its exit code, and the fingerprint of the code at that moment. |
-| **Gate** | Checkpoint | A checkpoint that **you (a human)** must pass. The agent has no way to pass it by itself. |
+| **Gate** | Checkpoint | A CLI checkpoint whose structural rules the Runner checks. **An agent can submit PASS**; no human identity is required by the tool. |
 
 ### Why you can't just trust the agent's "tests pass"
 
@@ -58,9 +58,9 @@ The division of labor looks like this:
 
 - **The agent writes the code, writes the tests and reports the result.** All three roles are the same model. Tests written by the same model only cover what that model thought of. It can't see what it missed, so nobody knows what was missed.
 - **The Runner ignores the agent's report and trusts only receipts.** It re-runs the acceptance commands itself, computes the code fingerprint itself and compares them itself. To the Runner, "tests pass" from the agent means nothing.
-- **A human presses the Gate.** Only you run that command. It means "I've looked at this and I approve", not "the system detected that everything is fine".
+- **Independent human review is recommended but not enforced.** An agent with command access can submit Gate PASS or Review PASS. The Runner checks applicable evidence and structure, not the caller's identity.
 
-None of the three can stand in for another: the agent proposes, the Runner enforces, the operator approves. Remove any one and the process stops.
+Keep the responsibilities separate in practice: the agent proposes and may run CLI commands; the Runner checks formal evidence conditions; an operator **should independently** judge requirements and test quality. The last responsibility is **not enforced** by the current CLI.
 
 ### It runs on top of Matt Pocock's five skills
 
@@ -77,7 +77,7 @@ The harness does not produce specs or code itself. That comes from [Matt Pocock'
 Matt's skills, together with `grilling` and `tdd` which they call, are pinned under `skills/matt-upstream/` without modification.
 
 > [!NOTE]
-> Audit skills are rules for the agent to read, and the agent that runs the audit is the same one that just ran the Matt skill. In the last three stages the Runner checks from the outside using receipts and fingerprints; in DISCOVERY and SPEC the agent only checks itself. Those two stages are exactly where "what do we actually want" gets settled, so for now, whether the result is what you wanted depends mostly on you reviewing `SPEC.md` and `golden_path.json` at the TICKETS Gate. What the Runner can guarantee there is structure only: every acceptance check points to a User Story, and every User Story has an acceptance check. Whether an assertion really verifies that requirement is still your call.
+> Audit skills are rules for the agent to read, and the agent that runs the audit is the same one that just ran the Matt skill. In the last three stages the Runner checks from the outside using receipts and fingerprints; in DISCOVERY and SPEC the agent only checks itself. Those two stages are exactly where "what do we actually want" gets settled, so for now, whether the result is what you wanted depends mostly on independent review of `SPEC.md` and `golden_path.json` before accepting the TICKETS Gate; the Runner does not require a human to perform that review. What the Runner can guarantee there is structure only: every acceptance check points to a User Story, and every User Story has an acceptance check. Whether an assertion really verifies that requirement is still your call.
 
 ---
 
@@ -85,7 +85,7 @@ Matt's skills, together with `grilling` and `tdd` which they call, are pinned un
 
 ```mermaid
 flowchart LR
-    A["You<br/>ticket + Golden Path<br/>gate-verdict PASS"]:::op
+    A["TICKETS Gate<br/>CLI PASS submission"]:::op
     B["Agent<br/>implements"]:::agent
     C["Runner<br/>verify-ticket<br/>runs checks, saves receipt"]:::runner
     D["Agent<br/>handoff.json"]:::agent
@@ -108,8 +108,8 @@ Say your requirement is "`add(2, 3)` must return 5". Here is what actually happe
 **2. You define how it will be verified**
 In `.harness/golden_path.json` you define how to prove the work is actually correct. Here that's one command, `python check_calc.py`, and `check_calc.py` contains `assert add(2, 3) == 5`. **The command must exit non-zero when it fails.** Printing `OK` is not verification.
 
-**3. You pass the Gate: `gate-verdict --verdict PASS`**
-The Runner now does four things: checks the dependencies have no cycles, **checks every ticket has at least one acceptance command it can run on its own**, **checks every acceptance check maps to a User Story in `SPEC.md` and every User Story has one**, and records a fingerprint of the current plan.
+**3. Gate PASS is submitted: `gate-verdict --verdict PASS`**
+The Runner now does four things: checks the dependencies have no cycles, **checks every ticket has at least one acceptance command it can run on its own**, **checks every acceptance check maps to a User Story in `SPEC.md` and every User Story has one**, and records a fingerprint of the current plan. **It does not verify the adequacy of agent-written assertions or require a human submitter.**
 
 **4. The agent implements, then runs `verify-ticket`**
 The Runner runs the acceptance command **itself** and saves the result as a receipt, stamped with the fingerprint of the code at that moment.
@@ -144,7 +144,9 @@ The Runner additionally re-runs every acceptance command from scratch. If any on
 
 - **Not a sandbox.** The same OS user can edit the state, the tests and the evidence. Hashes are freshness checks, not digital signatures. The tool guards against mistakes, not against an attacker with the same privileges.
 - **No agent runtime.** It doesn't call an LLM, connect to MCP, or have a web UI or scheduler. Skills are rule files for a coding agent to read, not an execution engine.
-- **No quality judgment.** It doesn't assess your architecture or how well your tests are written. Those judgments belong to the review criteria and the Gate.
+- **No assertion-quality guarantee.** Golden Path tests may be written by the same agent as the product. The Runner executes them and checks the receipts, but does not determine whether assertions really cover the requirements; weak tests can pass.
+- **No mandatory human approval.** Agents with command access can submit both `gate-verdict PASS` and `review-verdict PASS`. Neither checkpoint authenticates a human. Independent approval needs a separately enforced process.
+- **No independent quality judgment.** The Runner does not assess architecture, UI usability or the completeness of the acceptance criteria. A populated review criterion is not proof a human checked it.
 - **No multi-user collaboration.** One state, one writer (locked). Concurrent handoffs are not implemented.
 
 ### Three layers of responsibility
@@ -153,7 +155,7 @@ The Runner additionally re-runs every acceptance command from scratch. If any on
 |---|---|---|---|
 | **Audit skills** | `skills/*-audit/SKILL.md` | Agent (reads the rules) | Defining what each stage's output must satisfy; rejecting invalid output |
 | **Runner** | `harness/runner/` | CLI (enforces) | Checking evidence exists, hashes match and the process wasn't bypassed; exits non-zero otherwise |
-| **Operator (you)** | — | Human | `gate-verdict` / `decide` are **human approvals**. The tool never declares PASS by itself |
+| **Decision submitter** | CLI caller | Human or agent | May submit Gate/Review PASS when conditions allow; the Runner does **not require human identity or sign-off** |
 
 > [!IMPORTANT]
 > **The Runner takes over at TICKETS.** `init` sets the stage straight to `TICKETS` (see `initialize()` in `harness/runner/workflow.py`), so **no CLI path reaches** `DISCOVERY` or `SPEC`. The acceptance conditions of `grill-me-audit` and `to-spec-audit` are currently followed by the agent on its own; the Runner does not enforce them at the stage level. The one exception is that the TICKETS Gate reads the User Stories list in `SPEC.md` and checks how it maps to the Golden Path. Runner enforcement for those two stages is not implemented; see [Deferred Items](docs/DEFERRED_ITEMS.md) (Traditional Chinese).

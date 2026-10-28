@@ -89,7 +89,7 @@ The `SPEC.md` required at a **target project's root** is that project's requirem
 
 **Why Deferred**:
 - Ticket decomposition requires architectural judgment (vertical slicing, dependency identification)
-- Current: `to-tickets-audit` with human approval loop works well
+- Current: `to-tickets-audit` provides decomposition guidance; a human approval loop can be arranged, but is **not automatically authenticated or enforced** by the Runner
 - Risk of over/under-decomposition without human oversight
 
 **Reconsideration Trigger**:

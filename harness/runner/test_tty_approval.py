@@ -61,12 +61,14 @@ class TerminalApprovalTests(unittest.TestCase):
             before = state_file.read_bytes()
             fingerprint = plan_hash(root)
             self.assertEqual(len(fingerprint), 64)
-            with patch("workflow.sys.stdin", FakeTTY("0000000Z\n")):
+            with patch("workflow.stdin_is_interactive", return_value=True), \
+                    patch("workflow.sys.stdin", FakeTTY("0000000Z\n")):
                 with self.assertRaisesRegex(InteractiveApprovalError, "TTY_CONFIRMATION_MISMATCH"):
                     workflow.gate("PASS")
             self.assertEqual(before, state_file.read_bytes())
             output = io.StringIO()
-            with patch("workflow.sys.stdin", FakeTTY(fingerprint[:8] + "\n")):
+            with patch("workflow.stdin_is_interactive", return_value=True), \
+                    patch("workflow.sys.stdin", FakeTTY(fingerprint[:8] + "\n")):
                 with contextlib.redirect_stdout(output):
                     workflow.gate("PASS")
             state = json.loads(state_file.read_text(encoding="utf-8"))
@@ -85,7 +87,8 @@ class TerminalApprovalTests(unittest.TestCase):
             for input_stream, code in ((io.StringIO(""), "TTY_CONFIRMATION_REQUIRED"),
                                        (FakeTTY("deadbeef\n"), "TTY_CONFIRMATION_MISMATCH")):
                 with self.subTest(code=code):
-                    with patch("workflow.sys.stdin", input_stream):
+                    with patch("workflow.stdin_is_interactive", return_value=input_stream.isatty()), \
+                            patch("workflow.sys.stdin", input_stream):
                         with self.assertRaisesRegex(InteractiveApprovalError, code):
                             workflow.review("T-001", "PASS", review, handoff)
                     self.assertEqual(before, state_file.read_bytes())

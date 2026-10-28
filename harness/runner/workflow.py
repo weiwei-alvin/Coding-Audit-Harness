@@ -25,9 +25,25 @@ class InteractiveApprovalError(RuntimeError):
     """A critical PASS cannot proceed without successful terminal confirmation."""
 
 
+def stdin_is_interactive():
+    """Check a real terminal, not Windows NUL (which may report isatty=True)."""
+    if not sys.stdin.isatty():
+        return False
+    if sys.platform == "win32":
+        import ctypes
+        import msvcrt
+        try:
+            mode = ctypes.c_uint()
+            handle = msvcrt.get_osfhandle(sys.stdin.fileno())
+            return bool(ctypes.windll.kernel32.GetConsoleMode(handle, ctypes.byref(mode)))
+        except (OSError, ValueError, AttributeError):
+            return False
+    return True
+
+
 def tty_pass_confirmation(stage, fingerprint):
     """Production confirmation. No CLI flag can bypass this callback."""
-    if not sys.stdin.isatty():
+    if not stdin_is_interactive():
         raise InteractiveApprovalError(
             "TTY_CONFIRMATION_REQUIRED: PASS requires an interactive terminal (stdin TTY)"
         )
@@ -54,7 +70,7 @@ class Workflow:
 
     def preflight_tty(self):
         """Refuse noninteractive critical PASS before even a plan-drift pause can mutate state."""
-        if self.confirm_pass is tty_pass_confirmation and not sys.stdin.isatty():
+        if self.confirm_pass is tty_pass_confirmation and not stdin_is_interactive():
             raise InteractiveApprovalError(
                 "TTY_CONFIRMATION_REQUIRED: PASS requires an interactive terminal (stdin TTY)"
             )

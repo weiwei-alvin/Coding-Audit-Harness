@@ -62,6 +62,9 @@ def main():
     if not args.legacy_only:
         import test_v21_completion
         suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(test_v21_completion))
+    if not args.legacy_only:
+        import test_tty_approval
+        suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(test_tty_approval))
     log=io.StringIO()
     with contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
         result=unittest.TextTestRunner(stream=log,verbosity=2,resultclass=Result).run(suite)

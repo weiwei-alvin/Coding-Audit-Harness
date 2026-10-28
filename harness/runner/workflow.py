@@ -434,7 +434,12 @@ class Workflow:
         if tickets_pass:
             fingerprint=plan_hash(self.root)
             # TICKETS Gate must be confirmed before approved_plan/state is committed.
-            if stage=='TICKETS': self.require_approval("TICKETS GATE", fingerprint)
+            if stage=='TICKETS':
+                self.require_approval("TICKETS GATE", fingerprint)
+                if plan_hash(self.root) != fingerprint:
+                    raise InteractiveApprovalError(
+                        "TTY_CONFIRMATION_STALE: plan changed during terminal confirmation"
+                    )
             result.new_state['approved_plan']=dict(sha256=fingerprint)
         elif stage=='TICKETS' and verdict=='PASS':
             self.require_approval("TICKETS GATE", plan_hash(self.root))

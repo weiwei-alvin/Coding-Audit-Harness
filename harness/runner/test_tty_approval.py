@@ -135,6 +135,50 @@ class TerminalApprovalTests(unittest.TestCase):
             self.assertIn("TTY_CONFIRMATION_REQUIRED", proc.stderr)
             self.assertEqual(before, (root / ".harness/state.json").read_bytes())
 
+    def test_final_non_tty_cannot_change_state_even_when_plan_is_stale(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            workflow, review, handoff = self.review_fixture(root)
+            state_file = root / ".harness/state.json"
+            state = json.loads(state_file.read_text(encoding="utf-8"))
+            state["approved_plan"] = {"sha256": plan_hash(root)}
+            state_file.write_text(json.dumps(state), encoding="utf-8")
+            (root / "SPEC.md").write_text(
+                "# Changed spec\\n\\n## User Stories\\n1. US-001: changed requirements\\n",
+                encoding="utf-8")
+            before = state_file.read_bytes()
+            with patch("workflow.sys.stdin", io.StringIO("")):
+                with self.assertRaisesRegex(InteractiveApprovalError, "TTY_CONFIRMATION_REQUIRED"):
+                    workflow.review("T-001", "PASS", review, handoff)
+            self.assertEqual(state_file.read_bytes(), before)
+
+    @unittest.skipIf(sys.platform == "win32", "Unix pseudo-terminal only")
+    def test_actual_pty_gate_accepts_typed_prefix(self):
+        import os
+        import pty
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self.gate_fixture(root)
+            prefix = plan_hash(root)[:8]
+            master, slave = pty.openpty()
+            try:
+                cmd = [sys.executable, str(root / "harness/runner/runner.py"),
+                    "gate-verdict", "--verdict", "PASS", "--project-root", str(root)]
+                proc = subprocess.Popen(cmd, cwd=root, stdin=slave,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                os.close(slave)
+                slave = -1
+                os.write(master, (prefix + "\\n").encode("ascii"))
+                stdout, stderr = proc.communicate(timeout=60)
+                self.assertEqual(proc.returncode, 0, stderr)
+                self.assertIn(plan_hash(root), stdout)
+                self.assertEqual(json.loads((root / ".harness/state.json").read_text(
+                    encoding="utf-8"))["active_ticket_id"], "T-001")
+            finally:
+                if slave >= 0:
+                    os.close(slave)
+                os.close(master)
+
     def test_python_fixture_injection_is_explicit(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

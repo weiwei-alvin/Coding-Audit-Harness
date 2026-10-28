@@ -102,7 +102,8 @@ class TerminalApprovalTests(unittest.TestCase):
             workflow, review, handoff = self.review_fixture(root)
             fingerprint = plan_hash(root)
             output = io.StringIO()
-            with patch("workflow.sys.stdin", FakeTTY(fingerprint[:8] + "\n")):
+            with patch("workflow.stdin_is_interactive", return_value=True), \
+                    patch("workflow.sys.stdin", FakeTTY(fingerprint[:8] + "\n")):
                 with contextlib.redirect_stdout(output):
                     workflow.review("T-001", "PASS", review, handoff)
             state = json.loads((root / ".harness/state.json").read_text(encoding="utf-8"))
